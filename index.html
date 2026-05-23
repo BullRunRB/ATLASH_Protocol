@@ -1820,11 +1820,17 @@ async function buySlot(){
 async function syncSlot(posId){
   if(!signer){toast('Conecta tu wallet','error');return;}
   try{
-    toast('Sincronizando #'+posId+'…','info');
-    await (await contracts.slot.connect(signer).sync(posId)).wait();
-    toast('✅ Slot #'+posId+' sincronizado','success');
+    if(!posId && posId!==0){toast('ID inválido','error');return;}
+    toast('Procesando slot #'+posId+'…','info');
+    const tx = await contracts.slot.connect(signer).sync(BigInt(posId));
+    await tx.wait();
+    toast('✅ Recompensa reclamada · Slot #'+posId,'success');
     if(currentUser) loadUserSlots(currentUser);
-  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');}
+  }catch(e){
+    const msg=e?.reason||e?.message||String(e);
+    toast('Error: '+msg.slice(0,80),'error');
+    console.error('[syncSlot]',e);
+  }
 }
 
 // ── RANKS ──
@@ -2313,7 +2319,7 @@ async function loadLearnSlots() {
       return;
     }
     const positions = await Promise.all(activeIds.map(id =>
-      contracts.slot.positions(id).then(p => ({ id, ...p })).catch(() => null)
+      contracts.slot.positions(id).then(p => ({ id: Number(id), ...p })).catch(() => null)
     ));
     el.innerHTML = positions.filter(Boolean).map(p => {
       const amt            = Number(ethers.formatUnits(p.slotAmount, 18));
@@ -2354,12 +2360,21 @@ async function doLearnSync(posId) {
   if (!learnState.videoUnlocked) { toast('Debes ver ' + fmtSecs(MIN_WATCH_SECONDS) + ' del video primero', 'error'); return; }
   if (!signer) { toast('Conecta tu wallet', 'error'); return; }
   try {
-    toast('Sincronizando slot #' + posId + '…', 'info');
-    await (await contracts.slot.connect(signer).sync(posId)).wait();
+    if (!posId && posId !== 0) { toast('ID de posición inválido', 'error'); return; }
+    const pid = BigInt(posId);
+    toast('Procesando slot #' + posId + '…', 'info');
+    const tx = await contracts.slot.connect(signer).sync(pid);
+    await tx.wait();
     learnState.syncedSlots[posId] = true;
-    toast('✅ Slot #' + posId + ' sincronizado', 'success');
+    toast('✅ Recompensa reclamada · Slot #' + posId, 'success');
     loadLearnSlots();
-  } catch(e) { toast('Error: ' + (e?.reason||e?.message||'').slice(0,60), 'error'); }
+    // Also refresh slots tab
+    if (currentUser) loadUserSlots(currentUser);
+  } catch(e) {
+    const msg = e?.reason || e?.message || String(e);
+    toast('Error: ' + msg.slice(0,80), 'error');
+    console.error('[doLearnSync]', e);
+  }
 }
 
 // ── HISTORY ──
