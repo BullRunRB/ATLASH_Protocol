@@ -1243,21 +1243,20 @@ function showDapp(){
 }
 
 function _activateDapp(){
-  document.getElementById('landing').style.display='none';
-  document.getElementById('dapp').style.display='block';
-  document.getElementById('landing-nav').style.display='none';
-  document.getElementById('dapp-tabs-nav').style.display='flex';
-  document.getElementById('btn-enter-dapp').style.display='none';
-  document.getElementById('wallet-pill').style.display='';
-  document.getElementById('nav-net-pill').style.display='';
-  updateNavPill();
-  loadGlobalStats();
-  loadAllowedSlots();
-  updateContractsTab();
-  loadCoreStatus();
-  loadTreasury();
-  // Live stats for landing
-  loadLandingStats();
+  try { document.getElementById('landing').style.display='none'; } catch(e){}
+  try { document.getElementById('dapp').style.display='block'; } catch(e){}
+  try { document.getElementById('landing-nav').style.display='none'; } catch(e){}
+  try { document.getElementById('dapp-tabs-nav').style.display='flex'; } catch(e){}
+  try { document.getElementById('btn-enter-dapp').style.display='none'; } catch(e){}
+  try { document.getElementById('wallet-pill').style.display=''; } catch(e){}
+  try { document.getElementById('nav-net-pill').style.display=''; } catch(e){}
+  try { updateNavPill(); } catch(e){ console.error('updateNavPill',e); }
+  try { loadGlobalStats(); } catch(e){ console.error('loadGlobalStats',e); }
+  try { loadAllowedSlots(); } catch(e){ console.error('loadAllowedSlots',e); }
+  try { updateContractsTab(); } catch(e){ console.error('updateContractsTab',e); }
+  try { loadCoreStatus(); } catch(e){ console.error('loadCoreStatus',e); }
+  try { loadTreasury(); } catch(e){ console.error('loadTreasury',e); }
+  try { loadLandingStats(); } catch(e){ console.error('loadLandingStats',e); }
 }
 
 function scrollToSection(selector){
@@ -1294,22 +1293,28 @@ function setNetModal(key){
 }
 
 async function confirmNetModal(){
-  document.getElementById('net-modal').style.display='none';
-  _netKey=_pendingNetKey;
-  activeNet=NETS[_netKey];
-  const d=_netKey==='mainnet'?DEPLOY_MAINNET:DEPLOY_TESTNET;
-  addrs={...d};
-  provider=new ethers.JsonRpcProvider(activeNet.rpcs[0]);
-  // Instantiate contracts
-  if(addrs.core)     contracts.core      =new ethers.Contract(addrs.core,CORE_ABI,provider);
-  if(addrs.slot)     contracts.slot      =new ethers.Contract(addrs.slot,SLOT_ABI,provider);
-  if(addrs.rank)     contracts.rank      =new ethers.Contract(addrs.rank,RANK_ABI,provider);
-  if(addrs.pool)     contracts.pool      =new ethers.Contract(addrs.pool,POOL_ABI,provider);
-  if(addrs.rewards)  contracts.reward    =new ethers.Contract(addrs.rewards,REWARD_ABI,provider);
-  if(addrs.treasury) contracts.enterprise=new ethers.Contract(addrs.treasury,ENTERPRISE_ABI,provider);
-  if(addrs.usdt)     contracts.usdt      =new ethers.Contract(addrs.usdt,USDT_ABI,provider);
-  toast('Conectado a '+activeNet.label,'success');
-  _activateDapp();
+  try {
+    document.getElementById('net-modal').style.display='none';
+    _netKey    = _pendingNetKey;
+    activeNet  = NETS[_netKey];
+    const d    = _netKey==='mainnet' ? DEPLOY_MAINNET : DEPLOY_TESTNET;
+    addrs      = { ...d };
+    provider   = new ethers.JsonRpcProvider(activeNet.rpcs[0]);
+
+    if(addrs.core)     contracts.core       = new ethers.Contract(addrs.core,     CORE_ABI,       provider);
+    if(addrs.slot)     contracts.slot       = new ethers.Contract(addrs.slot,     SLOT_ABI,       provider);
+    if(addrs.rank)     contracts.rank       = new ethers.Contract(addrs.rank,     RANK_ABI,       provider);
+    if(addrs.pool)     contracts.pool       = new ethers.Contract(addrs.pool,     POOL_ABI,       provider);
+    if(addrs.rewards)  contracts.reward     = new ethers.Contract(addrs.rewards,  REWARD_ABI,     provider);
+    if(addrs.treasury) contracts.enterprise = new ethers.Contract(addrs.treasury, ENTERPRISE_ABI, provider);
+    if(addrs.usdt)     contracts.usdt       = new ethers.Contract(addrs.usdt,     USDT_ABI,       provider);
+
+    toast('Conectado a ' + activeNet.label, 'success');
+    _activateDapp();
+  } catch(e) {
+    console.error('[confirmNetModal]', e);
+    toast('Error al iniciar: ' + (e.message||String(e)).slice(0,80), 'error');
+  }
 }
 
 function updateNavPill(){
@@ -1321,6 +1326,28 @@ function updateNavPill(){
   if(pill) pill.className='net-pill-sm '+(activeNet===NETS.testnet?'testnet':'mainnet');
   if(pulse) pulse.className='npulse '+(activeNet===NETS.testnet?'test':'main');
 }
+
+// ── MAIN goTab (merged) ──
+function goTab(name) {
+  // Update tab buttons
+  const tabNames = ['overview','learn','slots','ranks','pools','network','treasury','contracts'];
+  document.querySelectorAll('.dtab').forEach((b, i) => {
+    b.classList.toggle('on', tabNames[i] === name);
+    b.style.color = tabNames[i] === name ? 'var(--blue)' : 'var(--gray-500)';
+    b.style.borderBottomColor = tabNames[i] === name ? 'var(--blue)' : 'transparent';
+    b.style.fontWeight = tabNames[i] === name ? '700' : '500';
+  });
+  document.querySelectorAll('.tpane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
+
+  if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
+  if (name === 'ranks')     loadRanksTab(currentUser);
+  if (name === 'pools')     loadPoolsData();
+  if (name === 'treasury')  loadTreasury();
+  if (name === 'slots' && contracts.slot) loadGlobalStats();
+  if (name === 'learn')     initLearnTab();
+}
+
+
 
 // ── DAPP TAB NAVIGATION ──
 // goTab merged below
@@ -2247,25 +2274,6 @@ async function checkOwnerAccess() {
   }
 }
 
-// ── MAIN goTab (merged) ──
-function goTab(name) {
-  // Update tab buttons
-  const tabNames = ['overview','learn','slots','ranks','pools','network','treasury','contracts'];
-  document.querySelectorAll('.dtab').forEach((b, i) => {
-    b.classList.toggle('on', tabNames[i] === name);
-    b.style.color = tabNames[i] === name ? 'var(--blue)' : 'var(--gray-500)';
-    b.style.borderBottomColor = tabNames[i] === name ? 'var(--blue)' : 'transparent';
-    b.style.fontWeight = tabNames[i] === name ? '700' : '500';
-  });
-  document.querySelectorAll('.tpane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
-
-  if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
-  if (name === 'ranks')     loadRanksTab(currentUser);
-  if (name === 'pools')     loadPoolsData();
-  if (name === 'treasury')  loadTreasury();
-  if (name === 'slots' && contracts.slot) loadGlobalStats();
-  if (name === 'learn')     initLearnTab();
-}
 
 
 
