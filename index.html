@@ -1368,77 +1368,102 @@ function disconnectWallet(){
 }
 
 async function connectWith(type){
-  // Close any existing modals
+  // Close modal
   document.querySelectorAll('.wallet-modal-bg').forEach(m=>m.remove());
 
   if(window.location.protocol==='file:'){ showHelpModal(); return; }
+  if(!window.ethereum){ showHelpModal(); return; }
+  if(!activeNet){ toast('Selecciona la red primero','error'); return; }
 
-  // All 3 wallets inject window.ethereum (MetaMask, Trust, SafePal all use EIP-1193)
-  const prov=window.ethereum;
-  if(!prov){
-    showHelpModal();
-    return;
-  }
+  const prov = window.ethereum;
+  const lbl  = document.getElementById('wallet-label');
+  const pill = document.getElementById('wallet-pill');
 
-  const lbl=document.getElementById('wallet-label');
-  const pill=document.getElementById('wallet-pill');
-  lbl.textContent='Conectando…';
-  pill.disabled=true;
+  // helper to reset button state on any failure
+  const reset = (msg) => {
+    lbl.textContent = msg || 'Conectar wallet';
+    pill.disabled = false;
+  };
 
-  try{
-    await prov.request({method:'eth_requestAccounts'});
-    const curHex=await prov.request({method:'eth_chainId'});
-    const curId=parseInt(curHex,16);
-    const targetId=activeNet.chainId;
+  lbl.textContent = 'Conectando…';
+  pill.disabled = true;
 
-    if(curId!==targetId){
-      toast('Cambiando a '+activeNet.label+'…','info');
-      try{
-        await prov.request({method:'wallet_switchEthereumChain',params:[{chainId:activeNet.chainIdHex}]});
-      }catch(se){
-        if(se.code===4001){toast('Cambio rechazado','error');lbl.textContent='Conectar wallet';pill.disabled=false;return;}
-        try{
-          await prov.request({method:'wallet_addEthereumChain',params:[{
-            chainId:activeNet.chainIdHex,chainName:activeNet.label,
-            nativeCurrency:activeNet.nativeCurrency,
-            rpcUrls:activeNet.rpcs,blockExplorerUrls:[activeNet.explorer]
-          }]});
-        }catch(ae){toast('No se pudo agregar red','error');lbl.textContent='Conectar wallet';pill.disabled=false;return;}
+  try {
+    // 1. Request accounts — opens MetaMask/Trust/SafePal popup
+    const accounts = await prov.request({ method: 'eth_requestAccounts' });
+    if (!accounts || !accounts[0]) throw new Error('Sin cuentas');
+
+    // 2. Check current chain
+    const curHex   = await prov.request({ method: 'eth_chainId' });
+    const curId    = parseInt(curHex, 16);
+    const targetId = activeNet.chainId;
+
+    // 3. Switch chain if needed — fire-and-forget style (no waiting loop)
+    if (curId !== targetId) {
+      toast('Cambiando a ' + activeNet.label + '…', 'info');
+      try {
+        await prov.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: activeNet.chainIdHex }]
+        });
+      } catch (se) {
+        if (se.code === 4001) { toast('Cambio de red rechazado', 'error'); reset(); return; }
+        // Chain not in wallet yet — add it
+        try {
+          await prov.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: activeNet.chainIdHex,
+              chainName: activeNet.label,
+              nativeCurrency: activeNet.nativeCurrency,
+              rpcUrls: activeNet.rpcs,
+              blockExplorerUrls: [activeNet.explorer]
+            }]
+          });
+        } catch (ae) {
+          if (ae.code === 4001) { toast('Agregar red rechazado', 'error'); }
+          else { toast('No se pudo agregar la red: ' + (ae.message||'').slice(0,40), 'error'); }
+          reset(); return;
+        }
       }
-      // Wait for chain switch
-      await new Promise(res=>{
-        const end=Date.now()+8000;
-        const t=setInterval(async()=>{
-          const h=await prov.request({method:'eth_chainId'});
-          if(parseInt(h,16)===targetId){clearInterval(t);res();}
-          if(Date.now()>end){clearInterval(t);res();}
-        },600);
-        try{prov.on('chainChanged',h=>{if(parseInt(h,16)===targetId){clearInterval(t);res();}});}catch{}
-      });
+
+      // Verify chain actually changed
+      const newHex = await prov.request({ method: 'eth_chainId' });
+      if (parseInt(newHex, 16) !== targetId) {
+        toast('Cambia manualmente a ' + activeNet.label + ' en tu wallet', 'error');
+        reset(); return;
+      }
     }
 
-    const ep=new ethers.BrowserProvider(prov);
-    signer=await ep.getSigner();
-    walletAddr=await signer.getAddress();
-    lbl.textContent=short(walletAddr);
-    pill.disabled=false;
-    pill.classList.add('connected');
-    document.getElementById('wallet-dot').className='wallet-dot on';
-    toast('Conectado · '+activeNet.label,'success');
+    // 4. Build signer
+    const ep = new ethers.BrowserProvider(prov);
+    signer     = await ep.getSigner();
+    walletAddr = await signer.getAddress();
 
-    // Auto-search own address
-    document.getElementById('search-inp').value=walletAddr;
+    // 5. Update UI
+    lbl.textContent = short(walletAddr);
+    pill.disabled   = false;
+    pill.classList.add('connected');
+    document.getElementById('wallet-dot').className = 'wallet-dot on';
+    toast('✅ Conectado · ' + activeNet.label, 'success');
+
+    // 6. Load user data
+    document.getElementById('search-inp').value = walletAddr;
     searchUser();
-    // Check owner access after connecting
     setTimeout(() => {
       checkOwnerAccess();
       if (contracts.slot) loadLearnSlots();
     }, 800);
 
-  }catch(e){
-    const msg=e?.message||String(e);
-    toast(e?.code===4001||msg.includes('rejected')?'Rechazado':'Error: '+msg.slice(0,50),'error');
-    lbl.textContent='Conectar wallet';pill.disabled=false;
+  } catch(e) {
+    const msg = e?.message || String(e);
+    if (e?.code === 4001 || msg.includes('rejected') || msg.includes('denied')) {
+      toast('Conexión rechazada', 'error');
+    } else {
+      toast('Error: ' + msg.slice(0, 60), 'error');
+      console.error('[connectWith]', e);
+    }
+    reset();
   }
 }
 
