@@ -1132,6 +1132,16 @@ const DEPLOY_MAINNET = {
   rewards:    '0xEB8b6B68D15A0B9c32cCD2B9243CEe30881B5418',
 };
 
+const DEPLOY_TESTNET = {
+  usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
+  core:       '0xC150c1863103f64F4b8cc2eBae979D96a0588f0a',
+  pool:       '0xa4795eC965cF1911F912B06071Dedc0bC30f01De',
+  rank:       '0xDF784FA71523E55e2174bd1F37bC2B65CA096C79',
+  treasury:   '0x8FD158FAE9ae164C9E0fB1FdcFE3E71C61699f39',
+  slot:       '0x4c42F7ac14169BE601891413982C8BDC94810938',
+  rewards:    '0x39009fEa533F0A187DD631E05b8797D46a64bfb2',
+};
+
 // ── ABIs ──
 const CORE_ABI = [
   "function getUserStatus(address) view returns (bool registered, bool frozen, address upline, uint256 directCount, uint256 totalSlotVolume, uint256 joinTimestamp)",
@@ -1182,7 +1192,7 @@ const ENTERPRISE_ABI = ["function enterprisePool() view returns (uint256)", "fun
 const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)"];
 
 // ── STATE ──
-let activeNet = null, _netKey = 'mainnet';
+let activeNet = null, _netKey = 'testnet';
 let provider = null, signer = null, walletAddr = null;
 let currentUser = null;
 let contracts = {};
@@ -1262,14 +1272,14 @@ window.addEventListener('scroll',()=>{
 // ── NET MODAL ──
 let _pendingNetKey='mainnet';
 function showNetModal(){
-  _pendingNetKey='mainnet';
-  setNetModal('mainnet');
+  _pendingNetKey='testnet';
+  setNetModal('testnet');
   document.getElementById('net-modal').style.display='flex';
 }
 
 function setNetModal(key){
   _pendingNetKey=key;
-  const d=key==='mainnet'?DEPLOY_MAINNET:{};
+  const d=key==='mainnet'?DEPLOY_MAINNET:DEPLOY_TESTNET;
   const ml=document.getElementById('nm-contracts-list');
   if(ml){
     ml.innerHTML=Object.entries({Core:d.core||'—',SlotProgram:d.slot||'—',RanksModule:d.rank||'—',PoolsModule:d.pool||'—',Rewards:d.rewards||'—',Enterprise:d.treasury||'—',USDT:d.usdt||'—'})
@@ -1283,7 +1293,7 @@ async function confirmNetModal(){
   document.getElementById('net-modal').style.display='none';
   _netKey=_pendingNetKey;
   activeNet=NETS[_netKey];
-  const d=_netKey==='mainnet'?DEPLOY_MAINNET:{};
+  const d=_netKey==='mainnet'?DEPLOY_MAINNET:DEPLOY_TESTNET;
   addrs={...d};
   provider=new ethers.JsonRpcProvider(activeNet.rpcs[0]);
   // Instantiate contracts
