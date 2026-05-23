@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>ATLASH LearnEarn — Aprende. Invierte. Crece.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -1229,7 +1232,6 @@ function showLanding(){
   document.getElementById('btn-enter-dapp').style.display='';
   document.getElementById('wallet-pill').style.display='none';
   document.getElementById('nav-net-pill').style.display='none';
-  try { window.scrollTo({top:0}); } catch(e) {}
 }
 
 function showDapp(){
@@ -1248,7 +1250,6 @@ function _activateDapp(){
   document.getElementById('btn-enter-dapp').style.display='none';
   document.getElementById('wallet-pill').style.display='';
   document.getElementById('nav-net-pill').style.display='';
-  try { window.scrollTo({top:0}); } catch(e) {}
   updateNavPill();
   loadGlobalStats();
   loadAllowedSlots();
@@ -1260,6 +1261,7 @@ function _activateDapp(){
 }
 
 function scrollToSection(selector){
+  if(typeof selector !== 'string') return;
   try {
     const el = document.querySelector(selector);
     if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
