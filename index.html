@@ -958,7 +958,10 @@ footer .brand-mark{background:var(--blue);}
         <div class="panel" id="learn-video-panel">
           <div class="panel-head">
             <div class="panel-title" id="learn-video-title">📹 Cargando clase del día…</div>
+            <div style="display:flex;align-items:center;gap:8px;">
             <div id="learn-day-badge"></div>
+            <button onclick="clearLearnProgress()" class="btn-outline" style="font-size:10px;padding:3px 10px;color:var(--gray-400);">↺ Reset progreso</button>
+          </div>
           </div>
           <div class="panel-body" style="padding:0;">
             <!-- Video container with overlay -->
@@ -970,7 +973,7 @@ footer .brand-mark{background:var(--blue);}
                   allowfullscreen>
                 </iframe>
                 <!-- Completed overlay -->
-                <div id="learn-completed-overlay" style="display:none;position:absolute;inset:0;background:rgba(5,150,105,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;">
+                <div id="learn-completed-overlay" style="display:none;position:absolute;inset:0;background:rgba(5,150,105,.9);flex-direction:column;align-items:center;justify-content:center;gap:12px;">
                   <div style="font-size:56px;">✅</div>
                   <div style="font-size:20px;font-weight:800;color:var(--white);">¡Video completado!</div>
                   <div style="font-size:14px;color:rgba(255,255,255,.8);">Tu Sync diario está desbloqueado</div>
@@ -1374,6 +1377,20 @@ function updateNavPill(){
   if(lbl) lbl.textContent=activeNet.label;
   if(pill) pill.className='net-pill-sm '+(activeNet===NETS.testnet?'testnet':'mainnet');
   if(pulse) pulse.className='npulse '+(activeNet===NETS.testnet?'test':'main');
+}
+
+
+function clearLearnProgress() {
+  const lesson = getTodayLesson();
+  const key = 'learn-done-' + new Date().toISOString().slice(0,10);
+  localStorage.removeItem(key);
+  localStorage.removeItem(key + '-secs');
+  learnState.videoUnlocked  = false;
+  learnState.secondsWatched = 0;
+  learnState.syncedSlots    = {};
+  updateWatchUI();
+  if (walletAddr && contracts.slot) loadLearnSlots();
+  toast('Progreso de hoy reseteado', 'info');
 }
 
 // ── MAIN goTab (merged) ──
@@ -2030,7 +2047,7 @@ const MIN_WATCH_SECONDS = 300; // 5 minutes
 const VIDEO_REPO = [
   {
     id: 1,
-    youtubeId: 'eLelgy5zRv4',
+    youtubeId: 'dQw4w9WgXcQ',
     title: 'Introducción al protocolo LearnEarn',
     topic: '¿Qué es ATLASH y cómo funciona el ROI diario?',
     duration: 720, // 12 min in seconds
@@ -2117,6 +2134,10 @@ function initLearnTab() {
   // Already completed today?
   const alreadyDone = localStorage.getItem(learnState.todayKey) === '1';
   const savedSecs   = parseInt(localStorage.getItem(learnState.todayKey + '-secs') || '0');
+  // Reset state for new tab load
+  learnState.videoUnlocked  = false;
+  learnState.secondsWatched = 0;
+  learnState.syncedSlots    = {};
   if (alreadyDone) {
     learnState.videoUnlocked  = true;
     learnState.secondsWatched = MIN_WATCH_SECONDS;
@@ -2235,15 +2256,20 @@ function updateWatchUI() {
 }
 
 function setVideoUnlocked(silent=false) {
+  learnState.videoUnlocked = true;
   const icon  = document.getElementById('learn-sync-icon');
   const label = document.getElementById('learn-sync-label');
   if (icon)  icon.textContent  = '🟢';
   if (label) label.textContent = 'Sync desbloqueado';
 
   const overlay = document.getElementById('learn-completed-overlay');
-  if (overlay && !silent) {
-    overlay.style.display = 'flex';
-    setTimeout(() => { overlay.style.display = 'none'; }, 3000);
+  if (overlay) {
+    if (!silent) {
+      overlay.style.display = 'flex';
+      setTimeout(() => { overlay.style.display = 'none'; }, 3000);
+    } else {
+      overlay.style.display = 'none'; // always hidden on silent restore
+    }
   }
 
   updateWatchUI();
