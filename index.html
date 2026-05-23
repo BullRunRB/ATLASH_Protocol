@@ -956,10 +956,15 @@ footer .brand-mark{background:var(--blue);}
                   <div style="font-size:13px;color:var(--gray-400);">visto</div>
                 </div>
               </div>
+              <!-- Watch time info -->
+              <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gray-500);font-family:var(--mono);">
+                <span id="learn-secs-watched">Presiona Play para empezar</span>
+                <span>Mínimo: <strong id="learn-min-required">5 min</strong></span>
+              </div>
               <!-- Unlock hint -->
               <div id="learn-unlock-hint" style="margin-top:14px;background:var(--amber-bg);border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px;">
                 <span>⏱</span>
-                <span>Debes ver al menos el <strong>80%</strong> del video para desbloquear el Sync del día.</span>
+                <span>Debes ver al menos <strong>5 minutos</strong> del video para desbloquear el Sync del día.</span>
               </div>
               <div id="learn-unlocked-msg" style="display:none;margin-top:14px;background:var(--green-bg);border:1px solid #a7f3d0;border-radius:10px;padding:12px 16px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:10px;">
                 <span>🎉</span>
@@ -1147,7 +1152,8 @@ const DEPLOY_TESTNET = {
 
 // ── ABIs ──
 const CORE_ABI = [
-  "function getUserStatus(address) view returns (bool registered, bool frozen, address upline, uint256 directCount, uint256 totalSlotVolume, uint256 joinTimestamp)",
+  "function getUserStatus(address) view returns (uint8 activeFlag, uint256 validUntil, address upline, bool exists, bool frozen)",
+  "function userInfo(address) view returns (bool exists, bool frozen, address upline, uint32 joinedAt, uint256 totalSlotVolume, uint256 totalPoints)",
   "function totalUsers() view returns (uint256)",
   "function directCount(address) view returns (uint256)",
   "function directAt(address, uint256) view returns (address)",
@@ -1530,17 +1536,19 @@ async function searchUser(){
 // ── USER DATA ──
 async function loadUserData(addr){
   try{
-    const [statusRes,dcRes]=await Promise.allSettled([
-      contracts.core.getUserStatus(addr),
+    const [infoRes,dcRes]=await Promise.allSettled([
+      contracts.core.userInfo(addr),
       contracts.core.directCount(addr)
     ]);
+    // userInfo returns: (bool exists, bool frozen, address upline, uint32 joinedAt, uint256 totalSlotVolume, uint256 totalPoints)
     let registered=false,frozen=false,upline='',directCnt=0,totalVol=0n,joinTs=0n;
-    if(statusRes.status==='fulfilled'){
-      const s=statusRes.value;
-      [registered,frozen,upline]=[s[0]||s.registered,s[1]||s.frozen,s[2]||s.upline];
-      directCnt=Number(s[3]||s.directCount||0);
-      totalVol=s[4]||s.totalSlotVolume||0n;
-      joinTs=s[5]||s.joinTimestamp||0n;
+    if(infoRes.status==='fulfilled'){
+      const s=infoRes.value;
+      registered = s[0]||s.exists||false;
+      frozen     = s[1]||s.frozen||false;
+      upline     = s[2]||s.upline||'';
+      joinTs     = BigInt(s[3]||s.joinedAt||0);
+      totalVol   = s[4]||s.totalSlotVolume||0n;
     }
     if(dcRes.status==='fulfilled') directCnt=Number(dcRes.value);
 
@@ -1966,253 +1974,304 @@ async function loadCoreStatus(){
 
 
 // ═══════════════════════════════════════════════════════════
-// LEARN TO EARN — Course + Sync Unlock System
+// LEARN TO EARN — Video Repository + 5-min Sync Unlock
 // ═══════════════════════════════════════════════════════════
 
-// ── COURSE CATALOG ──
-// Replace YouTube IDs with your real videos when ready
-// Format: { day: N, youtubeId: '...', title: '...', duration: 'Xm Ys' }
-const COURSE_PLAYLIST = [
-  { day:1,  youtubeId:'dQw4w9WgXcQ', title:'Introducción al protocolo LearnEarn', topic:'¿Qué es ATLASH y cómo funciona el ROI diario?', duration:'12m 30s' },
-  { day:2,  youtubeId:'dQw4w9WgXcQ', title:'Cómo elegir tu primer Slot', topic:'Estrategia de slots: valores, cap y proyección', duration:'15m 00s' },
-  { day:3,  youtubeId:'dQw4w9WgXcQ', title:'El sistema de Streak y Boosts', topic:'Por qué el sync diario multiplica tus ganancias', duration:'10m 45s' },
-  { day:4,  youtubeId:'dQw4w9WgXcQ', title:'Red de referidos y bonos directos', topic:'Construye tu equipo y activa los bonos comerciales', duration:'14m 20s' },
-  { day:5,  youtubeId:'dQw4w9WgXcQ', title:'Sistema de Rangos', topic:'Puntos, rangos y cómo reclamar tus bonos de rango', duration:'11m 00s' },
-  { day:6,  youtubeId:'dQw4w9WgXcQ', title:'Pool de Liderazgo mensual', topic:'Cómo participar y reclamar el pool de liderazgo', duration:'9m 15s' },
-  { day:7,  youtubeId:'dQw4w9WgXcQ', title:'Estrategia avanzada: múltiples slots', topic:'Máximo 5 slots del mismo valor, ¿cómo optimizarlo?', duration:'18m 00s' },
+// ── VIDEO REPOSITORY ──
+// Admin: edit this array to add/update videos.
+// Each video: { id, youtubeId, title, topic, duration (seconds), date }
+// 'date' (YYYY-MM-DD) = the day this video is shown. Leave '' to assign by rotation.
+// MIN_WATCH_SECONDS = minimum seconds user must watch to unlock Sync.
+const MIN_WATCH_SECONDS = 300; // 5 minutes
+
+const VIDEO_REPO = [
+  {
+    id: 1,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Introducción al protocolo LearnEarn',
+    topic: '¿Qué es ATLASH y cómo funciona el ROI diario?',
+    duration: 720, // 12 min in seconds
+    date: ''
+  },
+  {
+    id: 2,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Cómo elegir tu primer Slot',
+    topic: 'Estrategia de slots: valores, cap y proyección',
+    duration: 900, // 15 min
+    date: ''
+  },
+  {
+    id: 3,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'El sistema de Streak y Boosts',
+    topic: 'Por qué el sync diario multiplica tus ganancias',
+    duration: 645, // 10m 45s
+    date: ''
+  },
+  {
+    id: 4,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Red de referidos y bonos directos',
+    topic: 'Construye tu equipo y activa los bonos comerciales',
+    duration: 860, // 14m 20s
+    date: ''
+  },
+  {
+    id: 5,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Sistema de Rangos',
+    topic: 'Puntos, rangos y cómo reclamar tus bonos de rango',
+    duration: 660, // 11 min
+    date: ''
+  },
+  {
+    id: 6,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Pool de Liderazgo mensual',
+    topic: 'Cómo participar y reclamar el pool de liderazgo',
+    duration: 555, // 9m 15s
+    date: ''
+  },
+  {
+    id: 7,
+    youtubeId: 'dQw4w9WgXcQ',
+    title: 'Estrategia avanzada: múltiples slots',
+    topic: 'Máximo 5 slots del mismo valor — cómo optimizarlo',
+    duration: 1080, // 18 min
+    date: ''
+  },
 ];
 
-// Cycle videos — día actual del protocolo (relativo al epoch)
+// ── GET TODAY'S VIDEO ──
 function getTodayLesson() {
-  const dayEpoch = Math.floor(Date.now() / 86400000); // days since epoch
-  const idx = dayEpoch % COURSE_PLAYLIST.length;
-  return { ...COURSE_PLAYLIST[idx], absoluteDay: dayEpoch };
+  const todayStr = new Date().toISOString().slice(0,10); // 'YYYY-MM-DD'
+  // 1. Check if any video has today's exact date
+  const exact = VIDEO_REPO.find(v => v.date === todayStr);
+  if (exact) return exact;
+  // 2. Rotate by day index
+  const dayEpoch = Math.floor(Date.now() / 86400000);
+  return VIDEO_REPO[dayEpoch % VIDEO_REPO.length];
 }
 
 // ── LEARN STATE ──
 let learnState = {
-  videoUnlocked: false,    // true when user watched >= 80%
-  syncedSlots:   {},       // { positionId: true } — synced today
-  watchPct:      0,
-  ytPlayer:      null,
-  pollInterval:  null,
-  todayKey:      '',       // 'learn-done-' + dayEpoch
+  videoUnlocked:  false,
+  syncedSlots:    {},
+  secondsWatched: 0,
+  ytPlayer:       null,
+  pollInterval:   null,
+  todayKey:       '',
+  watchInterval:  null, // counts real watch time
+  isPlaying:      false,
 };
 
 // ── INIT LEARN TAB ──
 function initLearnTab() {
   const lesson = getTodayLesson();
-  learnState.todayKey = 'learn-done-' + lesson.absoluteDay;
+  learnState.todayKey = 'learn-done-' + new Date().toISOString().slice(0,10);
 
-  // Check if already completed today (localStorage)
+  // Already completed today?
   const alreadyDone = localStorage.getItem(learnState.todayKey) === '1';
+  const savedSecs   = parseInt(localStorage.getItem(learnState.todayKey + '-secs') || '0');
   if (alreadyDone) {
-    learnState.videoUnlocked = true;
+    learnState.videoUnlocked  = true;
+    learnState.secondsWatched = MIN_WATCH_SECONDS;
+  } else if (savedSecs > 0) {
+    learnState.secondsWatched = savedSecs;
   }
 
-  // Set video info
-  const titleEl = document.getElementById('learn-video-title');
-  const descEl  = document.getElementById('learn-video-desc');
-  const durEl   = document.getElementById('learn-video-duration');
-  const dayBadge= document.getElementById('learn-day-badge');
-  if (titleEl) titleEl.textContent = '📹 ' + lesson.title;
-  if (descEl)  descEl.textContent  = lesson.topic;
-  if (durEl)   durEl.textContent   = 'Duración estimada: ' + lesson.duration;
-  if (dayBadge) dayBadge.innerHTML = `<span class="badge badge-blue">Clase del día ${lesson.day}</span>`;
+  // Update header
+  const titleEl  = document.getElementById('learn-video-title');
+  const descEl   = document.getElementById('learn-video-desc');
+  const durEl    = document.getElementById('learn-video-duration');
+  const dayBadge = document.getElementById('learn-day-badge');
+  const minEl    = document.getElementById('learn-min-required');
+  if (titleEl)  titleEl.textContent = '📹 ' + lesson.title;
+  if (descEl)   descEl.textContent  = lesson.topic;
+  if (durEl)    durEl.textContent   = 'Duración: ' + fmtSecs(lesson.duration);
+  if (dayBadge) dayBadge.innerHTML  = `<span class="badge badge-blue">Video #${lesson.id}</span>`;
+  if (minEl)    minEl.textContent   = fmtSecs(MIN_WATCH_SECONDS);
 
-  // Embed YouTube with JS API enabled
+  // Update progress display
+  updateWatchUI();
+
+  // Embed YouTube
   const iframe = document.getElementById('learn-iframe');
   if (iframe) {
     iframe.src = `https://www.youtube.com/embed/${lesson.youtubeId}?enablejsapi=1&rel=0&modestbranding=1&origin=${encodeURIComponent(window.location.origin)}`;
   }
 
-  // Load YouTube IFrame API
+  // Load YT API
   if (!window.YT) {
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
-    window.onYouTubeIframeAPIReady = () => setupYTPlayer(lesson.youtubeId);
+    window.onYouTubeIframeAPIReady = () => setupYTPlayer();
   } else {
-    setupYTPlayer(lesson.youtubeId);
+    setupYTPlayer();
   }
 
-  // If already unlocked, show that state
-  if (alreadyDone) {
-    setVideoUnlocked();
-  }
-
-  // Load slots for sync
-  if (walletAddr && contracts.slot) {
-    loadLearnSlots();
-  }
-
-  // Load history
+  if (alreadyDone) setVideoUnlocked(true); // silent = true, no toast again
+  if (walletAddr && contracts.slot) loadLearnSlots();
   renderLearnHistory();
 }
 
-function setupYTPlayer(videoId) {
+function fmtSecs(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return sec > 0 ? `${m}m ${sec}s` : `${m} min`;
+}
+
+function setupYTPlayer() {
   try {
+    if (learnState.ytPlayer && learnState.ytPlayer.destroy) {
+      try { learnState.ytPlayer.destroy(); } catch {}
+    }
     learnState.ytPlayer = new YT.Player('learn-iframe', {
-      events: {
-        onStateChange: onYTStateChange,
-        onReady: onYTReady,
-      }
+      events: { onStateChange: onYTStateChange }
     });
-  } catch(e) {
-    // YT API not ready yet, will retry via onYouTubeIframeAPIReady
-  }
-}
-
-function onYTReady(event) {
-  // Start polling progress every 2 seconds
-  if (learnState.pollInterval) clearInterval(learnState.pollInterval);
-  learnState.pollInterval = setInterval(updateWatchProgress, 2000);
-}
-
-function onYTStateChange(event) {
-  // YT.PlayerState.ENDED = 0
-  if (event.data === 0) {
-    setWatchPct(100);
-  }
-}
-
-function updateWatchProgress() {
-  if (!learnState.ytPlayer || learnState.videoUnlocked) return;
-  try {
-    const current  = learnState.ytPlayer.getCurrentTime() || 0;
-    const duration = learnState.ytPlayer.getDuration()    || 1;
-    const pct = Math.min(100, Math.round((current / duration) * 100));
-    setWatchPct(pct);
   } catch(e) {}
 }
 
-function setWatchPct(pct) {
-  if (learnState.videoUnlocked) return;
-  learnState.watchPct = pct;
-
-  const bar  = document.getElementById('learn-watch-progress');
-  const pctEl= document.getElementById('learn-progress-pct');
-  if (bar)   bar.style.width = pct + '%';
-  if (pctEl) pctEl.textContent = pct + '%';
-
-  // Unlock at 80%
-  if (pct >= 80) {
-    learnState.videoUnlocked = true;
-    localStorage.setItem(learnState.todayKey, '1');
-    setVideoUnlocked();
-    // Save to history
+function onYTStateChange(event) {
+  // YT.PlayerState: PLAYING=1, PAUSED=2, ENDED=0
+  if (event.data === 1) {
+    // Playing — start counting
+    learnState.isPlaying = true;
+    if (!learnState.watchInterval) {
+      learnState.watchInterval = setInterval(() => {
+        if (!learnState.isPlaying || learnState.videoUnlocked) return;
+        learnState.secondsWatched++;
+        // Save progress
+        localStorage.setItem(learnState.todayKey + '-secs', learnState.secondsWatched);
+        updateWatchUI();
+        if (learnState.secondsWatched >= MIN_WATCH_SECONDS) {
+          learnState.videoUnlocked = true;
+          localStorage.setItem(learnState.todayKey, '1');
+          setVideoUnlocked(false);
+          clearInterval(learnState.watchInterval);
+          learnState.watchInterval = null;
+          saveLearnHistory(getTodayLesson());
+        }
+      }, 1000);
+    }
+  } else {
+    learnState.isPlaying = false;
+  }
+  if (event.data === 0) {
+    // Video ended — count as watched if >= 80% of duration
     const lesson = getTodayLesson();
-    saveLearnHistory(lesson);
-    clearInterval(learnState.pollInterval);
+    if (learnState.secondsWatched >= lesson.duration * 0.8 || learnState.secondsWatched >= MIN_WATCH_SECONDS) {
+      learnState.secondsWatched = MIN_WATCH_SECONDS;
+      learnState.videoUnlocked  = true;
+      localStorage.setItem(learnState.todayKey, '1');
+      setVideoUnlocked(false);
+      saveLearnHistory(lesson);
+    }
   }
 }
 
-function setVideoUnlocked() {
-  // Update header badge
+function updateWatchUI() {
+  const pct    = Math.min(100, Math.round((learnState.secondsWatched / MIN_WATCH_SECONDS) * 100));
+  const bar    = document.getElementById('learn-watch-progress');
+  const pctEl  = document.getElementById('learn-progress-pct');
+  const secEl  = document.getElementById('learn-secs-watched');
+  const hint   = document.getElementById('learn-unlock-hint');
+  const msgEl  = document.getElementById('learn-unlocked-msg');
+
+  if (bar)   bar.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (secEl) {
+    const remaining = Math.max(0, MIN_WATCH_SECONDS - learnState.secondsWatched);
+    secEl.textContent = learnState.videoUnlocked
+      ? '¡Completado!'
+      : (learnState.secondsWatched > 0 ? fmtSecs(learnState.secondsWatched) + ' vistos · Faltan ' + fmtSecs(remaining) : 'Presiona Play para empezar');
+  }
+  if (hint)  hint.style.display  = learnState.videoUnlocked ? 'none' : 'flex';
+  if (msgEl) msgEl.style.display = learnState.videoUnlocked ? 'flex' : 'none';
+}
+
+function setVideoUnlocked(silent=false) {
   const icon  = document.getElementById('learn-sync-icon');
   const label = document.getElementById('learn-sync-label');
-  if (icon)  icon.textContent = '🟢';
+  if (icon)  icon.textContent  = '🟢';
   if (label) label.textContent = 'Sync desbloqueado';
 
-  // Show completed overlay briefly
   const overlay = document.getElementById('learn-completed-overlay');
-  if (overlay) {
+  if (overlay && !silent) {
     overlay.style.display = 'flex';
     setTimeout(() => { overlay.style.display = 'none'; }, 3000);
   }
 
-  // Show/hide hint messages
-  const hint = document.getElementById('learn-unlock-hint');
-  const msg  = document.getElementById('learn-unlocked-msg');
-  if (hint) hint.style.display = 'none';
-  if (msg)  { msg.style.display = 'flex'; }
-
-  // Progress bar full
-  const bar  = document.getElementById('learn-watch-progress');
-  const pctEl= document.getElementById('learn-progress-pct');
-  if (bar)   bar.style.width = '100%';
-  if (pctEl) pctEl.textContent = '100%';
-
-  // Refresh slots so sync buttons become active
+  updateWatchUI();
   if (walletAddr && contracts.slot) loadLearnSlots();
-  toast('🎉 ¡Video completado! Sync desbloqueado para hoy.', 'success');
+  if (!silent) toast('🎉 ¡' + fmtSecs(MIN_WATCH_SECONDS) + ' completados! Sync desbloqueado.', 'success');
 }
 
-// ── LOAD SLOTS FOR LEARN TAB ──
+// ── SLOTS IN LEARN TAB ──
 async function loadLearnSlots() {
   const el = document.getElementById('learn-slots-list');
   if (!el || !contracts.slot || !walletAddr) return;
-
   el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;padding:8px;">Cargando slots…</div>';
-
   try {
     const ids = await contracts.slot.positionsOf(walletAddr);
-    const active = [];
+    const activeIds = [];
     for (const id of ids) {
-      const isActive = await contracts.slot.isPositionActive(id).catch(() => false);
-      if (isActive) active.push(Number(id));
+      const ok = await contracts.slot.isPositionActive(id).catch(() => false);
+      if (ok) activeIds.push(Number(id));
     }
-
-    if (active.length === 0) {
+    if (activeIds.length === 0) {
       el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin slots activos</div><div class="empty-desc">Compra un slot para empezar a ganar</div></div>';
       return;
     }
-
-    const positions = await Promise.all(active.map(id =>
+    const positions = await Promise.all(activeIds.map(id =>
       contracts.slot.positions(id).then(p => ({ id, ...p })).catch(() => null)
     ));
-
     el.innerHTML = positions.filter(Boolean).map(p => {
-      const amt = Number(ethers.formatUnits(p.slotAmount, 18));
-      const alreadySynced = learnState.syncedSlots[p.id];
-      const canSync = learnState.videoUnlocked && !alreadySynced;
-
+      const amt            = Number(ethers.formatUnits(p.slotAmount, 18));
+      const alreadySynced  = learnState.syncedSlots[p.id];
       let btnHtml;
       if (alreadySynced) {
         btnHtml = `<div class="btn-sync-done"><span>✅</span> Sincronizado hoy</div>`;
       } else if (learnState.videoUnlocked) {
         btnHtml = `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})"><span>↻</span> Hacer Sync</button>`;
       } else {
-        btnHtml = `<div class="btn-sync-locked"><span>🔒</span> Ver video primero</div>`;
+        const pct = Math.min(100, Math.round((learnState.secondsWatched / MIN_WATCH_SECONDS) * 100));
+        btnHtml = `<div class="btn-sync-locked" style="flex-direction:column;gap:4px;align-items:flex-end;">
+          <span style="display:flex;align-items:center;gap:5px;"><span>🔒</span> Ver ${fmtSecs(MIN_WATCH_SECONDS)} mín.</span>
+          <div style="width:100px;height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--blue);border-radius:2px;"></div></div>
+        </div>`;
       }
-
-      return `<div class="learn-slot-card ${canSync ? 'unlocked' : alreadySynced ? '' : 'locked'}">
+      return `<div class="learn-slot-card ${learnState.videoUnlocked && !alreadySynced ? 'unlocked' : alreadySynced ? '' : 'locked'}">
         <div class="learn-slot-info">
           <div class="learn-slot-name">Slot #${p.id} · ${amt.toLocaleString()} USDT</div>
-          <div class="learn-slot-sub">Streak: ${Number(p.currentStreak || 0)} días · Boost: ${getBoostLabel(Number(p.currentStreak || 0))}</div>
+          <div class="learn-slot-sub">Streak: ${Number(p.currentStreak||0)}d · ${getBoostLabel(Number(p.currentStreak||0))}</div>
         </div>
         ${btnHtml}
       </div>`;
     }).join('');
-
   } catch(e) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error cargando slots</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div><div class="empty-desc">${e.message.slice(0,60)}</div></div>`;
   }
 }
 
 function getBoostLabel(streak) {
-  if (streak >= 90) return '+20% (90d)';
-  if (streak >= 30) return '+10% (30d)';
-  if (streak >= 7)  return '+3% (7d)';
+  if (streak >= 90) return '+20% boost';
+  if (streak >= 30) return '+10% boost';
+  if (streak >= 7)  return '+3% boost';
   return 'Sin boost';
 }
 
-// ── SYNC FROM LEARN TAB ──
 async function doLearnSync(posId) {
-  if (!learnState.videoUnlocked) {
-    toast('Debes completar el video del día primero', 'error'); return;
-  }
+  if (!learnState.videoUnlocked) { toast('Debes ver ' + fmtSecs(MIN_WATCH_SECONDS) + ' del video primero', 'error'); return; }
   if (!signer) { toast('Conecta tu wallet', 'error'); return; }
-
   try {
     toast('Sincronizando slot #' + posId + '…', 'info');
     await (await contracts.slot.connect(signer).sync(posId)).wait();
     learnState.syncedSlots[posId] = true;
-    toast('✅ Slot #' + posId + ' sincronizado · ROI acreditado', 'success');
+    toast('✅ Slot #' + posId + ' sincronizado', 'success');
     loadLearnSlots();
-  } catch(e) {
-    toast('Error: ' + (e?.reason || e?.message || '').slice(0, 60), 'error');
-  }
+  } catch(e) { toast('Error: ' + (e?.reason||e?.message||'').slice(0,60), 'error'); }
 }
 
 // ── HISTORY ──
@@ -2220,9 +2279,10 @@ function saveLearnHistory(lesson) {
   try {
     const stored = JSON.parse(localStorage.getItem('learn-history') || '[]');
     const today  = new Date().toLocaleDateString('es-CO');
-    if (!stored.find(h => h.day === lesson.absoluteDay)) {
-      stored.unshift({ day: lesson.absoluteDay, title: lesson.title, date: today });
-      if (stored.length > 30) stored.pop();
+    const key    = new Date().toISOString().slice(0,10);
+    if (!stored.find(h => h.dateKey === key)) {
+      stored.unshift({ dateKey: key, title: lesson.title, date: today, secs: MIN_WATCH_SECONDS });
+      if (stored.length > 60) stored.pop();
       localStorage.setItem('learn-history', JSON.stringify(stored));
     }
   } catch {}
@@ -2241,42 +2301,27 @@ function renderLearnHistory() {
       <div class="history-row">
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:16px;">✅</span>
-          <span style="font-size:13px;font-weight:600;color:var(--gray-800);">${h.title}</span>
+          <div><div style="font-size:13px;font-weight:600;color:var(--gray-800);">${h.title}</div>
+          <div style="font-size:11px;color:var(--gray-400);font-family:var(--mono);">${fmtSecs(h.secs||MIN_WATCH_SECONDS)} vistos</div></div>
         </div>
-        <span style="font-size:12px;color:var(--gray-400);font-family:var(--mono);">${h.date}</span>
+        <span style="font-size:12px;color:var(--gray-400);font-family:var(--mono);flex-shrink:0;">${h.date}</span>
       </div>`).join('');
   } catch {
-    el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Sin historial disponible.</div>';
+    el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Sin historial.</div>';
   }
 }
 
-// ── OWNER CHECK — show contracts tab only to owner ──
-const OWNER_ADDR = ''; // leave blank to auto-detect from contract
-
+// ── OWNER CHECK ──
+const OWNER_ADDR = '';
 async function checkOwnerAccess() {
   const btn = document.getElementById('tab-contracts-btn');
-  if (!btn) return;
-  if (!walletAddr || !contracts.core) return;
-
+  if (!btn || !walletAddr || !contracts.core) return;
   try {
-    // Try to read owner from Core contract
     const ownerAbi = ["function owner() view returns (address)"];
-    const coreOwner = new ethers.Contract(addrs.core || DEPLOY_MAINNET.core, ownerAbi, provider);
-    const owner = await coreOwner.owner().catch(() => OWNER_ADDR);
-    if (owner && owner.toLowerCase() === walletAddr.toLowerCase()) {
-      btn.style.display = '';
-      toast('👑 Acceso de owner activado', 'info');
-    } else {
-      btn.style.display = 'none';
-    }
-  } catch {
-    btn.style.display = 'none';
-  }
+    const co = new ethers.Contract(addrs.core || DEPLOY_TESTNET.core, ownerAbi, provider);
+    const owner = await co.owner().catch(() => OWNER_ADDR);
+    btn.style.display = (owner && owner.toLowerCase() === walletAddr.toLowerCase()) ? '' : 'none';
+    if (owner && owner.toLowerCase() === walletAddr.toLowerCase()) toast('👑 Acceso owner activado', 'info');
+  } catch { btn.style.display = 'none'; }
 }
-
-
-
-
-
-</script>
-</html>
+>
