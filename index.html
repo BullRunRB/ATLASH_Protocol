@@ -663,10 +663,10 @@ footer .brand-mark{background:var(--blue);}
 
   <!-- Landing nav -->
   <nav class="topbar-nav" id="landing-nav">
-    <button class="tnav-btn" onclick="scrollTo('#how')">Cómo funciona</button>
-    <button class="tnav-btn" onclick="scrollTo('#slots-lp')">Slots</button>
-    <button class="tnav-btn" onclick="scrollTo('#ranks-lp')">Rangos</button>
-    <button class="tnav-btn" onclick="scrollTo('#wallets-lp')">Wallets</button>
+    <button class="tnav-btn" onclick="scrollToSection('#how')">Cómo funciona</button>
+    <button class="tnav-btn" onclick="scrollToSection('#slots-lp')">Slots</button>
+    <button class="tnav-btn" onclick="scrollToSection('#ranks-lp')">Rangos</button>
+    <button class="tnav-btn" onclick="scrollToSection('#wallets-lp')">Wallets</button>
   </nav>
 
   <!-- DApp tabs (hidden on landing) -->
@@ -710,7 +710,7 @@ footer .brand-mark{background:var(--blue);}
       <p class="hero-desc">ATLASH LearnEarn es un protocolo de inversión descentralizado sobre Binance Smart Chain. Compra Slots, gana rendimiento diario dinámico, construye tu red y desbloquea bonos de liderazgo.</p>
       <div class="hero-ctas">
         <button class="hero-cta-main" onclick="showDapp()">Abrir Dashboard →</button>
-        <button class="hero-cta-sec" onclick="scrollTo('#how')">¿Cómo funciona?</button>
+        <button class="hero-cta-sec" onclick="scrollToSection('#how')">¿Cómo funciona?</button>
       </div>
       <p class="hero-note">Sin custodio · Smart contracts auditables · BSC Mainnet</p>
     </div>
@@ -848,8 +848,8 @@ footer .brand-mark{background:var(--blue);}
       <span class="brand-name">ATLASH LearnEarn</span>
     </a>
     <div class="footer-links">
-      <span class="footer-link" onclick="scrollTo('#how')">Cómo funciona</span>
-      <span class="footer-link" onclick="scrollTo('#slots-lp')">Slots</span>
+      <span class="footer-link" onclick="scrollToSection('#how')">Cómo funciona</span>
+      <span class="footer-link" onclick="scrollToSection('#slots-lp')">Slots</span>
       <span class="footer-link" onclick="showDapp()">Dashboard</span>
     </div>
     <div class="footer-copy">© 2025 ATLASH Protocol · BSC</div>
@@ -1229,7 +1229,7 @@ function showLanding(){
   document.getElementById('btn-enter-dapp').style.display='';
   document.getElementById('wallet-pill').style.display='none';
   document.getElementById('nav-net-pill').style.display='none';
-  window.scrollTo({top:0,behavior:'smooth'});
+  try { window.scrollTo({top:0}); } catch(e) {}
 }
 
 function showDapp(){
@@ -1248,7 +1248,7 @@ function _activateDapp(){
   document.getElementById('btn-enter-dapp').style.display='none';
   document.getElementById('wallet-pill').style.display='';
   document.getElementById('nav-net-pill').style.display='';
-  window.scrollTo({top:0});
+  try { window.scrollTo({top:0}); } catch(e) {}
   updateNavPill();
   loadGlobalStats();
   loadAllowedSlots();
@@ -1259,9 +1259,11 @@ function _activateDapp(){
   loadLandingStats();
 }
 
-function scrollTo(selector){
-  const el=document.querySelector(selector);
-  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+function scrollToSection(selector){
+  try {
+    const el = document.querySelector(selector);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e) {}
 }
 
 // Scroll effect on topbar
