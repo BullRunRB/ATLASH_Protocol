@@ -1016,7 +1016,9 @@ footer .brand-mark{background:var(--blue);}
         </div>
 
         <!-- Slots with sync buttons (unlocked by video) -->
-        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Tus slots — Sync disponible hoy</span><span class="sec-line"></span></div>
+        <div class="sec" style="margin-top:8px;"><span class="sec-bar"></span><span class="sec-label">Cobrar ROI — Sync de hoy</span><span class="sec-line"></span>
+          <span style="font-size:11px;color:var(--gray-400);margin-left:8px;">Completa el video → Sync → cobras el ROI del día</span>
+        </div>
         <div id="learn-slots-list">
           <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin wallet conectada</div><div class="empty-desc">Conecta tu wallet para ver tus slots y hacer Sync</div></div>
         </div>
@@ -1549,7 +1551,8 @@ async function connectWith(type){
     searchUser();
     setTimeout(() => {
       checkOwnerAccess();
-      if (contracts.slot) loadLearnSlots();
+      // Always refresh learn slots after wallet connects
+      loadLearnSlots();
     }, 800);
 
   } catch(e) {
@@ -1760,7 +1763,7 @@ async function loadUserSlots(addr){
             <span class="badge ${isActive?'badge-blue':'badge-gray'}">${isActive?'Activo':'Completado'}</span>
             Slot #${p.id} · ${amt.toLocaleString()} USDT
           </div>
-          ${canSync&&isActive?`<button class="btn-ghost" onclick="syncSlot(${p.id})" style="padding:5px 14px;font-size:12px;">↻ Sync</button>`:''}
+          ${canSync&&isActive?`<button class="btn-ghost" onclick="syncSlot(${p.id})" style="padding:5px 14px;font-size:12px;">💰 Reclamar Recompensa</button>`:''}
         </div>
         <div class="slot-pos-body">
           <div class="slot-stats-grid">
@@ -2063,7 +2066,7 @@ const VIDEO_REPO = [
   },
   {
     id: 3,
-    youtubeId: 'eLelgy5zRv4',
+    youtubeId: 'dQw4w9WgXcQ',
     title: 'El sistema de Streak y Boosts',
     topic: 'Por qué el sync diario multiplica tus ganancias',
     duration: 645, // 10m 45s
@@ -2273,7 +2276,23 @@ function setVideoUnlocked(silent=false) {
   }
 
   updateWatchUI();
-  if (walletAddr && contracts.slot) loadLearnSlots();
+  // Always try to load slots — show wallet prompt if not connected
+  if (contracts.slot) {
+    if (walletAddr) {
+      loadLearnSlots();
+    } else {
+      const el = document.getElementById('learn-slots-list');
+      if (el) el.innerHTML = `<div class="alert alert-info" style="margin-top:8px;">
+        <span>ℹ</span>
+        <span><strong>Video completado.</strong> Conecta tu wallet para hacer Sync y cobrar tu ROI.</span>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn-primary" onclick="openWalletModal()" style="padding:10px 24px;">
+          Conectar wallet para hacer Sync
+        </button>
+      </div>`;
+    }
+  }
   if (!silent) toast('🎉 ¡' + fmtSecs(MIN_WATCH_SECONDS) + ' completados! Sync desbloqueado.', 'success');
 }
 
@@ -2303,7 +2322,7 @@ async function loadLearnSlots() {
       if (alreadySynced) {
         btnHtml = `<div class="btn-sync-done"><span>✅</span> Sincronizado hoy</div>`;
       } else if (learnState.videoUnlocked) {
-        btnHtml = `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})"><span>↻</span> Hacer Sync</button>`;
+        btnHtml = `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})"><span>💰</span> Reclamar Recompensa</button>`;
       } else {
         const pct = Math.min(100, Math.round((learnState.secondsWatched / MIN_WATCH_SECONDS) * 100));
         btnHtml = `<div class="btn-sync-locked" style="flex-direction:column;gap:4px;align-items:flex-end;">
