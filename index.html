@@ -1215,9 +1215,11 @@ const SLOT_ABI = [
   "function positionsOf(address) view returns (uint256[])",
   "function userSlotPositions(address, uint256) view returns (uint256[])",
   "function isPositionActive(uint256) view returns (bool)",
-  "function positions(uint256) view returns (address user, uint256 slotAmount, uint256 paidOut, uint256 capMax, uint32 openedDay, uint32 lastSyncDay, uint32 currentStreak, uint32 bestStreak, bool completed)",
+  "function positions(uint256) view returns (address user, uint8 slotLevel, uint256 slotAmount, uint256 paidOut, uint256 capMax, uint32 openedDay, uint32 lastSyncDay, uint32 currentStreak, uint32 bestStreak, bool rewardActive, bool commercialActive, bool isMasterGrant, bool completed)",
   "function userSlotCountByAmount(address, uint256) view returns (uint8)",
-  "function buySlot(uint256, address) external",
+  "function slotLevelByAmount(uint256) view returns (uint8)",
+  "function slotAmountByLevel(uint8) view returns (uint256)",
+  "function buySlot(uint256, address) external returns (uint256)",
   "function sync(uint256) external"
 ];
 
@@ -1294,20 +1296,22 @@ function showDapp(){
 
 function _activateDapp(){
   console.log('[_activateDapp] called');
-  try { document.getElementById('landing').style.display='none'; } catch(e){ console.error('landing hide:',e); }
+  try { document.getElementById('landing').style.display='none'; } catch(e){}
   try { document.getElementById('dapp').style.display='block'; } catch(e){}
   try { document.getElementById('landing-nav').style.display='none'; } catch(e){}
   try { document.getElementById('dapp-tabs-nav').style.display='flex'; } catch(e){}
   try { document.getElementById('btn-enter-dapp').style.display='none'; } catch(e){}
   try { document.getElementById('wallet-pill').style.display=''; } catch(e){}
   try { document.getElementById('nav-net-pill').style.display=''; } catch(e){}
+  console.log('[_activateDapp] DOM done, starting data loads...');
+  console.log('[_activateDapp] contracts:', Object.keys(contracts).filter(k=>contracts[k]));
+  console.log('[_activateDapp] addrs:', addrs);
   try { updateNavPill(); } catch(e){ console.error('updateNavPill',e); }
   try { loadGlobalStats(); } catch(e){ console.error('loadGlobalStats',e); }
   try { loadAllowedSlots(); } catch(e){ console.error('loadAllowedSlots',e); }
   try { updateContractsTab(); } catch(e){ console.error('updateContractsTab',e); }
   try { loadCoreStatus(); } catch(e){ console.error('loadCoreStatus',e); }
   try { loadTreasury(); } catch(e){ console.error('loadTreasury',e); }
-  try { loadLandingStats(); } catch(e){ console.error('loadLandingStats',e); }
 }
 
 function scrollToSection(selector){
@@ -1678,20 +1682,40 @@ function renderStatusBody(d){
   if(tag) tag.innerHTML=`<span class="badge ${d.registered&&!d.frozen?'badge-blue':d.frozen?'badge-red':'badge-gray'}">${d.registered&&!d.frozen?'Activo':d.frozen?'Congelado':'Sin registro'}</span>`;
 }
 
+// Parse position tuple from new contract (13 fields)
+function parsePosition(id, p) {
+  return {
+    id:              Number(id),
+    slotLevel:       Number(p[1]),
+    slotAmount:      p[2],
+    paidOut:         p[3],
+    capMax:          p[4],
+    openedDay:       Number(p[5]),
+    lastSyncDay:     Number(p[6]),
+    currentStreak:   Number(p[7]),
+    bestStreak:      Number(p[8]),
+    rewardActive:    !!p[9],
+    commercialActive:!!p[10],
+    isMasterGrant:   !!p[11],
+    completed:       !!p[12],
+  };
+}
 // ── GLOBAL STATS ──
 async function loadGlobalStats(){
-  if(!contracts.slot) return;
+  if(!contracts.slot){ console.warn('[loadGlobalStats] no slot contract'); return; }
+  console.log('[loadGlobalStats] calling totalActivePrincipal...');
   try{
     const [total,rate,liq]=await Promise.all([
-      contracts.slot.totalActivePrincipal().catch(()=>0n),
-      contracts.slot.previewDynamicRateBP().catch(()=>0n),
-      contracts.reward?contracts.reward.availableRewardsLiquidity().catch(()=>0n):Promise.resolve(0n),
+      contracts.slot.totalActivePrincipal().catch(e=>{console.warn('[totalActivePrincipal]',e.message);return 0n;}),
+      contracts.slot.previewDynamicRateBP().catch(e=>{console.warn('[previewDynamicRateBP]',e.message);return 0n;}),
+      contracts.reward?contracts.reward.availableRewardsLiquidity().catch(e=>{console.warn('[rewardsLiq]',e.message);return 0n;}):Promise.resolve(0n),
     ]);
+    console.log('[loadGlobalStats] total=',total,'rate=',rate,'liq=',liq);
     document.getElementById('sl-total-principal').textContent=fmt18s(total)+' USDT';
     document.getElementById('sl-daily-rate').textContent=(Number(rate)/100).toFixed(2)+'%';
     document.getElementById('sl-liquidity').textContent=fmt18s(liq)+' USDT';
     document.getElementById('ov-principal').textContent=fmt18s(total)+' USDT';
-  }catch{}
+  }catch(e){ console.error('[loadGlobalStats]',e); }
 }
 
 async function loadLandingStats(){
@@ -1737,14 +1761,19 @@ async function loadUserSlots(addr){
   el.innerHTML='<div style="color:var(--gray-500);font-size:13px;padding:8px;">Cargando posiciones…</div>';
   try{
     const ids=await contracts.slot.positionsOf(addr);
+    console.log('[loadUserSlots] positionsOf:', ids?.length, 'for', addr);
     if(!ids||ids.length===0){
       el.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin slots</div><div class="empty-desc">Este usuario no tiene posiciones de slot</div></div>';
       if(ovEl) ovEl.textContent='0';
       return;
     }
-    const positions=await Promise.all(ids.map(id=>contracts.slot.positions(id).then(p=>({id:Number(id),...p})).catch(()=>null)));
+    const positions=await Promise.all(ids.map(id=>
+      contracts.slot.positions(Number(id))
+        .then(p=>parsePosition(id,p))
+        .catch(e=>{console.error('[positions] id='+id, e.message); return null;})
+    ));
     const valid=positions.filter(Boolean);
-    const active=valid.filter(p=>!p.completed);
+    const active=valid.filter(p=>p.rewardActive&&!p.completed);
     if(ovEl) ovEl.textContent=active.length;
 
     const canSync=walletAddr&&walletAddr.toLowerCase()===addr.toLowerCase();
@@ -2305,49 +2334,95 @@ function setVideoUnlocked(silent=false) {
 // ── SLOTS IN LEARN TAB ──
 async function loadLearnSlots() {
   const el = document.getElementById('learn-slots-list');
-  if (!el || !contracts.slot || !walletAddr) return;
-  el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;padding:8px;">Cargando slots…</div>';
+  if (!el) return;
+
+  // Guard checks with visible feedback
+  if (!walletAddr) {
+    el.innerHTML = '<div class="alert alert-info"><span>ℹ</span><span>Conecta tu wallet para ver tus slots.</span></div>';
+    return;
+  }
+  if (!contracts.slot) {
+    el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>SlotProgram no inicializado. Verifica la configuración de red.</span></div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="padding:12px;color:var(--gray-500);font-size:13px;">Consultando blockchain…</div>';
+
   try {
-    const ids = await contracts.slot.positionsOf(walletAddr);
-    const activeIds = [];
-    for (const id of ids) {
-      const ok = await contracts.slot.isPositionActive(id).catch(() => false);
-      if (ok) activeIds.push(Number(id));
-    }
-    if (activeIds.length === 0) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin slots activos</div><div class="empty-desc">Compra un slot para empezar a ganar</div></div>';
+    // Step 1: positionsOf
+    let ids;
+    try {
+      ids = await contracts.slot.positionsOf(walletAddr);
+    } catch(e) {
+      el.innerHTML = `<div class="alert alert-warn"><span>⚠</span><span>Error en positionsOf: ${e.message.slice(0,100)}</span></div>`;
       return;
     }
-    const positions = await Promise.all(activeIds.map(id =>
-      contracts.slot.positions(id).then(p => ({ id: Number(id), ...p })).catch(() => null)
-    ));
-    el.innerHTML = positions.filter(Boolean).map(p => {
-      const amt            = Number(ethers.formatUnits(p.slotAmount, 18));
-      const alreadySynced  = learnState.syncedSlots[p.id];
-      let btnHtml;
-      if (alreadySynced) {
-        btnHtml = `<div class="btn-sync-done"><span>✅</span> Sincronizado hoy</div>`;
+
+    if (!ids || ids.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin slots</div><div class="empty-desc">No tienes posiciones de slot aún</div></div>';
+      return;
+    }
+
+    // Step 2: load each position individually with full error info
+    const rows = [];
+    for (const rawId of ids) {
+      const numId = Number(rawId);
+      try {
+        const raw = await contracts.slot.positions(numId);
+        const pos = parsePosition(numId, raw);
+        // active = rewardActive=true, completed=false
+        if (pos.rewardActive && !pos.completed) {
+          rows.push(pos);
+        }
+      } catch(e) {
+        console.warn('[loadLearnSlots] positions('+numId+') error:', e.message);
+      }
+    }
+
+    if (rows.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin slots activos</div><div class="empty-desc">Todos tus slots están completados</div></div>';
+      return;
+    }
+
+    // Step 3: Render
+    el.innerHTML = rows.map(p => {
+      const amt  = Number(ethers.formatUnits(p.slotAmount, 18));
+      const paid = Number(ethers.formatUnits(p.paidOut,    18));
+      const cap  = Number(ethers.formatUnits(p.capMax,     18));
+      const pct  = cap > 0 ? Math.min(100, Math.round(paid * 100 / cap)) : 0;
+      const synced = learnState.syncedSlots[p.id];
+
+      let btn;
+      if (synced) {
+        btn = `<div class="btn-sync-done">✅ Reclamado hoy</div>`;
       } else if (learnState.videoUnlocked) {
-        btnHtml = `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})"><span>💰</span> Reclamar Recompensa</button>`;
+        btn = `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})">💰 Reclamar Recompensa</button>`;
       } else {
-        const pct = Math.min(100, Math.round((learnState.secondsWatched / MIN_WATCH_SECONDS) * 100));
-        btnHtml = `<div class="btn-sync-locked" style="flex-direction:column;gap:4px;align-items:flex-end;">
-          <span style="display:flex;align-items:center;gap:5px;"><span>🔒</span> Ver ${fmtSecs(MIN_WATCH_SECONDS)} mín.</span>
-          <div style="width:100px;height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--blue);border-radius:2px;"></div></div>
+        const wp = Math.min(100, Math.round((learnState.secondsWatched / MIN_WATCH_SECONDS) * 100));
+        btn = `<div class="btn-sync-locked">
+          <div><div style="font-size:11px;margin-bottom:4px;">🔒 Ver ${fmtSecs(MIN_WATCH_SECONDS)} para cobrar</div>
+          <div style="width:110px;height:4px;background:var(--gray-200);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${wp}%;background:var(--blue);border-radius:2px;"></div>
+          </div></div>
         </div>`;
       }
-      return `<div class="learn-slot-card ${learnState.videoUnlocked && !alreadySynced ? 'unlocked' : alreadySynced ? '' : 'locked'}">
+
+      return `<div class="learn-slot-card ${learnState.videoUnlocked && !synced ? 'unlocked' : synced ? '' : 'locked'}">
         <div class="learn-slot-info">
           <div class="learn-slot-name">Slot #${p.id} · ${amt.toLocaleString()} USDT</div>
-          <div class="learn-slot-sub">Streak: ${Number(p.currentStreak||0)}d · ${getBoostLabel(Number(p.currentStreak||0))}</div>
+          <div class="learn-slot-sub">Streak: ${p.currentStreak}d · ${getBoostLabel(p.currentStreak)} · ${pct}% cap</div>
+          <div class="prog" style="width:140px;margin-top:4px;"><div class="prog-fill" style="width:${pct}%;"></div></div>
         </div>
-        ${btnHtml}
+        ${btn}
       </div>`;
     }).join('');
+
   } catch(e) {
-    el.innerHTML = `<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div><div class="empty-desc">${e.message.slice(0,60)}</div></div>`;
+    console.error('[loadLearnSlots] unexpected:', e);
+    el.innerHTML = `<div class="alert alert-warn"><span>⚠</span><span>${e.message || String(e)}</span></div>`;
   }
 }
+
 
 function getBoostLabel(streak) {
   if (streak >= 90) return '+20% boost';
