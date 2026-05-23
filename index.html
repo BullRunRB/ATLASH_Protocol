@@ -1279,6 +1279,7 @@ function showLanding(){
 }
 
 function showDapp(){
+  console.log('[showDapp] provider=', !!provider, 'activeNet=', activeNet?.label);
   if(!provider){
     showNetModal();
     return;
@@ -1287,7 +1288,8 @@ function showDapp(){
 }
 
 function _activateDapp(){
-  try { document.getElementById('landing').style.display='none'; } catch(e){}
+  console.log('[_activateDapp] called');
+  try { document.getElementById('landing').style.display='none'; } catch(e){ console.error('landing hide:',e); }
   try { document.getElementById('dapp').style.display='block'; } catch(e){}
   try { document.getElementById('landing-nav').style.display='none'; } catch(e){}
   try { document.getElementById('dapp-tabs-nav').style.display='flex'; } catch(e){}
@@ -1337,6 +1339,7 @@ function setNetModal(key){
 }
 
 async function confirmNetModal(){
+  console.log('[confirmNetModal] starting, _pendingNetKey=', _pendingNetKey);
   try {
     document.getElementById('net-modal').style.display='none';
     _netKey    = _pendingNetKey;
@@ -1354,9 +1357,11 @@ async function confirmNetModal(){
     if(addrs.usdt)     contracts.usdt       = new ethers.Contract(addrs.usdt,     USDT_ABI,       provider);
 
     toast('Conectado a ' + activeNet.label, 'success');
+    console.log('[confirmNetModal] calling _activateDapp, contracts.core=', !!contracts.core);
     _activateDapp();
+    console.log('[confirmNetModal] _activateDapp done');
   } catch(e) {
-    console.error('[confirmNetModal]', e);
+    console.error('[confirmNetModal] ERROR:', e);
     toast('Error al iniciar: ' + (e.message||String(e)).slice(0,80), 'error');
   }
 }
@@ -2362,4 +2367,5 @@ async function checkOwnerAccess() {
     if (owner && owner.toLowerCase() === walletAddr.toLowerCase()) toast('👑 Acceso owner activado', 'info');
   } catch { btn.style.display = 'none'; }
 }
->
+</script>
+</html>
