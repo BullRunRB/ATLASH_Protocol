@@ -1392,7 +1392,7 @@ let contracts = {};
 let addrs = {};
 let selectedSlot = 0;
 
-const RANK_NAMES  = ['Sin rango','Rank 1','Rank 2','Rank 3'];
+const RANK_NAMES  = ['Sin rango','Rank 1','Rank 2','Rank 3','Rank 4','Rank 5','Rank 6','Rank 7'];
 const SLOT_AMOUNTS_ALL = [10,20,40,80,160,320,640,1280,2560,5120,10240,20480,40960,81920];
 
 // ── UTILS ──
@@ -1790,22 +1790,29 @@ async function loadUserData(addr){
 
     renderUserCard(addr,{registered,frozen,upline,directCnt,totalVol,joinTs});
 
-    let pts=0n,rank=0;
+    let netPts=0n,rank=0,personalVol=0n;
     if(contracts.rank){
-      const [pR,rR]=await Promise.allSettled([contracts.rank.points(addr),contracts.rank.userRank(addr)]);
-      if(pR.status==='fulfilled') pts=pR.value;
-      if(rR.status==='fulfilled') rank=Number(rR.value);
+      const [npR,rR,pvR]=await Promise.allSettled([
+        contracts.rank.weightedNetworkPoints(addr),
+        contracts.rank.userRank(addr),
+        contracts.rank.personalVolume(addr),
+      ]);
+      if(npR.status==='fulfilled') netPts=npR.value;
+      if(rR.status==='fulfilled')  rank=Number(rR.value);
+      if(pvR.status==='fulfilled') personalVol=pvR.value;
     }
 
-    document.getElementById('ov-points').textContent=fmt18s(pts);
-    document.getElementById('ov-rank').textContent=RANK_NAMES[rank]||'—';
-    document.getElementById('ov-rank-sub').textContent=rank<3?'Sig: '+RANK_NAMES[rank+1]:'Máximo';
-    document.getElementById('rk-points').textContent=fmt18s(pts);
-    document.getElementById('rk-rank').textContent=RANK_NAMES[rank]||'—';
-    document.getElementById('rk-rank-sub').textContent=rank<3?'Siguiente: '+RANK_NAMES[rank+1]:'Rango máximo';
+    const rankLabel = rank>0 ? 'Rank '+rank : 'Sin rango';
+    const rankNext  = rank<7 ? 'Sig: Rank '+(rank+1) : 'Rango máximo';
+    document.getElementById('ov-points').textContent=fmt18s(netPts);
+    document.getElementById('ov-rank').textContent=rankLabel;
+    document.getElementById('ov-rank-sub').textContent=rankNext;
+    document.getElementById('rk-points').textContent=fmt18s(netPts);
+    document.getElementById('rk-rank').textContent=rankLabel;
+    document.getElementById('rk-rank-sub').textContent=rankNext;
+    document.getElementById('rk-vol').textContent=fmt18s(personalVol)+' USDT';
     document.getElementById('nt-directs').textContent=directCnt;
     document.getElementById('nt-upline').textContent=!isZero(upline)?short(upline):'—';
-    if(contracts.rank) contracts.rank.personalVolume(addr).then(v=>{ document.getElementById('rk-vol').textContent=fmt18s(v)+' USDT'; }).catch(()=>{});
 
     renderStatusBody({registered,frozen,upline,directCnt,totalVol,joinTs});
     loadDirectsList(addr,directCnt);
@@ -1884,6 +1891,9 @@ async function loadGlobalStats(){
     document.getElementById('sl-daily-rate').textContent=(Number(rate)/100).toFixed(2)+'%';
     document.getElementById('sl-liquidity').textContent=fmt18s(liq)+' USDT';
     document.getElementById('ov-principal').textContent=fmt18s(total)+' USDT';
+    // Coverage tooltip on rate
+    const rateEl=document.getElementById('sl-daily-rate');
+    if(rateEl) rateEl.title='Tasa dinámica basada en cobertura del RewardTreasury';
   }catch(e){ console.error('[loadGlobalStats]',e); }
 }
 
@@ -2122,15 +2132,7 @@ async function loadRanksTab(addr){
   }catch(e){ el.innerHTML=`<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div><div class="empty-desc">${e.message.slice(0,100)}</div></div>`; }
 }
 
-async function claimRankBonus(rank){
-  if(!signer){toast('Conecta tu wallet','error');return;}
-  try{
-    toast('Reclamando bono Rank '+rank+'…','info');
-    await (await contracts.rank.connect(signer).claimRankBonus(rank)).wait();
-    toast('✅ Bono de Rank '+rank+' reclamado','success');
-    if(currentUser) loadRanksTab(currentUser);
-  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');}
-}
+// claimRankBonus removed — not in V9 ABI
 
 // ── POOLS ──
 async function loadPoolsData(){
@@ -2232,15 +2234,16 @@ function updateContractsTab(){
   const tag=document.getElementById('ctr-net-tag');
   if(tag&&activeNet) tag.innerHTML=`<span class="badge ${activeNet===NETS.testnet?'badge-purple':'badge-blue'}">${activeNet.label}</span>`;
   const items=[
-    {name:'Core (AtlashCore)',       key:'core'},
-    {name:'SlotProgramModule',       key:'slot'},
-    {name:'RanksModule',             key:'rank'},
-    {name:'PoolsModule (Leadership)',key:'pool'},
-    {name:'RewardReserveTreasury',   key:'rewards'},
-    {name:'EnterpriseTreasury',      key:'treasury'},
-    {name:'USDT Token',              key:'usdt'},
+    {name:'Core (AtlashCore)',           key:'core'},
+    {name:'SlotProgramModule',           key:'slot'},
+    {name:'RanksModule',                 key:'rank'},
+    {name:'PoolsModule (Leadership)',     key:'pool'},
+    {name:'RewardReserveTreasury',        key:'rewards'},
+    {name:'EnterpriseTreasury V9',        key:'treasury'},
+    {name:'USDT Token',                   key:'usdt'},
   ];
   const exp=activeNet?activeNet.explorer:'https://bscscan.com';
+  // addrs uses 'rewards' and 'treasury' as keys
   el.innerHTML=items.map(it=>{
     const a=addrs[it.key]||'';
     return `<div class="ctr-row" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray-100);">
@@ -2257,12 +2260,19 @@ async function loadCoreStatus(){
   if(!el||!contracts.core) return;
   el.innerHTML='<div style="color:var(--gray-400);font-size:13px;padding:8px;">Leyendo Core…</div>';
   try{
-    const [paused,total,month]=await Promise.all([contracts.core.paused().catch(()=>false),contracts.core.totalUsers().catch(()=>0n),contracts.core.currentMonthIndex().catch(()=>0n)]);
-    el.innerHTML=`<div class="g3" style="margin:0;">
+    const [paused,total,month,root]=await Promise.all([
+      contracts.core.paused().catch(()=>false),
+      contracts.core.totalUsers().catch(()=>0n),
+      contracts.core.currentMonthIndex().catch(()=>0n),
+      contracts.core.companyRoot().catch(()=>'—'),
+    ]);
+    el.innerHTML=`<div class="g4" style="margin:0 0 12px 0;">
       <div class="kpi" style="padding:14px;"><div class="kpi-label">Estado</div><div class="kpi-value" style="font-size:16px;color:${paused?'var(--red)':'var(--green)'};">${paused?'⏸ Pausado':'▶ Activo'}</div></div>
       <div class="kpi" style="padding:14px;"><div class="kpi-label">Total usuarios</div><div class="kpi-value" style="font-size:20px;">${Number(total).toLocaleString()}</div></div>
       <div class="kpi" style="padding:14px;"><div class="kpi-label">Mes actual</div><div class="kpi-value" style="font-size:20px;">${Number(month)}</div></div>
-    </div>`;
+      <div class="kpi" style="padding:14px;"><div class="kpi-label">Protocolo V9</div><div class="kpi-value" style="font-size:14px;color:var(--blue);">R1–R7</div></div>
+    </div>
+    <div class="mem-row"><span class="mem-label">Company Root</span><span class="mem-val" style="font-size:11px;">${root}</span></div>`;
   }catch(e){el.innerHTML=`<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div><div class="empty-desc">${e.message.slice(0,80)}</div></div>`;}
 }
 
