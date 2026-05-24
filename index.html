@@ -836,15 +836,19 @@ footer .brand-mark{background:var(--blue);}
       <div class="section-eyebrow">Sistema de rangos</div>
       <h2 class="section-h2">Crece con tu volumen</h2>
       <p class="section-desc">Acumula puntos al comprar slots y desbloquea bonos únicos. Los puntos son 1:1 con el volumen de slots en USDT.</p>
-      <div class="ranks-cards">
-        <div class="rank-card-lp"><div class="rank-num">1</div><div class="rank-name">Rank 1</div><div class="rank-pts">5,000 puntos</div><div class="rank-bonus">💰 100 USDT</div></div>
-        <div class="rank-card-lp"><div class="rank-num">2</div><div class="rank-name">Rank 2</div><div class="rank-pts">20,000 puntos</div><div class="rank-bonus">💰 500 USDT</div></div>
-        <div class="rank-card-lp"><div class="rank-num">3</div><div class="rank-name">Rank 3</div><div class="rank-pts">100,000 puntos</div><div class="rank-bonus">💰 2,500 USDT</div></div>
+      <div class="ranks-cards" style="grid-template-columns:repeat(4,1fr);">
+        <div class="rank-card-lp"><div class="rank-num">1</div><div class="rank-name">Rank 1</div><div class="rank-pts">Vol: 150 USDT · Red: 1,000 pts</div><div class="rank-bonus">💰 100 USDT</div></div>
+        <div class="rank-card-lp"><div class="rank-num">2</div><div class="rank-name">Rank 2</div><div class="rank-pts">Vol: 750 USDT · Red: 5,000 pts</div><div class="rank-bonus">💰 500 USDT</div></div>
+        <div class="rank-card-lp"><div class="rank-num">3</div><div class="rank-name">Rank 3</div><div class="rank-pts">Vol: 2,250 USDT · Red: 15,000 pts</div><div class="rank-bonus">💰 1,500 USDT</div></div>
+        <div class="rank-card-lp"><div class="rank-num">4</div><div class="rank-name">Rank 4</div><div class="rank-pts">Vol: 7,500 USDT · Red: 50,000 pts</div><div class="rank-bonus">💰 5,000 USDT</div></div>
+        <div class="rank-card-lp"><div class="rank-num">5</div><div class="rank-name">Rank 5</div><div class="rank-pts">Vol: 22,500 USDT · Red: 150,000 pts</div><div class="rank-bonus">💰 15,000 USDT</div></div>
+        <div class="rank-card-lp"><div class="rank-num">6</div><div class="rank-name">Rank 6</div><div class="rank-pts">Vol: 60,000 USDT · Red: 400,000 pts</div><div class="rank-bonus">💰 40,000 USDT</div></div>
+        <div class="rank-card-lp"><div class="rank-num">7</div><div class="rank-name">Rank 7</div><div class="rank-pts">Vol: 150,000 USDT · Red: 1M pts</div><div class="rank-bonus">💰 100,000 USDT</div></div>
         <div class="rank-card-lp" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);">
-          <div class="rank-num" style="color:rgba(255,255,255,.3);">+</div>
+          <div class="rank-num" style="color:rgba(255,255,255,.3);">🏆</div>
           <div class="rank-name">Pool Liderazgo</div>
-          <div class="rank-pts">Mensual · Top performers</div>
-          <div class="rank-bonus">🏆 Tu participación en el pool</div>
+          <div class="rank-pts">Mensual · Top Ten</div>
+          <div class="rank-bonus">Tu % del pool</div>
         </div>
       </div>
     </div>
@@ -1311,18 +1315,24 @@ const DEPLOY_TESTNET = {
   rewards:    '0x30aFf2928A70131435D84B53f1FC5f892D80BA87',
 };
 
+// Root user (company root wallet)
+const COMPANY_ROOT = '0x48173E34Cd6A58DA4F489a01144480Fb03070673';
+
 // ── ABIs ──
 const CORE_ABI = [
   "function getUserStatus(address) view returns (uint8 activeFlag, uint256 validUntil, address upline, bool exists, bool frozen)",
   "function userInfo(address) view returns (bool exists, bool frozen, address upline, uint32 joinedAt, uint256 totalSlotVolume, uint256 totalPoints)",
   "function totalUsers() view returns (uint256)",
+  "function userAt(uint256) view returns (address)",
   "function directCount(address) view returns (uint256)",
   "function directAt(address, uint256) view returns (address)",
   "function currentMonthIndex() view returns (uint256)",
   "function slotProgram() view returns (address)",
   "function ranksModule() view returns (address)",
   "function poolsModule() view returns (address)",
-  "function paused() view returns (bool)"
+  "function paused() view returns (bool)",
+  "function companyRoot() view returns (address)",
+  "function owner() view returns (address)"
 ];
 
 const SLOT_ABI = [
@@ -1337,30 +1347,41 @@ const SLOT_ABI = [
   "function userSlotCountByAmount(address, uint256) view returns (uint8)",
   "function slotLevelByAmount(uint256) view returns (uint8)",
   "function slotAmountByLevel(uint8) view returns (uint256)",
+  "function activationFeeForAmount(uint256) view returns (uint256)",
+  "function totalToPayForSlot(uint256) view returns (uint256)",
+  "function paused() view returns (bool)",
+  "function buyPaused() view returns (bool)",
+  "function syncPaused() view returns (bool)",
   "function buySlot(uint256, address) external returns (uint256)",
   "function sync(uint256) external"
 ];
 
 const RANK_ABI = [
-  "function points(address) view returns (uint256)",
   "function userRank(address) view returns (uint8)",
   "function personalVolume(address) view returns (uint256)",
+  "function weightedNetworkPoints(address) view returns (uint256)",
   "function rankPoolBalance() view returns (uint256)",
-  "function rankRequiredPoints(uint256) view returns (uint256)",
-  "function rankBonusAmount(uint256) view returns (uint256)",
   "function rankBonusClaimed(address, uint8) view returns (bool)",
-  "function claimRankBonus(uint8) external"
+  "function activeDirects(address) view returns (uint8)",
+  "function rankNetworkPoints(uint256) view returns (uint256)",
+  "function rankBonusAmount(uint256) view returns (uint256)",
+  "function rankPersonalVolume(uint256) view returns (uint256)",
+  "function rankActiveDirects(uint256) view returns (uint8)",
+  "function getRankConfig(uint8) view returns (uint256 networkPoints, uint256 bonus, uint256 pv, uint8 directs)",
+  "function refreshRank(address) external returns (uint8)"
 ];
 
 const POOL_ABI = [
   "function leadershipPoolByMonth(uint256) view returns (uint256)",
   "function leadershipFinalized(uint256) view returns (bool)",
   "function leadershipClaimable(uint256, address) view returns (uint256)",
+  "function monthlyWeightedPoints(address, uint256) view returns (uint256)",
+  "function minLeadershipMonthlyPoints() view returns (uint256)",
   "function claimLeadership(uint256) external"
 ];
 
 const REWARD_ABI = ["function availableRewardsLiquidity() view returns (uint256)"];
-const ENTERPRISE_ABI = ["function enterprisePool() view returns (uint256)", "function operationPool() view returns (uint256)"];
+const ENTERPRISE_ABI = ["function partnerCount() view returns (uint256)", "function partnerAt(uint256) view returns (address)"];
 const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)"];
 
 // ── STATE ──
@@ -1968,19 +1989,23 @@ async function buySlot(){
   btn.disabled=true;btn.textContent='Procesando…';
   if(errEl) errEl.style.display='none';
   try{
-    const amtWei=ethers.parseUnits(selectedSlot.toString(),18);
-    const usdtC=new ethers.Contract(addrs.usdt||DEPLOY_MAINNET.usdt,USDT_ABI,signer);
-    const slotAddr=addrs.slot||DEPLOY_MAINNET.slot;
-    const allowance=await usdtC.allowance(walletAddr,slotAddr);
-    if(allowance<amtWei){
-      toast('Aprobando USDT…','info');
-      await (await usdtC.approve(slotAddr,amtWei)).wait();
+    const amtWei   = ethers.parseUnits(selectedSlot.toString(), 18);
+    const totalWei = await contracts.slot.totalToPayForSlot(amtWei);
+    const feeWei   = totalWei - amtWei;
+    const usdtC    = new ethers.Contract(addrs.usdt||DEPLOY_TESTNET.usdt, USDT_ABI, signer);
+    const slotAddr = addrs.slot||DEPLOY_TESTNET.slot;
+    const allowance= await usdtC.allowance(walletAddr, slotAddr);
+    if(allowance < totalWei){
+      const feeStr = Number(ethers.formatUnits(feeWei,18)).toFixed(2);
+      toast(`Aprobando ${selectedSlot.toLocaleString()} USDT + ${feeStr} USDT de fee…`,'info');
+      await (await usdtC.approve(slotAddr, totalWei)).wait();
       toast('USDT aprobado ✓','success');
     }
     toast('Comprando slot…','info');
-    const slotC=contracts.slot.connect(signer);
-    const upline=currentUser&&currentUser.toLowerCase()!==walletAddr.toLowerCase()?currentUser:ethers.ZeroAddress;
-    await (await slotC.buySlot(amtWei,upline)).wait();
+    const slotC  = contracts.slot.connect(signer);
+    const upline = currentUser&&currentUser.toLowerCase()!==walletAddr.toLowerCase()
+      ? currentUser : (COMPANY_ROOT || ethers.ZeroAddress);
+    await (await slotC.buySlot(amtWei, upline)).wait();
     toast(`✅ Slot de ${selectedSlot.toLocaleString()} USDT creado`,'success');
     if(currentUser) loadUserSlots(currentUser);
     loadGlobalStats();
@@ -2015,53 +2040,83 @@ async function loadRanksTab(addr){
   const el=document.getElementById('rk-progression');
   if(!el) return;
   if(!contracts.rank){ el.innerHTML='<div class="empty"><div class="empty-icon">⚙</div><div class="empty-title">RanksModule no configurado</div></div>'; return; }
-  el.innerHTML='<div style="color:var(--gray-400);font-size:13px;padding:8px;">Cargando…</div>';
+  el.innerHTML='<div style="color:var(--gray-400);font-size:13px;padding:8px;">Cargando rangos…</div>';
   try{
-    const poolBal=await contracts.rank.rankPoolBalance().catch(()=>0n);
-    document.getElementById('rk-pool').textContent=fmt18s(poolBal)+' USDT';
-    let userPts=0n,userRank=0;
-    if(addr){
-      const [pR,rR]=await Promise.all([contracts.rank.points(addr).catch(()=>0n),contracts.rank.userRank(addr).catch(()=>0)]);
-      userPts=pR; userRank=Number(rR);
-    }
-    const thresholds=[0n],bonuses=[0n];
-    for(let i=1;i<=3;i++){
-      const [t,b]=await Promise.all([contracts.rank.rankRequiredPoints(i).catch(()=>BigInt([0,5000,20000,100000][i])*BigInt(1e18)),contracts.rank.rankBonusAmount(i).catch(()=>BigInt([0,100,500,2500][i])*BigInt(1e18))]);
-      thresholds.push(t);bonuses.push(b);
-    }
-    const claimed=addr?await Promise.all([1,2,3].map(i=>contracts.rank.rankBonusClaimed(addr,i).catch(()=>false))):[[false],[false],[false]];
+    // Load pool balance
+    const poolBal = await contracts.rank.rankPoolBalance().catch(()=>0n);
+    document.getElementById('rk-pool').textContent = fmt18s(poolBal)+' USDT';
 
+    // Load user rank and personal volume
+    let userRank=0, personalVol=0n, netPoints=0n;
+    if(addr){
+      [userRank, personalVol, netPoints] = await Promise.all([
+        contracts.rank.userRank(addr).then(Number).catch(()=>0),
+        contracts.rank.personalVolume(addr).catch(()=>0n),
+        contracts.rank.weightedNetworkPoints(addr).catch(()=>0n),
+      ]);
+      document.getElementById('rk-vol').textContent = fmt18s(personalVol)+' USDT';
+      document.getElementById('rk-points').textContent = fmt18s(netPoints);
+      document.getElementById('rk-rank').textContent = userRank > 0 ? 'Rank '+userRank : 'Sin rango';
+      document.getElementById('rk-rank-sub').textContent = userRank < 7 ? 'Siguiente: Rank '+(userRank+1) : 'Rango máximo';
+    }
+
+    // Load V9 on-chain rank configs (R1–R7) in parallel
+    const MAX_RANK = 7;
+    const configs = await Promise.all(
+      Array.from({length:MAX_RANK},(_,i)=>i+1).map(i=>
+        Promise.all([
+          contracts.rank.rankNetworkPoints(i).catch(()=>0n),
+          contracts.rank.rankBonusAmount(i).catch(()=>0n),
+          contracts.rank.rankPersonalVolume(i).catch(()=>0n),
+          contracts.rank.rankActiveDirects(i).catch(()=>0),
+          contracts.rank.rankBonusClaimed(addr||ethers.ZeroAddress, i).catch(()=>false),
+        ]).then(([np,bonus,pv,directs,claimed])=>({np,bonus,pv,directs:Number(directs),claimed}))
+      )
+    );
+
+    // Render
     let html='<div style="display:flex;flex-direction:column;gap:10px;">';
-    for(let i=1;i<=3;i++){
-      const achieved=userRank>=i,isNext=userRank+1===i;
-      const pct=Number(thresholds[i])>0?Math.min(100,Math.round(Number(userPts)*100/Number(thresholds[i]))):(achieved?100:0);
-      const alreadyClaimed=claimed[i-1];
+    configs.forEach((cfg,idx)=>{
+      const rank     = idx+1;
+      const achieved = userRank >= rank;
+      const isNext   = userRank+1 === rank;
+      const pvPct    = Number(cfg.pv)>0 ? Math.min(100,Math.round(Number(personalVol)*100/Number(cfg.pv))) : (achieved?100:0);
+      const npPct    = Number(cfg.np)>0 ? Math.min(100,Math.round(Number(netPoints)*100/Number(cfg.np)))   : (achieved?100:0);
+      const pct      = Math.min(pvPct, npPct);
+
       html+=`<div class="rk-card ${achieved?'achieved':isNext?'next':''}">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:38px;height:38px;border-radius:10px;background:${achieved?'var(--blue)':'var(--gray-200)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:${achieved?'var(--white)':'var(--gray-500)'};">${i}</div>
+            <div style="width:38px;height:38px;border-radius:10px;background:${achieved?'var(--blue)':'var(--gray-200)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:${achieved?'var(--white)':'var(--gray-500)'};">${rank}</div>
             <div>
-              <div style="font-weight:800;font-size:15px;color:${achieved?'var(--blue)':isNext?'var(--amber)':'var(--gray-700)'};">Rank ${i}</div>
-              <div style="font-size:12px;color:var(--gray-400);font-family:var(--mono);">Bono: ${fmt18s(bonuses[i])} USDT</div>
+              <div style="font-weight:800;font-size:15px;color:${achieved?'var(--blue)':isNext?'var(--amber)':'var(--gray-700)'};">Rank ${rank}</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--mono);">Bono: ${fmt18s(cfg.bonus)} USDT · ${cfg.directs} directos activos</div>
             </div>
           </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
             ${achieved?'<span class="badge badge-blue">✓ Alcanzado</span>':''}
             ${isNext?'<span class="badge badge-amber">← Siguiente</span>':''}
-            ${alreadyClaimed?'<span class="badge badge-gray">Cobrado</span>':''}
+            ${cfg.claimed&&achieved?'<span class="badge badge-gray">Bono cobrado</span>':''}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:3px;">Vol. personal</div>
+            <div style="font-weight:700;color:${pvPct>=100?'var(--green)':'var(--gray-700)'};font-family:var(--mono);font-size:12px;">${addr?fmt18s(personalVol):'—'} / ${fmt18s(cfg.pv)} USDT</div>
+            <div class="prog" style="margin-top:4px;"><div class="prog-fill" style="width:${pvPct}%;background:${pvPct>=100?'var(--green)':'var(--blue)'};"></div></div>
+          </div>
+          <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:10px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:3px;">Puntos red</div>
+            <div style="font-weight:700;color:${npPct>=100?'var(--green)':'var(--gray-700)'};font-family:var(--mono);font-size:12px;">${addr?fmt18s(netPoints):'—'} / ${fmt18s(cfg.np)}</div>
+            <div class="prog" style="margin-top:4px;"><div class="prog-fill" style="width:${npPct}%;background:${npPct>=100?'var(--green)':'var(--blue)'};"></div></div>
           </div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400);margin-bottom:4px;font-family:var(--mono);">
-          <span>${addr?fmt18s(userPts):'—'} / ${fmt18s(thresholds[i])} pts</span><span>${addr?pct+'%':'—'}</span>
+          <span>Progreso global</span><span>${addr?pct+'%':'—'}</span>
         </div>
         <div class="prog"><div class="prog-fill" style="width:${pct}%;background:${achieved?'var(--blue)':isNext?'var(--amber)':'var(--gray-300)'};"></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
-          <div style="background:${achieved?'var(--white)':'var(--gray-50)'};border:1px solid var(--gray-200);border-radius:8px;padding:10px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:3px;">Puntos requeridos</div><div style="font-weight:700;color:${pct>=100?'var(--green)':'var(--gray-700)'};font-family:var(--mono);font-size:13px;">${pct>=100||achieved?'✓ ':''} ${fmt18s(thresholds[i])}</div></div>
-          <div style="background:${achieved?'var(--white)':'var(--gray-50)'};border:1px solid var(--gray-200);border-radius:8px;padding:10px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:3px;">Bono único</div><div style="font-weight:700;color:var(--amber);font-family:var(--mono);font-size:13px;">${fmt18s(bonuses[i])} USDT</div></div>
-        </div>
-        ${achieved&&!alreadyClaimed&&addr&&walletAddr&&walletAddr.toLowerCase()===addr.toLowerCase()?`<div style="margin-top:10px;"><button class="btn-ghost" onclick="claimRankBonus(${i})" style="font-size:12px;padding:7px 18px;">Reclamar bono Rank ${i}</button></div>`:''}
       </div>`;
-    }
+    });
     html+='</div>';
     el.innerHTML=html;
   }catch(e){ el.innerHTML=`<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div><div class="empty-desc">${e.message.slice(0,100)}</div></div>`; }
@@ -2152,19 +2207,21 @@ async function loadDirectsList(addr,count){
 async function loadTreasury(){
   const el=document.getElementById('tr-body');
   try{
-    const [liq,ent,op]=await Promise.all([
-      contracts.reward?contracts.reward.availableRewardsLiquidity().catch(()=>0n):Promise.resolve(0n),
-      contracts.enterprise?contracts.enterprise.enterprisePool().catch(()=>0n):Promise.resolve(0n),
-      contracts.enterprise?contracts.enterprise.operationPool().catch(()=>0n):Promise.resolve(0n),
-    ]);
-    document.getElementById('tr-reward-liq').textContent=fmt18s(liq)+' USDT';
-    document.getElementById('tr-enterprise').textContent=fmt18s(ent)+' USDT';
-    document.getElementById('tr-operation').textContent=fmt18s(op)+' USDT';
-    document.getElementById('sl-liquidity').textContent=fmt18s(liq)+' USDT';
+    const liq = contracts.reward
+      ? await contracts.reward.availableRewardsLiquidity().catch(()=>0n)
+      : 0n;
+    document.getElementById('tr-reward-liq').textContent = fmt18s(liq)+' USDT';
+    document.getElementById('sl-liquidity').textContent  = fmt18s(liq)+' USDT';
+    // V8: enterprise uses partner distribution model
+    const partnerCount = contracts.enterprise
+      ? await contracts.enterprise.partnerCount().catch(()=>0n)
+      : 0n;
+    document.getElementById('tr-enterprise').textContent = Number(partnerCount)+' socios';
+    document.getElementById('tr-operation').textContent  = '—';
     if(el) el.innerHTML=`
       <div class="mem-row"><span class="mem-label">Reward Reserve Liquidity</span><span class="mem-val" style="color:var(--green);">${fmt18s(liq)} USDT</span></div>
-      <div class="mem-row"><span class="mem-label">Enterprise Pool</span><span class="mem-val" style="color:var(--amber);">${fmt18s(ent)} USDT</span></div>
-      <div class="mem-row"><span class="mem-label">Operation Pool</span><span class="mem-val" style="color:var(--blue);">${fmt18s(op)} USDT</span></div>`;
+      <div class="mem-row"><span class="mem-label">Enterprise Treasury (V8)</span><span class="mem-val" style="color:var(--amber);">${Number(partnerCount)} socios configurados</span></div>
+      <div class="mem-row"><span class="mem-label">Modelo</span><span class="mem-val" style="color:var(--blue);">Distribución entre socios</span></div>`;
   }catch(e){if(el) el.innerHTML=`<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error cargando tesorería</div></div>`;}
 }
 
@@ -2228,7 +2285,7 @@ async function loadCoreStatus(){
 // Each video: { id, youtubeId, title, topic, duration (seconds), date }
 // 'date' (YYYY-MM-DD) = the day this video is shown. Leave '' to assign by rotation.
 // MIN_WATCH_SECONDS = minimum seconds user must watch to unlock Sync.
-const MIN_WATCH_SECONDS = 300; // 5 minutes
+const MIN_WATCH_SECONDS = 30; // 5 minutes
 
 const VIDEO_REPO = [
   {
@@ -2643,11 +2700,14 @@ async function checkOwnerAccess() {
   const btn = document.getElementById('tab-contracts-btn');
   if (!btn || !walletAddr || !contracts.core) return;
   try {
+    // Try core.owner() first, fallback to COMPANY_ROOT
     const ownerAbi = ["function owner() view returns (address)"];
     const co = new ethers.Contract(addrs.core || DEPLOY_TESTNET.core, ownerAbi, provider);
-    const owner = await co.owner().catch(() => OWNER_ADDR);
-    btn.style.display = (owner && owner.toLowerCase() === walletAddr.toLowerCase()) ? '' : 'none';
-    if (owner && owner.toLowerCase() === walletAddr.toLowerCase()) toast('👑 Acceso owner activado', 'info');
+    const owner = await co.owner().catch(() => COMPANY_ROOT || OWNER_ADDR);
+    const isOwner = owner && owner.toLowerCase() === walletAddr.toLowerCase();
+    const isRoot  = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
+    btn.style.display = (isOwner || isRoot) ? '' : 'none';
+    if (isOwner || isRoot) toast('👑 Acceso owner activado', 'info');
   } catch { btn.style.display = 'none'; }
 }
 
@@ -2754,15 +2814,18 @@ async function landingBuySlot() {
   if(errEl) errEl.style.display = 'none';
 
   try {
-    const amtWei  = ethers.parseUnits(lpSelectedSlot.toString(), 18);
-    const usdtC   = new ethers.Contract(addrs.usdt || DEPLOY_TESTNET.usdt, USDT_ABI, signer);
+    const amtWei   = ethers.parseUnits(lpSelectedSlot.toString(), 18);
+    const totalWei = await contracts.slot.totalToPayForSlot(amtWei);
+    const feeWei   = totalWei - amtWei;
+    const usdtC    = new ethers.Contract(addrs.usdt || DEPLOY_TESTNET.usdt, USDT_ABI, signer);
     const slotAddr = addrs.slot || DEPLOY_TESTNET.slot;
-    const upline  = sponsor || ethers.ZeroAddress;
+    const upline   = sponsor || COMPANY_ROOT || ethers.ZeroAddress;
 
     const allowance = await usdtC.allowance(walletAddr, slotAddr);
-    if (allowance < amtWei) {
-      toast('Aprobando USDT…', 'info');
-      await (await usdtC.approve(slotAddr, amtWei)).wait();
+    if (allowance < totalWei) {
+      const feeStr = Number(ethers.formatUnits(feeWei,18)).toFixed(2);
+      toast(`Aprobando ${lpSelectedSlot.toLocaleString()} USDT + ${feeStr} fee…`, 'info');
+      await (await usdtC.approve(slotAddr, totalWei)).wait();
       toast('USDT aprobado ✓', 'success');
     }
 
