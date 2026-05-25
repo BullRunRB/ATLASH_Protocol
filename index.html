@@ -690,6 +690,165 @@ footer .brand-mark{background:var(--blue);}
   padding:10px 0;border-bottom:1px solid var(--gray-100);gap:12px;
 }
 .history-row:last-child { border-bottom:none; }
+
+/* ══════════════════════════════════════════
+   MOBILE SIDEBAR NAV
+══════════════════════════════════════════ */
+.mob-menu-btn {
+  display: none;
+  width: 38px; height: 38px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 10px;
+  background: var(--white);
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+.mob-menu-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Sidebar overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 800;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(3px);
+}
+.sidebar-overlay.open { display: block; }
+
+/* Sidebar panel */
+.sidebar {
+  position: fixed; top: 0; left: -280px; bottom: 0;
+  width: 280px; z-index: 900;
+  background: var(--white);
+  border-right: 1px solid var(--gray-200);
+  box-shadow: 4px 0 24px rgba(0,0,0,.12);
+  transition: left .28s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.sidebar.open { left: 0; }
+
+.sidebar-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  flex-shrink: 0;
+}
+.sidebar-brand { display: flex; align-items: center; gap: 9px; }
+.sidebar-brand .brand-mark { width: 30px; height: 30px; font-size: 11px; }
+.sidebar-brand .brand-name { font-size: 15px; }
+.sidebar-close {
+  width: 32px; height: 32px; border: 1px solid var(--gray-200);
+  border-radius: 8px; background: var(--gray-50);
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 16px; color: var(--gray-500);
+}
+.sidebar-close:hover { border-color: var(--red); color: var(--red); }
+
+/* Sidebar wallet info */
+.sidebar-wallet {
+  margin: 12px 14px;
+  background: var(--blue-bg);
+  border: 1px solid var(--blue-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  flex-shrink: 0;
+}
+.sidebar-wallet-label { font-size: 10px; font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 4px; }
+.sidebar-wallet-addr { font-size: 12px; font-family: var(--mono); color: var(--gray-700); word-break: break-all; }
+
+/* Sidebar net pill */
+.sidebar-net {
+  margin: 0 14px 12px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--gray-50); border: 1px solid var(--gray-200);
+  border-radius: 10px; font-size: 12px; font-family: var(--mono);
+  color: var(--gray-600); flex-shrink: 0;
+}
+
+/* Sidebar nav items */
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 6px 10px; }
+.sidebar-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 15px; font-weight: 500;
+  color: var(--gray-600);
+  margin-bottom: 2px;
+  border: none; background: none; width: 100%; text-align: left;
+  font-family: var(--ff);
+}
+.sidebar-item:hover { background: var(--gray-50); color: var(--gray-900); }
+.sidebar-item.on { background: var(--blue-bg); color: var(--blue); font-weight: 700; }
+.sidebar-item.on .si-icon { background: var(--blue); color: var(--white); }
+.si-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--gray-100); color: var(--gray-500);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0; transition: all .15s;
+}
+.si-label { flex: 1; }
+.si-badge {
+  font-size: 10px; background: var(--blue); color: var(--white);
+  padding: 2px 7px; border-radius: 20px; font-weight: 700;
+}
+
+/* Sidebar divider */
+.sidebar-divider { height: 1px; background: var(--gray-100); margin: 8px 14px; }
+
+/* Sidebar footer actions */
+.sidebar-footer { padding: 12px 14px; border-top: 1px solid var(--gray-100); flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.sidebar-connect-btn {
+  width: 100%; padding: 12px;
+  background: var(--blue); border: none; border-radius: 12px;
+  color: var(--white); font-family: var(--ff); font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+}
+.sidebar-connect-btn:hover { background: var(--blue-dark); }
+.sidebar-landing-btn {
+  width: 100%; padding: 10px;
+  background: var(--gray-50); border: 1.5px solid var(--gray-200); border-radius: 12px;
+  color: var(--gray-600); font-family: var(--ff); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s; text-align: center;
+}
+.sidebar-landing-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Show mobile button on small screens */
+@media(max-width:768px) {
+  .mob-menu-btn { display: flex; }
+  .dapp-tabs-nav { display: none !important; } /* always hide horizontal tabs on mobile */
+  .topbar-nav { display: none; }
+  .topbar { padding: 0 14px; }
+  .wallet-pill span { display: none; } /* hide text, keep dot */
+  .wallet-pill { padding: 8px 10px; }
+  .dmain { padding: 14px 12px 60px; }
+  .g4 { grid-template-columns: repeat(2,1fr); }
+  .g3 { grid-template-columns: repeat(2,1fr); }
+  .g2 { grid-template-columns: 1fr; }
+  .learn-slot-card { flex-direction: column; align-items: flex-start; }
+  .btn-sync-ready, .btn-sync-locked, .btn-sync-done { width: 100%; justify-content: center; }
+  .slot-stats-grid { grid-template-columns: repeat(2,1fr); }
+  .hero { padding: 100px 16px 60px; }
+  .hero-h1 { font-size: 32px; }
+  .section { padding: 52px 16px; }
+  .section-h2 { font-size: 26px; }
+  .slots-grid { grid-template-columns: repeat(2,1fr); }
+  .ranks-cards { grid-template-columns: repeat(2,1fr); }
+  .wallets-grid { grid-template-columns: 1fr; }
+  .stats-inner { grid-template-columns: repeat(2,1fr); gap: 16px; padding: 32px 16px; }
+  .steps { grid-template-columns: 1fr; }
+}
+
+@media(max-width:400px) {
+  .g4, .g3 { grid-template-columns: 1fr; }
+  .slots-grid { grid-template-columns: 1fr 1fr; }
+  .ranks-cards { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -735,8 +894,91 @@ footer .brand-mark{background:var(--blue);}
       <span id="wallet-label">Conectar wallet</span>
     </button>
     <button class="btn-primary" id="btn-enter-dapp" onclick="showDapp()">Entrar al Dashboard →</button>
+    <button class="mob-menu-btn" id="mob-menu-btn" onclick="openSidebar()" aria-label="Menú">☰</button>
   </div>
 </header>
+
+
+<!-- ════ SIDEBAR (mobile nav) ════ -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <div class="sidebar-brand">
+      <div class="brand-mark">AT</div>
+      <span class="brand-name">ATLASH</span>
+    </div>
+    <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+  </div>
+
+  <!-- Wallet info -->
+  <div class="sidebar-wallet" id="sb-wallet-box" style="display:none;">
+    <div class="sidebar-wallet-label">Wallet conectada</div>
+    <div class="sidebar-wallet-addr" id="sb-wallet-addr">—</div>
+  </div>
+
+  <!-- Net info -->
+  <div class="sidebar-net" id="sb-net-box" style="display:none;">
+    <div class="npulse" id="sb-net-pulse"></div>
+    <span id="sb-net-label">—</span>
+  </div>
+
+  <!-- Landing nav -->
+  <div class="sidebar-nav" id="sb-nav-landing">
+    <div class="sidebar-item" onclick="closeSidebar();scrollToSection('#how');">
+      <div class="si-icon">📖</div><span class="si-label">Cómo funciona</span>
+    </div>
+    <div class="sidebar-item" onclick="closeSidebar();scrollToSection('#slots-lp');">
+      <div class="si-icon">🎰</div><span class="si-label">Slots</span>
+    </div>
+    <div class="sidebar-item" onclick="closeSidebar();scrollToSection('#ranks-lp');">
+      <div class="si-icon">🏆</div><span class="si-label">Rangos</span>
+    </div>
+    <div class="sidebar-item" onclick="closeSidebar();scrollToSection('#wallets-lp');">
+      <div class="si-icon">👛</div><span class="si-label">Wallets</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" onclick="closeSidebar();scrollToSection('#buy-lp');" style="background:var(--blue-bg);color:var(--blue);font-weight:700;">
+      <div class="si-icon" style="background:var(--blue);color:var(--white);">💰</div><span class="si-label">Comprar Slot</span>
+    </div>
+  </div>
+
+  <!-- DApp nav -->
+  <div class="sidebar-nav" id="sb-nav-dapp" style="display:none;">
+    <div class="sidebar-item on" id="sb-overview" onclick="closeSidebar();goTab('overview');">
+      <div class="si-icon">📊</div><span class="si-label">Overview</span>
+    </div>
+    <div class="sidebar-item" id="sb-learn" onclick="closeSidebar();goTab('learn');">
+      <div class="si-icon">🎓</div><span class="si-label">Aprender</span>
+    </div>
+    <div class="sidebar-item" id="sb-slots" onclick="closeSidebar();goTab('slots');">
+      <div class="si-icon">🎰</div><span class="si-label">Slots</span>
+    </div>
+    <div class="sidebar-item" id="sb-ranks" onclick="closeSidebar();goTab('ranks');">
+      <div class="si-icon">🏆</div><span class="si-label">Rangos</span>
+    </div>
+    <div class="sidebar-item" id="sb-pools" onclick="closeSidebar();goTab('pools');">
+      <div class="si-icon">🏊</div><span class="si-label">Pools</span>
+    </div>
+    <div class="sidebar-item" id="sb-network" onclick="closeSidebar();goTab('network');">
+      <div class="si-icon">🌐</div><span class="si-label">Red</span>
+    </div>
+    <div class="sidebar-item" id="sb-treasury" onclick="closeSidebar();goTab('treasury');">
+      <div class="si-icon">💼</div><span class="si-label">Tesorería</span>
+    </div>
+    <div class="sidebar-item" id="sb-contracts" onclick="closeSidebar();goTab('contracts');" style="display:none;">
+      <div class="si-icon">📄</div><span class="si-label">Contratos</span><span class="si-badge">Owner</span>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="sidebar-connect-btn" id="sb-connect-btn" onclick="closeSidebar();openWalletModal();">
+      Conectar wallet
+    </button>
+    <button class="sidebar-landing-btn" id="sb-landing-btn" onclick="closeSidebar();showLanding();" style="display:none;">
+      ← Volver al inicio
+    </button>
+  </div>
+</div>
 
 <!-- ═══════ LANDING PAGE ═══════ -->
 <div id="landing">
@@ -1422,6 +1664,7 @@ function showLanding(){
   document.getElementById('btn-enter-dapp').style.display='';
   document.getElementById('wallet-pill').style.display='none';
   document.getElementById('nav-net-pill').style.display='none';
+  try { updateSidebarState(); } catch(e) {}
 }
 
 function showDapp(){
@@ -1578,6 +1821,8 @@ function goTab(name) {
   if (name === 'treasury')  loadTreasury();
   if (name === 'slots' && contracts.slot) loadGlobalStats();
   if (name === 'learn')     initLearnTab();
+  // Update sidebar active state
+  try { updateSidebarActive(name); } catch(e) {}
 }
 
 
@@ -1630,6 +1875,7 @@ function disconnectWallet(){
   document.getElementById('wallet-pill').classList.remove('connected');
   toast('Wallet desconectada','info');
   showDappGate('gate');
+  try { updateSidebarState(); closeSidebar(); } catch(e) {}
 }
 
 async function connectWith(type){
@@ -2295,7 +2541,7 @@ async function loadCoreStatus(){
 // Each video: { id, youtubeId, title, topic, duration (seconds), date }
 // 'date' (YYYY-MM-DD) = the day this video is shown. Leave '' to assign by rotation.
 // MIN_WATCH_SECONDS = minimum seconds user must watch to unlock Sync.
-const MIN_WATCH_SECONDS = 30; // 5 minutes
+const MIN_WATCH_SECONDS = 300; // 5 minutes
 
 const VIDEO_REPO = [
   {
@@ -2952,6 +3198,75 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => scrollToSection('#buy-lp'), 600);
   }
 });
+
+
+// ═══════════════════════════════════════════════════════════
+// SIDEBAR — Mobile Navigation
+// ═══════════════════════════════════════════════════════════
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  updateSidebarState();
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function updateSidebarState() {
+  const inDapp = document.getElementById('dapp').style.display !== 'none';
+
+  // Switch nav panels
+  const landingNav = document.getElementById('sb-nav-landing');
+  const dappNav    = document.getElementById('sb-nav-dapp');
+  if (landingNav) landingNav.style.display = inDapp ? 'none' : 'block';
+  if (dappNav)    dappNav.style.display    = inDapp ? 'block' : 'none';
+
+  // Back to landing button
+  const backBtn = document.getElementById('sb-landing-btn');
+  if (backBtn) backBtn.style.display = inDapp ? 'block' : 'none';
+
+  // Wallet info
+  const walletBox  = document.getElementById('sb-wallet-box');
+  const walletAddr_ = document.getElementById('sb-wallet-addr');
+  if (walletBox) walletBox.style.display = walletAddr ? 'block' : 'none';
+  if (walletAddr_ && walletAddr) walletAddr_.textContent = walletAddr;
+
+  // Net info
+  const netBox   = document.getElementById('sb-net-box');
+  const netLabel = document.getElementById('sb-net-label');
+  const netPulse = document.getElementById('sb-net-pulse');
+  if (netBox) netBox.style.display = activeNet ? 'flex' : 'none';
+  if (netLabel && activeNet) netLabel.textContent = activeNet.label;
+  if (netPulse && activeNet) netPulse.className = 'npulse ' + (activeNet === NETS.testnet ? 'test' : 'main');
+
+  // Connect button label
+  const connectBtn = document.getElementById('sb-connect-btn');
+  if (connectBtn) connectBtn.textContent = walletAddr ? 'Desconectar wallet' : 'Conectar wallet';
+
+  // Contracts item visibility (owner only)
+  const sbContracts = document.getElementById('sb-contracts');
+  const tabContractsBtn = document.getElementById('tab-contracts-btn');
+  if (sbContracts && tabContractsBtn) {
+    sbContracts.style.display = tabContractsBtn.style.display === 'none' ? 'none' : 'flex';
+  }
+}
+
+// ── Sync sidebar active item with goTab ──
+function updateSidebarActive(name) {
+  const map = ['overview','learn','slots','ranks','pools','network','treasury','contracts'];
+  map.forEach(n => {
+    const el = document.getElementById('sb-' + n);
+    if (el) el.classList.toggle('on', n === name);
+  });
+}
+
+// ── Close sidebar on escape key ──
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
 
 </script>
 </html>
