@@ -1168,6 +1168,10 @@ footer .brand-mark{background:var(--blue);}
             <span style="color:var(--gray-600);">Cap máximo (200%)</span>
             <span style="font-weight:700;" id="lp-sum-cap">—</span>
           </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+            <span style="color:var(--gray-600);">Fee de activación</span>
+            <span style="font-weight:700;color:var(--amber);" id="lp-sum-fee">—</span>
+          </div>
           <div style="display:flex;justify-content:space-between;font-size:14px;">
             <span style="color:var(--gray-600);">Patrocinador</span>
             <span style="font-weight:700;font-family:var(--mono);font-size:12px;" id="lp-sum-sponsor">—</span>
@@ -1593,7 +1597,6 @@ const SLOT_ABI = [
   "function slotLevelByAmount(uint256) view returns (uint8)",
   "function slotAmountByLevel(uint8) view returns (uint256)",
   "function activationFeeByLevel(uint8) view returns (uint256)",
-  "function activationFeeForAmount(uint256) view returns (uint256)",
   "function paused() view returns (bool)",
   "function buySlot(uint256, address) external returns (uint256)",
   "function restartSlot(uint8) external returns (uint256)",
@@ -2132,6 +2135,46 @@ function parsePosition(id, p) {
     roiEnabled:   !!p[11],
   };
 }
+
+// ── V15 Activation fee table (matches activationFeeByLevel in contract) ──
+// level → fee in USDT (18 decimals as BigInt)
+const ACTIVATION_FEE_BY_LEVEL = {
+  1:  25n * BigInt(1e17),   // 2.50 USDT
+  2:  5n  * BigInt(1e18),   // 5.00 USDT
+  3:  10n * BigInt(1e18),   // 10.00 USDT
+  4:  20n * BigInt(1e18),   // 20.00 USDT
+  5:  40n * BigInt(1e18),   // 40.00 USDT
+  6:  60n * BigInt(1e18),   // 60.00 USDT
+  7:  80n * BigInt(1e18),   // 80.00 USDT
+  8:  100n * BigInt(1e18),  // 100.00 USDT
+  9:  120n * BigInt(1e18),  // 120.00 USDT
+  10: 140n * BigInt(1e18),  // 140.00 USDT
+  11: 180n * BigInt(1e18),  // 180.00 USDT
+  12: 220n * BigInt(1e18),  // 220.00 USDT
+  13: 260n * BigInt(1e18),  // 260.00 USDT
+  14: 300n * BigInt(1e18),  // 300.00 USDT
+};
+
+// Slot amount by level (10 USDT * 2^(level-1))
+function slotAmountForLevel(level) {
+  return 10n * BigInt(1e18) * (1n << BigInt(level - 1));
+}
+
+// Level from amount (local, no RPC)
+function slotLevelFromAmount(amountWei) {
+  for (let lvl = 1; lvl <= 14; lvl++) {
+    if (slotAmountForLevel(lvl) === amountWei) return lvl;
+  }
+  return 0;
+}
+
+// Total to pay = slotAmount + activationFee
+function totalToPayLocal(amountWei) {
+  const level = slotLevelFromAmount(amountWei);
+  const fee   = ACTIVATION_FEE_BY_LEVEL[level] || 0n;
+  return { total: amountWei + fee, fee, level };
+}
+
 // ── GLOBAL STATS ──
 async function loadGlobalStats(){
   if(!contracts.slot){ console.warn('[loadGlobalStats] no slot contract'); return; }
@@ -2257,8 +2300,7 @@ async function buySlot(){
   if(errEl) errEl.style.display='none';
   try{
     const amtWei   = ethers.parseUnits(selectedSlot.toString(), 18);
-    const totalWei = await contracts.slot.totalToPayForSlot(amtWei);
-    const feeWei   = totalWei - amtWei;
+    const { total: totalWei, fee: feeWei } = totalToPayLocal(amtWei);
     const usdtC    = new ethers.Contract(addrs.usdt||DEPLOY_TESTNET.usdt, USDT_ABI, signer);
     const slotAddr = addrs.slot||DEPLOY_TESTNET.slot;
     const allowance= await usdtC.allowance(walletAddr, slotAddr);
@@ -3052,6 +3094,10 @@ function updateLpSummary() {
     if(summary) summary.style.display = 'block';
     if(sumSlot) sumSlot.textContent = lpSelectedSlot.toLocaleString() + ' USDT';
     if(sumCap)  sumCap.textContent  = (lpSelectedSlot * 2).toLocaleString() + ' USDT';
+    // Show fee in summary
+    const { fee: feePreview } = totalToPayLocal(ethers.parseUnits(lpSelectedSlot.toString(), 18));
+    const sumFeeEl = document.getElementById('lp-sum-fee');
+    if(sumFeeEl) sumFeeEl.textContent = Number(ethers.formatUnits(feePreview,18)).toFixed(2) + ' USDT';
     if(sumSpon) sumSpon.textContent = sponsor ? sponsor.slice(0,10)+'…'+sponsor.slice(-6) : 'Sin patrocinador';
     if(btn && validSponsor) {
       btn.style.opacity = '1';
@@ -3096,8 +3142,7 @@ async function landingBuySlot() {
 
   try {
     const amtWei   = ethers.parseUnits(lpSelectedSlot.toString(), 18);
-    const totalWei = await contracts.slot.totalToPayForSlot(amtWei);
-    const feeWei   = totalWei - amtWei;
+    const { total: totalWei, fee: feeWei } = totalToPayLocal(amtWei);
     const usdtC    = new ethers.Contract(addrs.usdt || DEPLOY_TESTNET.usdt, USDT_ABI, signer);
     const slotAddr = addrs.slot || DEPLOY_TESTNET.slot;
     const upline   = sponsor || COMPANY_ROOT || ethers.ZeroAddress;
