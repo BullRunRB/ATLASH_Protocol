@@ -876,6 +876,7 @@ footer .brand-mark{background:var(--blue);}
       <button class="dtab on" onclick="goTab('overview')" style="border:none;padding:14px 16px;border-bottom:2px solid var(--blue);color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Overview</button>
       <button class="dtab" onclick="goTab('learn')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Aprender</button>
       <button class="dtab" onclick="goTab('slots')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Slots</button>
+      <button class="dtab" onclick="goTab('earnings')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Ganancias</button>
       <button class="dtab" onclick="goTab('ranks')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Rangos</button>
       <button class="dtab" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
       <button class="dtab" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
@@ -953,6 +954,7 @@ footer .brand-mark{background:var(--blue);}
     <div class="sidebar-item" id="sb-slots" onclick="closeSidebar();goTab('slots');">
       <div class="si-icon">🎰</div><span class="si-label">Slots</span>
     </div>
+    <div class="sidebar-item" id="sb-earnings" onclick="closeSidebar();goTab('earnings');"><div class="si-icon">💰</div><span class="si-label">Ganancias</span></div>
     <div class="sidebar-item" id="sb-ranks" onclick="closeSidebar();goTab('ranks');">
       <div class="si-icon">🏆</div><span class="si-label">Rangos</span>
     </div>
@@ -1415,6 +1417,54 @@ footer .brand-mark{background:var(--blue);}
         </div>
       </div>
 
+
+      <!-- ── EARNINGS ── -->
+      <div class="tpane" id="tab-earnings">
+
+        <!-- Header KPIs -->
+        <div class="g3">
+          <div class="kpi"><div class="kpi-label">Pools de rangos pendientes</div><div class="kpi-value blue" id="earn-rank-total">—</div><div class="kpi-sub">Mes actual · R1–R7</div></div>
+          <div class="kpi"><div class="kpi-label">Top Five pendiente</div><div class="kpi-value green" id="earn-pool-total">—</div><div class="kpi-sub">Pool de liderazgo</div></div>
+          <div class="kpi"><div class="kpi-label">Total reclamable</div><div class="kpi-value amber" id="earn-grand-total">—</div><div class="kpi-sub">Todos los pools</div></div>
+        </div>
+
+        <!-- Claim all button -->
+        <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="claimAllPools()" id="btn-claim-all" style="padding:11px 28px;font-size:14px;" disabled>
+            💰 Reclamar todo
+          </button>
+          <button class="btn-outline" onclick="loadEarningsTab()" style="padding:11px 16px;font-size:13px;">
+            ↻ Actualizar
+          </button>
+        </div>
+
+        <!-- Rank Pools section -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Pools de Rangos (R1–R7)</span><span class="sec-line"></span></div>
+        <div class="panel" style="margin-bottom:16px;">
+          <div class="panel-head">
+            <div class="panel-title">🏆 Pools de rangos por mes</div>
+            <button class="btn-ghost" onclick="claimAllRankPools()" id="btn-claim-ranks" style="padding:5px 14px;font-size:12px;" disabled>
+              Reclamar todos los rangos
+            </button>
+          </div>
+          <div class="panel-body" id="earn-rank-table">
+            <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin usuario</div><div class="empty-desc">Conecta tu wallet o busca una dirección</div></div>
+          </div>
+        </div>
+
+        <!-- Leadership Pool section -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Pool Top Five (Liderazgo)</span><span class="sec-line"></span></div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">🥇 Pool de liderazgo mensual</div>
+            <div id="earn-pool-month-badge"></div>
+          </div>
+          <div class="panel-body" id="earn-pool-table">
+            <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin usuario</div><div class="empty-desc">Conecta tu wallet o busca una dirección</div></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── RANKS ── -->
       <div class="tpane" id="tab-ranks">
         <div class="g4">
@@ -1441,21 +1491,25 @@ footer .brand-mark{background:var(--blue);}
 
       <!-- ── NETWORK ── -->
       <div class="tpane" id="tab-network">
-        <div class="sub-tabs">
-          <button class="stab on" id="nt-uni-btn" onclick="switchNetTab('uni')">Árbol Unilevel</button>
-          <button class="stab" id="nt-slots-btn" onclick="switchNetTab('slots')">Directos con slots</button>
+
+        <!-- Network KPIs -->
+        <div class="g4">
+          <div class="kpi"><div class="kpi-label">Directos</div><div class="kpi-value blue" id="nt-directs">—</div><div class="kpi-sub">Nivel 1</div></div>
+          <div class="kpi"><div class="kpi-label">Vol. red total</div><div class="kpi-value" id="nt-total-vol">—</div><div class="kpi-sub">USDT generado</div></div>
+          <div class="kpi"><div class="kpi-label">Vol. red calificado</div><div class="kpi-value green" id="nt-qual-vol">—</div><div class="kpi-sub">Para rangos</div></div>
+          <div class="kpi"><div class="kpi-label">Upline</div><div class="kpi-value" id="nt-upline" style="font-size:12px;letter-spacing:0;">—</div><div class="kpi-sub">Patrocinador</div></div>
         </div>
-        <div id="nt-pane-uni">
-          <div class="g2" style="margin-bottom:16px;">
-            <div class="kpi"><div class="kpi-label">Directos</div><div class="kpi-value blue" id="nt-directs">—</div><div class="kpi-sub">Nivel 1</div></div>
-            <div class="kpi"><div class="kpi-label">Upline</div><div class="kpi-value" id="nt-upline" style="font-size:13px;letter-spacing:0;">—</div><div class="kpi-sub">Patrocinador directo</div></div>
-          </div>
-          <div class="sec"><span class="sec-bar"></span><span class="sec-label">Referidos directos</span><span class="sec-line"></span></div>
-          <div id="nt-directs-list"><div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin referidos</div><div class="empty-desc">Busca una dirección para ver su red</div></div></div>
+
+        <!-- Cycle cards from positions -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Ciclos completados</span><span class="sec-line"></span></div>
+        <div id="nt-cycles-wrap">
+          <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin datos</div><div class="empty-desc">Busca una dirección para ver sus ciclos</div></div>
         </div>
-        <div id="nt-pane-slots" style="display:none;">
-          <div class="alert alert-info"><span>ℹ</span><span>Directos que tienen slots del valor seleccionado — habilitan bonos comerciales al upline.</span></div>
-          <div id="nt-slots-list"><div class="empty"><div class="empty-icon">○</div><div class="empty-title">Selecciona un slot para ver directos calificados</div></div></div>
+
+        <!-- Directs list -->
+        <div class="sec" style="margin-top:20px;"><span class="sec-bar"></span><span class="sec-label">Referidos directos</span><span class="sec-line"></span></div>
+        <div id="nt-directs-list">
+          <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin referidos</div><div class="empty-desc">Busca una dirección para ver su red</div></div>
         </div>
       </div>
 
@@ -1616,17 +1670,21 @@ const RANK_ABI = [
   "function isQualifiedForPool(address, uint8) view returns (bool)",
   "function refreshRank(address) external returns (uint8)",
   "function claimRankPool(uint256, uint8) external",
-  "function claimRankPools(uint256) external"
+  "function claimRankPools(uint256) external",
+  "function claimSelectedRankPools(uint256, uint8[]) external"
 ];
 
 const POOL_ABI = [
   "function leadershipPoolByMonth(uint256) view returns (uint256)",
   "function leadershipFinalized(uint256) view returns (bool)",
   "function leadershipClaimable(uint256, address) view returns (uint256)",
+  "function pendingTopFive(address, uint256) view returns (uint256)",
   "function monthlyVolume(address, uint256) view returns (uint256)",
   "function minLeadershipMonthlyVolume() view returns (uint256)",
   "function leadershipCarryOverBP() view returns (uint16)",
-  "function claimLeadership(uint256) external",
+  "function topFiveSharesBP(uint256) view returns (uint16)",
+  "function claimTopFive(uint256) external",
+  "function claimTopFiveMonths(uint256[]) external",
   "function finalizeTopFiveLeadershipMonth(uint256, address[5]) external"
 ];
 
@@ -1814,7 +1872,7 @@ function clearLearnProgress() {
 // ── MAIN goTab (merged) ──
 function goTab(name) {
   // Update tab buttons
-  const tabNames = ['overview','learn','slots','ranks','pools','network','treasury','contracts'];
+  const tabNames = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts'];
   document.querySelectorAll('.dtab').forEach((b, i) => {
     b.classList.toggle('on', tabNames[i] === name);
     b.style.color = tabNames[i] === name ? 'var(--blue)' : 'var(--gray-500)';
@@ -1825,7 +1883,9 @@ function goTab(name) {
 
   if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
   if (name === 'ranks')     loadRanksTab(currentUser);
+  if (name === 'earnings')  loadEarningsTab();
   if (name === 'pools')     loadPoolsData();
+  if (name === 'network')   loadNetworkTab(currentUser);
   if (name === 'treasury')  loadTreasury();
   if (name === 'slots' && contracts.slot) loadGlobalStats();
   if (name === 'learn')     initLearnTab();
@@ -2071,10 +2131,11 @@ async function loadUserData(addr){
     document.getElementById('nt-upline').textContent=!isZero(upline)?short(upline):'—';
 
     renderStatusBody({registered,frozen,upline,directCnt,totalVol,joinTs});
-    loadDirectsList(addr,directCnt);
     if(contracts.slot) loadUserSlots(addr);
     loadRanksTab(addr);
     loadPoolsData();
+    loadNetworkTab(addr);
+    loadEarningsTab();
 
   }catch(e){ toast('Error al cargar usuario: '+e.message.slice(0,60),'error'); }
 }
@@ -2351,9 +2412,15 @@ async function loadRanksTab(addr){
   if(!contracts.rank){ el.innerHTML='<div class="empty"><div class="empty-icon">⚙</div><div class="empty-title">RanksModule no configurado</div></div>'; return; }
   el.innerHTML='<div style="color:var(--gray-400);font-size:13px;padding:8px;">Cargando rangos…</div>';
   try{
-    // Load pool balance
-    const poolBal = await contracts.rank.rankPoolBalance().catch(()=>0n);
-    document.getElementById('rk-pool').textContent = fmt18s(poolBal)+' USDT';
+    // V15: rank pools are per month, no single rankPoolBalance
+    // Load current month pool total across all 7 ranks
+    const curMonth = await contracts.core.currentMonthIndex().catch(()=>0n);
+    let totalRankPool = 0n;
+    for(let r=1;r<=7;r++){
+      const p = await contracts.rank.rankPoolByMonth(curMonth,r).catch(()=>0n);
+      totalRankPool += p;
+    }
+    document.getElementById('rk-pool').textContent = fmt18s(totalRankPool)+' USDT';
 
     // V15: Load user rank, personal + qualified network volume
     let userRank=0, personalVol=0n, qualVol=0n;
@@ -2373,9 +2440,10 @@ async function loadRanksTab(addr){
     const MAX_RANK = 7;
     const configs = await Promise.all(
       Array.from({length:MAX_RANK},(_,i)=>i+1).map(async i=>{
+        // curMonth already loaded above
         const cfg = await contracts.rank.rankConfig(i).catch(()=>null);
-        const claimable = addr
-          ? await contracts.rank.pendingRankPools(addr, await contracts.core.currentMonthIndex().catch(()=>0n)).catch(()=>0n)
+        const claimable = (addr && curMonth)
+          ? await contracts.rank.rankPoolClaimable(curMonth, i, addr).catch(()=>0n)
           : 0n;
         return cfg ? {
           qvRequired: cfg[0]||cfg.qualifiedVolumeRequired||0n,
@@ -2431,11 +2499,17 @@ async function loadRanksTab(addr){
           <span>Progreso global</span><span>${addr?pct+'%':'—'}</span>
         </div>
         <div class="prog"><div class="prog-fill" style="width:${pct}%;background:${achieved?'var(--blue)':isNext?'var(--amber)':'var(--gray-300)'};"></div></div>
+      ${ cfg.claimable>0n && addr && walletAddr && walletAddr.toLowerCase()===addr.toLowerCase()
+        ? '<div style="margin-top:10px;"><button class="btn-ghost" onclick="claimSingleRankPool('+rank+')" style="font-size:12px;padding:7px 18px;">💰 Reclamar ' + fmt18s(cfg.claimable) + ' USDT</button></div>'
+        : '' }
       </div>`;
     });
     html+='</div>';
     el.innerHTML=html;
-  }catch(e){ el.innerHTML=`<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div><div class="empty-desc">${e.message.slice(0,100)}</div></div>`; }
+  } catch(e) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error</div></div>';
+    console.error('[loadRanksTab]', e);
+  }
 }
 
 // claimRankBonus removed — not in V9 ABI
@@ -3328,7 +3402,7 @@ function updateSidebarState() {
 
 // ── Sync sidebar active item with goTab ──
 function updateSidebarActive(name) {
-  const map = ['overview','learn','slots','ranks','pools','network','treasury','contracts'];
+  const map = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts'];
   map.forEach(n => {
     const el = document.getElementById('sb-' + n);
     if (el) el.classList.toggle('on', n === name);
@@ -3337,6 +3411,213 @@ function updateSidebarActive(name) {
 
 // ── Close sidebar on escape key ──
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+
+// ═══════════════════════════════════════════════════════════
+// EARNINGS TAB — Rank pools + Top Five claims
+// ═══════════════════════════════════════════════════════════
+
+async function loadEarningsTab() {
+  if (!currentUser) return;
+  const addr = currentUser;
+
+  try {
+    const monthId = await contracts.core.currentMonthIndex().catch(()=>0n);
+
+    // ── Load rank pools (R1–R7) for current month ──
+    const rankRows = [];
+    let rankTotal = 0n;
+    for (let r = 1; r <= 7; r++) {
+      const [poolBal, claimable, finalized, qualified] = await Promise.all([
+        contracts.rank.rankPoolByMonth(monthId, r).catch(()=>0n),
+        contracts.rank.rankPoolClaimable(monthId, r, addr).catch(()=>0n),
+        contracts.rank.rankPoolFinalized(monthId, r).catch(()=>false),
+        contracts.rank.isQualifiedForPool(addr, r).catch(()=>false),
+      ]);
+      rankTotal += claimable;
+      rankRows.push({ rank: r, poolBal, claimable, finalized, qualified });
+    }
+
+    // ── Load Top Five pool ──
+    const poolBal  = await contracts.pool.leadershipPoolByMonth(monthId).catch(()=>0n);
+    const topFivePending = await contracts.pool.pendingTopFive(addr, monthId).catch(()=>0n);
+    const poolFin  = await contracts.pool.leadershipFinalized(monthId).catch(()=>false);
+    const grandTotal = rankTotal + topFivePending;
+
+    // ── Update KPI cards ──
+    document.getElementById('earn-rank-total').textContent  = fmt18s(rankTotal)+' USDT';
+    document.getElementById('earn-pool-total').textContent  = fmt18s(topFivePending)+' USDT';
+    document.getElementById('earn-grand-total').textContent = fmt18s(grandTotal)+' USDT';
+
+    const claimAllBtn  = document.getElementById('btn-claim-all');
+    const claimRanks   = document.getElementById('btn-claim-ranks');
+    const isOwn = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
+    if (claimAllBtn) claimAllBtn.disabled  = !(isOwn && grandTotal > 0n);
+    if (claimRanks)  claimRanks.disabled   = !(isOwn && rankTotal > 0n);
+
+    // ── Render rank rows ──
+    const rankEl = document.getElementById('earn-rank-table');
+    if (rankEl) {
+      if (rankRows.every(r => r.poolBal === 0n)) {
+        rankEl.innerHTML = '<div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin pools de rango para este mes</div><div class="empty-desc">Los pools se distribuyen cuando el owner finaliza el mes</div></div>';
+      } else {
+        rankEl.innerHTML = `<table class="tbl">
+          <thead><tr><th>Rango</th><th>Pool total</th><th>Estado</th><th>Calificado</th><th>Mi claimable</th><th></th></tr></thead>
+          <tbody>${rankRows.map(r=>`<tr>
+            <td><span class="badge badge-blue">Rank ${r.rank}</span></td>
+            <td style="color:var(--blue);font-weight:700;">${fmt18s(r.poolBal)} USDT</td>
+            <td><span class="badge ${r.finalized?'badge-green':'badge-gray'}">${r.finalized?'Finalizado':'Pendiente'}</span></td>
+            <td>${r.qualified?'<span class="badge badge-blue">✓ Sí</span>':'<span class="badge badge-gray">No</span>'}</td>
+            <td style="color:${r.claimable>0n?'var(--green)':'var(--gray-400)'};font-weight:700;">${fmt18s(r.claimable)} USDT</td>
+            <td>${isOwn && r.claimable>0n?`<button class="btn-ghost" onclick="claimSingleRankPool(${r.rank})" style="padding:4px 12px;font-size:11px;">Reclamar</button>`:''}</td>
+          </tr>`).join('')}</tbody>
+        </table>`;
+      }
+    }
+
+    // ── Render Top Five pool rows (last 3 months) ──
+    const poolEl = document.getElementById('earn-pool-table');
+    const badge  = document.getElementById('earn-pool-month-badge');
+    if (badge) badge.innerHTML = `<span class="badge ${poolFin?'badge-green':'badge-blue'}">Mes ${Number(monthId)} ${poolFin?'· Finalizado':'· Activo'}</span>`;
+
+    const poolRows = await Promise.all([0,1,2].map(async off=>{
+      const mId = BigInt(Math.max(0, Number(monthId)-off));
+      const [bal, fin, clm] = await Promise.all([
+        contracts.pool.leadershipPoolByMonth(mId).catch(()=>0n),
+        contracts.pool.leadershipFinalized(mId).catch(()=>false),
+        contracts.pool.pendingTopFive(addr, mId).catch(()=>0n),
+      ]);
+      return { mId: Number(mId), bal, fin, clm };
+    }));
+
+    if (poolEl) {
+      poolEl.innerHTML = `<table class="tbl">
+        <thead><tr><th>Mes</th><th>Pool total</th><th>Estado</th><th>Mi claimable</th><th></th></tr></thead>
+        <tbody>${poolRows.map(r=>`<tr>
+          <td>${r.mId}</td>
+          <td style="color:var(--blue);font-weight:700;">${fmt18s(r.bal)} USDT</td>
+          <td><span class="badge ${r.fin?'badge-green':'badge-gray'}">${r.fin?'Finalizado':'Pendiente'}</span></td>
+          <td style="color:${r.clm>0n?'var(--green)':'var(--gray-400)'};font-weight:700;">${fmt18s(r.clm)} USDT</td>
+          <td>${isOwn && r.clm>0n?`<button class="btn-ghost" onclick="claimTopFiveMonth(${r.mId})" style="padding:4px 12px;font-size:11px;">Reclamar</button>`:''}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+  } catch(e) {
+    console.error('[loadEarningsTab]', e);
+    toast('Error cargando ganancias: ' + e.message.slice(0,60), 'error');
+  }
+}
+
+// Claim single rank pool
+async function claimSingleRankPool(rank) {
+  if (!signer) { toast('Conecta tu wallet', 'error'); return; }
+  try {
+    const monthId = await contracts.core.currentMonthIndex();
+    toast(`Reclamando Rank ${rank} pool…`, 'info');
+    await (await contracts.rank.connect(signer).claimRankPool(monthId, rank)).wait();
+    toast(`✅ Pool Rank ${rank} reclamado`, 'success');
+    loadEarningsTab();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error'); }
+}
+
+// Claim all rank pools at once
+async function claimAllRankPools() {
+  if (!signer) { toast('Conecta tu wallet', 'error'); return; }
+  try {
+    const monthId = await contracts.core.currentMonthIndex();
+    toast('Reclamando todos los pools de rango…', 'info');
+    await (await contracts.rank.connect(signer).claimRankPools(monthId)).wait();
+    toast('✅ Todos los pools de rango reclamados', 'success');
+    loadEarningsTab();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error'); }
+}
+
+// Claim Top Five for specific month
+async function claimTopFiveMonth(monthId) {
+  if (!signer) { toast('Conecta tu wallet', 'error'); return; }
+  try {
+    toast('Reclamando Top Five mes '+monthId+'…', 'info');
+    await (await contracts.pool.connect(signer).claimTopFive(monthId)).wait();
+    toast('✅ Top Five mes '+monthId+' reclamado', 'success');
+    loadEarningsTab();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error'); }
+}
+
+// Claim everything at once
+async function claimAllPools() {
+  await claimAllRankPools();
+  // Then claim top five for recent months
+  if (!signer) return;
+  try {
+    const monthId = await contracts.core.currentMonthIndex();
+    const months = [monthId, monthId-1n, monthId-2n].filter(m=>m>=0n);
+    for (const m of months) {
+      const clm = await contracts.pool.pendingTopFive(walletAddr, m).catch(()=>0n);
+      if (clm > 0n) {
+        await (await contracts.pool.connect(signer).claimTopFive(m)).wait();
+      }
+    }
+    toast('✅ Todas las ganancias reclamadas', 'success');
+    loadEarningsTab();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// NETWORK TAB V2 — Volumes + Cycles + Directs
+// ═══════════════════════════════════════════════════════════
+
+async function loadNetworkTab(addr) {
+  if (!addr || !contracts.core) return;
+
+  try {
+    // ── Network volumes from RanksModule ──
+    let totalVol = 0n, qualVol = 0n;
+    if (contracts.rank) {
+      [totalVol, qualVol] = await Promise.all([
+        contracts.rank.totalNetworkVolume(addr).catch(()=>0n),
+        contracts.rank.qualifiedNetworkVolume(addr).catch(()=>0n),
+      ]);
+    }
+    document.getElementById('nt-total-vol').textContent = fmt18s(totalVol)+' USDT';
+    document.getElementById('nt-qual-vol').textContent  = fmt18s(qualVol)+' USDT';
+
+    // ── Cycles: completed positions ──
+    const cyclesEl = document.getElementById('nt-cycles-wrap');
+    if (cyclesEl && contracts.slot) {
+      const ids = await contracts.slot.positionsOf(addr).catch(()=>[]);
+      const positions = await Promise.all(
+        ids.map(id => contracts.slot.positions(id).then(p=>parsePosition(id,p)).catch(()=>null))
+      );
+      const completed = positions.filter(p=>p&&p.completed);
+
+      if (completed.length === 0) {
+        cyclesEl.innerHTML = '<div style="color:var(--gray-400);font-size:13px;padding:8px;">Sin ciclos completados aún.</div>';
+      } else {
+        cyclesEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+          ${completed.map(p=>{
+            const amt = Number(ethers.formatUnits(p.slotAmount,18));
+            const cap = Number(ethers.formatUnits(p.capMax,18));
+            return `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:14px;box-shadow:var(--shadow-sm);">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:6px;">Ciclo completado</div>
+              <div style="font-size:18px;font-weight:800;color:var(--green);letter-spacing:-.5px;margin-bottom:4px;">Slot ${p.slotLevel}</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--gray-600);">${amt.toLocaleString()} USDT</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);margin-top:4px;">Cap: ${cap.toLocaleString()} USDT</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">Mejor streak: ${p.bestStreak}d</div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }
+    }
+
+    // ── Directs list ──
+    const dcnt = Number(await contracts.core.directCount(addr).catch(()=>0));
+    document.getElementById('nt-directs').textContent = dcnt;
+    await loadDirectsList(addr, dcnt);
+
+  } catch(e) { console.error('[loadNetworkTab]', e); }
+}
+
 
 </script>
 </html>
