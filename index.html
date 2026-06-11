@@ -2109,7 +2109,7 @@ async function loadUserData(addr){
     let netPts=0n,rank=0,personalVol=0n;
     if(contracts.rank){
       const [npR,rR,pvR]=await Promise.allSettled([
-        contracts.rank.weightedNetworkPoints(addr),
+        contracts.rank.qualifiedNetworkVolume(addr),
         contracts.rank.userRank(addr),
         contracts.rank.personalVolume(addr),
       ]);
@@ -2440,9 +2440,8 @@ async function loadRanksTab(addr){
     const MAX_RANK = 7;
     const configs = await Promise.all(
       Array.from({length:MAX_RANK},(_,i)=>i+1).map(async i=>{
-        // curMonth already loaded above
         const cfg = await contracts.rank.rankConfig(i).catch(()=>null);
-        const claimable = (addr && curMonth)
+        const claimable = (addr && curMonth !== undefined)
           ? await contracts.rank.rankPoolClaimable(curMonth, i, addr).catch(()=>0n)
           : 0n;
         return cfg ? {
@@ -2527,13 +2526,13 @@ async function loadPoolsData(){
     if(badge) badge.innerHTML=`<span class="badge ${fin?'badge-gray':'badge-blue'}">Mes ${monthNum}</span>`;
 
     if(currentUser){
-      const clm=await contracts.pool.leadershipClaimable(monthId,currentUser).catch(()=>0n);
+      const clm=await contracts.pool.pendingTopFive(currentUser,monthId).catch(()=>0n);
       document.getElementById('po-claimable').textContent=fmt18s(clm)+' USDT';
     }
 
     const rows=await Promise.all([0,1,2].map(async off=>{
       const mId=BigInt(Math.max(0,monthNum-off));
-      const [b,f,c]=await Promise.all([contracts.pool.leadershipPoolByMonth(mId).catch(()=>0n),contracts.pool.leadershipFinalized(mId).catch(()=>false),currentUser?contracts.pool.leadershipClaimable(mId,currentUser).catch(()=>0n):Promise.resolve(0n)]);
+      const [b,f,c]=await Promise.all([contracts.pool.leadershipPoolByMonth(mId).catch(()=>0n),contracts.pool.leadershipFinalized(mId).catch(()=>false),currentUser?contracts.pool.pendingTopFive(currentUser,mId).catch(()=>0n):Promise.resolve(0n)]);
       return {mId:Number(mId),b,f,c};
     }));
 
@@ -2559,9 +2558,9 @@ async function claimLeadership(){
 async function claimLeadershipMonth(monthId){
   if(!signer){toast('Conecta tu wallet','error');return;}
   try{
-    toast('Reclamando pool mes '+monthId+'…','info');
-    await (await contracts.pool.connect(signer).claimLeadership(monthId)).wait();
-    toast('✅ Pool reclamado','success');
+    toast('Reclamando Top Five mes '+monthId+'…','info');
+    await (await contracts.pool.connect(signer).claimTopFive(monthId)).wait();
+    toast('✅ Top Five reclamado','success');
     loadPoolsData();
   }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');}
 }
