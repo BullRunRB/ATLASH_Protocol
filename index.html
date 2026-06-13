@@ -883,6 +883,7 @@ footer .brand-mark{background:var(--blue);}
       <button class="dtab on" onclick="goTab('overview')" style="border:none;padding:14px 16px;border-bottom:2px solid var(--blue);color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Overview</button>
       <button class="dtab" onclick="goTab('learn')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Aprender</button>
       <button class="dtab" onclick="goTab('slots')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Slots</button>
+      <button class="dtab" onclick="goTab('commercial')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Comercial</button>
       <button class="dtab" onclick="goTab('earnings')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Ganancias</button>
       <button class="dtab" onclick="goTab('ranks')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Rangos</button>
       <button class="dtab" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
@@ -962,6 +963,7 @@ footer .brand-mark{background:var(--blue);}
     <div class="sidebar-item" id="sb-slots" onclick="closeSidebar();goTab('slots');">
       <div class="si-icon">🎰</div><span class="si-label">Slots</span>
     </div>
+    <div class="sidebar-item" id="sb-commercial" onclick="closeSidebar();goTab('commercial');"><div class="si-icon">🤝</div><span class="si-label">Comercial</span></div>
     <div class="sidebar-item" id="sb-earnings" onclick="closeSidebar();goTab('earnings');"><div class="si-icon">💰</div><span class="si-label">Ganancias</span></div>
     <div class="sidebar-item" id="sb-ranks" onclick="closeSidebar();goTab('ranks');">
       <div class="si-icon">🏆</div><span class="si-label">Rangos</span>
@@ -1283,6 +1285,25 @@ footer .brand-mark{background:var(--blue);}
       <!-- ── OVERVIEW ── -->
       <div class="tpane on" id="tab-overview">
         <div id="user-card-wrap"></div>
+
+        <!-- Commercial role banner — Partner / Master / Root -->
+        <div id="ov-role-strip" style="display:none;margin-bottom:14px;">
+          <div class="panel" style="border-left:4px solid var(--blue);margin-bottom:0;">
+            <div class="panel-body" style="padding:12px 16px;">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div id="ov-role-icon" style="font-size:26px;"></div>
+                <div>
+                  <div id="ov-role-label" style="font-size:15px;font-weight:800;color:var(--gray-900);letter-spacing:-.3px;"></div>
+                  <div id="ov-role-detail" style="font-size:11px;font-family:var(--mono);color:var(--gray-500);margin-top:2px;"></div>
+                </div>
+                <div style="margin-left:auto;">
+                  <button onclick="goTab('commercial')" class="btn-ghost" style="font-size:12px;padding:6px 14px;">Ver detalles comerciales →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="g4">
           <div class="kpi"><div class="kpi-label">Slots activos</div><div class="kpi-value blue" id="ov-slots-active">—</div><div class="kpi-sub">Posiciones abiertas</div></div>
           <div class="kpi"><div class="kpi-label">Principal activo</div><div class="kpi-value" id="ov-principal">—</div><div class="kpi-sub">USDT en slots</div></div>
@@ -1426,6 +1447,89 @@ footer .brand-mark{background:var(--blue);}
         </div>
       </div>
 
+
+
+      <!-- ── COMMERCIAL ── -->
+      <div class="tpane" id="tab-commercial">
+
+        <!-- Role badge header -->
+        <div id="comm-role-header" style="display:none;margin-bottom:16px;">
+          <div class="panel" style="border-left:4px solid var(--blue);">
+            <div class="panel-body" style="padding:14px 18px;">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div id="comm-role-badge"></div>
+                <div>
+                  <div id="comm-role-title" style="font-size:18px;font-weight:800;color:var(--gray-900);"></div>
+                  <div id="comm-role-sub" style="font-size:12px;color:var(--gray-500);font-family:var(--mono);margin-top:2px;"></div>
+                </div>
+                <div style="margin-left:auto;display:flex;gap:8px;">
+                  <button id="btn-claim-partner" class="btn-primary" onclick="claimPartnerRevenue()" style="display:none;padding:9px 20px;font-size:13px;">💰 Cobrar Partner</button>
+                  <button id="btn-claim-master" class="btn-primary" onclick="claimMasterRevenueUser()" style="display:none;padding:9px 20px;font-size:13px;">💰 Cobrar Master</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No commercial role state -->
+        <div id="comm-no-role" style="display:none;">
+          <div class="empty">
+            <div class="empty-icon">🤝</div>
+            <div class="empty-title">Sin rol comercial</div>
+            <div class="empty-desc">Esta wallet no tiene rol de Partner Comercial ni Master activo.</div>
+          </div>
+        </div>
+
+        <!-- PARTNER section -->
+        <div id="comm-partner-section" style="display:none;">
+          <div class="sec"><span class="sec-bar"></span><span class="sec-label">Partner Comercial</span><span class="sec-line"></span></div>
+
+          <div class="g3" style="margin-bottom:16px;">
+            <div class="kpi"><div class="kpi-label">Mi participación</div><div class="kpi-value blue" id="cp-share">—</div><div class="kpi-sub">Del pool 5%</div></div>
+            <div class="kpi"><div class="kpi-label">Pool total partners</div><div class="kpi-value" id="cp-pool-bal">—</div><div class="kpi-sub">En contrato</div></div>
+            <div class="kpi"><div class="kpi-label">Estado</div><div class="kpi-value" id="cp-status">—</div><div class="kpi-sub">CommercialStatus</div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">📊 Estadísticas del pool comercial</div></div>
+            <div class="panel-body" id="cp-stats">
+              <div class="g2">
+                <div class="mem-row"><span class="mem-label">Total asignado histórico</span><span class="mem-val" id="cp-total-alloc">—</span></div>
+                <div class="mem-row"><span class="mem-label">Total reclamado histórico</span><span class="mem-val" id="cp-total-claimed">—</span></div>
+                <div class="mem-row"><span class="mem-label">Fees totales recaudados</span><span class="mem-val" id="cp-total-fees">—</span></div>
+                <div class="mem-row"><span class="mem-label">Razón / notas</span><span class="mem-val" id="cp-reason" style="font-size:11px;"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MASTER section -->
+        <div id="comm-master-section" style="display:none;">
+          <div class="sec" style="margin-top:8px;"><span class="sec-bar"></span><span class="sec-label">Master — Revenue Share</span><span class="sec-line"></span></div>
+
+          <div class="g4" style="margin-bottom:16px;">
+            <div class="kpi"><div class="kpi-label">Vol. org. acumulado</div><div class="kpi-value blue" id="ms-accum-vol">—</div><div class="kpi-sub">USDT generado</div></div>
+            <div class="kpi"><div class="kpi-label">Mi % de fees</div><div class="kpi-value amber" id="ms-share-bp">—</div><div class="kpi-sub">Tier actual</div></div>
+            <div class="kpi"><div class="kpi-label">Pendiente cobrar</div><div class="kpi-value green" id="ms-pending">—</div><div class="kpi-sub">USDT disponible</div></div>
+            <div class="kpi"><div class="kpi-label">Semana actual</div><div class="kpi-value" id="ms-week">—</div><div class="kpi-sub">Índice de semana</div></div>
+          </div>
+
+          <!-- Tier progress -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><div class="panel-title">📈 Progresión de Tier Master</div></div>
+            <div class="panel-body">
+              <div style="display:flex;flex-direction:column;gap:12px;" id="ms-tier-progress"></div>
+            </div>
+          </div>
+
+          <!-- Weekly history -->
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">📅 Últimas 4 semanas</div><button class="btn-outline" onclick="loadCommercialTab(currentUser)" style="padding:5px 12px;font-size:11px;">↻ Actualizar</button></div>
+            <div class="panel-body" id="ms-weekly-table"></div>
+          </div>
+        </div>
+
+      </div>
 
       <!-- ── EARNINGS ── -->
       <div class="tpane" id="tab-earnings">
@@ -1984,12 +2088,12 @@ const DEPLOY_MAINNET = {
 
 const DEPLOY_TESTNET = {
   usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x91DAE5219a5B06f367F364403212C13087A67b71',
-  pool:       '0x60B66674d7663d730092B84fb2447c3e6a86A68e',
-  rank:       '0x49dfE3B312502126c4610423466650168F050151',
-  treasury:   '0x451FBee46DF09Ca4bC2eDC451D78aE38e30660Aa',
-  slot:       '0x1e07181bd9daDb92dFCCe44361eb8d606a0e6677',
-  rewards:    '0x97cFCdC05DBC24f9CbEdeE9e4a777aF33Dd505F8',
+  core:       '0x506B51fD3a874Fc98b5F4eEF6848d609bD6BEEB3',
+  pool:       '0x2971593cf3d3e2CCDC4C297457569FC6F884A383',
+  rank:       '0x52F1C519F46820af79a87d1E15d3e17d3608734d',
+  treasury:   '0xDd5c1801a9D561DffD2C063B44C4774D2eCF0f80',
+  slot:       '0x862a4B85f48a811B20880A4208997369F2b3Ed65',
+  rewards:    '0x11926d1F0e7A785A1aa6c470c446F1A6A28A0fb7',
 };
 
 // Root user (company root wallet)
@@ -2157,6 +2261,30 @@ const ENTERPRISE_ABI = [
   "function closeMasterWeeks(address[], uint256, bytes32) external",
   "function setCore(address) external",
   "function setSlotProgram(address) external",
+  // Partner state (public mappings = auto-getters)
+  "function commercialPartnerShareBP(address) view returns (uint16)",
+  "function commercialPartnerStatus(address) view returns (uint8)",
+  "function commercialPartnerStatusReason(address) view returns (string)",
+  // Master state
+  "function isMaster(address) view returns (bool)",
+  "function masterStatus(address) view returns (uint8)",
+  "function masterStatusReason(address) view returns (string)",
+  "function masterShareBP(address) view returns (uint16)",
+  "function masterAccumulatedOrganizationVolume(address) view returns (uint256)",
+  "function masterPendingClaim(address) view returns (uint256)",
+  "function masterWeeklyVolume(address, uint256) view returns (uint256)",
+  "function masterWeeklyFees(address, uint256) view returns (uint256)",
+  "function masterWeekClosed(address, uint256) view returns (bool)",
+  // Founder state
+  "function founders(uint256) view returns (address)",
+  "function founderSharesBP(uint256) view returns (uint16)",
+  "function pendingFounderRevenue(address) view returns (uint256)",
+  // Totals
+  "function totalFeesCollected() view returns (uint256)",
+  "function totalMasterAllocated() view returns (uint256)",
+  "function totalMasterClaimed() view returns (uint256)",
+  "function totalCommercialPartnerAllocated() view returns (uint256)",
+  "function totalCommercialPartnerClaimed() view returns (uint256)",
   // User write
   "function claimFounderRevenue() external",
   "function claimCommercialPartnerRevenue() external",
@@ -2344,7 +2472,7 @@ function clearLearnProgress() {
 // ── MAIN goTab (merged) ──
 function goTab(name) {
   // Update tab buttons
-  const tabNames = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts','admin'];
+  const tabNames = ['overview','learn','slots','commercial','earnings','ranks','pools','network','treasury','contracts','admin'];
   document.querySelectorAll('.dtab').forEach((b, i) => {
     b.classList.toggle('on', tabNames[i] === name);
     b.style.color = tabNames[i] === name ? 'var(--blue)' : 'var(--gray-500)';
@@ -2356,6 +2484,7 @@ function goTab(name) {
   if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
   if (name === 'admin')     loadAdminTab();
   if (name === 'ranks')     loadRanksTab(currentUser);
+  if (name === 'commercial') loadCommercialTab(currentUser);
   if (name === 'earnings')  loadEarningsTab();
   if (name === 'pools')     loadPoolsData();
   if (name === 'network')   loadNetworkTab(currentUser);
@@ -3885,7 +4014,7 @@ function updateSidebarState() {
 
 // ── Sync sidebar active item with goTab ──
 function updateSidebarActive(name) {
-  const map = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts','admin'];
+  const map = ['overview','learn','slots','commercial','earnings','ranks','pools','network','treasury','contracts','admin'];
   map.forEach(n => {
     const el = document.getElementById('sb-' + n);
     if (el) el.classList.toggle('on', n === name);
@@ -4805,6 +4934,253 @@ async function admRunFullScan() {
 }
 
 // switchAdminTab extension handled inline in original function
+
+
+
+// ═══════════════════════════════════════════════════════════
+// COMMERCIAL TAB — Partner / Master data + Overview badge
+// ═══════════════════════════════════════════════════════════
+
+const COMM_STATUS = ['NONE','ACTIVE','FROZEN','SUSPENDED','TERMINATED'];
+const USER_ROLES  = ['NORMAL','MASTER','COMMERCIAL_PARTNER','ROOT'];
+
+// ── Show role badge in Overview ──
+async function updateOverviewRoleBadge(addr) {
+  const strip = document.getElementById('ov-role-strip');
+  if (!strip || !contracts.core) return;
+
+  try {
+    const info = await contracts.core.userCommercialInfo(addr).catch(()=>null);
+    if (!info) { strip.style.display='none'; return; }
+
+    const role = Number(info[0]);
+    // 0=NORMAL, 1=MASTER, 2=COMMERCIAL_PARTNER, 3=ROOT
+    if (role === 0) { strip.style.display='none'; return; }
+
+    strip.style.display = 'block';
+    const iconEl   = document.getElementById('ov-role-icon');
+    const labelEl  = document.getElementById('ov-role-label');
+    const detailEl = document.getElementById('ov-role-detail');
+
+    if (role === 3) { // ROOT
+      if(iconEl)  iconEl.textContent  = '👑';
+      if(labelEl) labelEl.textContent = 'Root del Protocolo';
+      if(detailEl) detailEl.textContent = 'Wallet raíz — acceso total al protocolo';
+      strip.querySelector('.panel').style.borderLeftColor = 'var(--amber)';
+    } else if (role === 2) { // COMMERCIAL_PARTNER
+      const shareBP = contracts.enterprise
+        ? await contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0)
+        : 0;
+      const status = contracts.enterprise
+        ? await contracts.enterprise.commercialPartnerStatus(addr).catch(()=>0)
+        : 0;
+      if(iconEl)  iconEl.textContent  = '🤝';
+      if(labelEl) labelEl.textContent = 'Partner Comercial';
+      if(detailEl) detailEl.textContent = (Number(shareBP)/100)+'% del pool · Estado: '+COMM_STATUS[Number(status)];
+      strip.querySelector('.panel').style.borderLeftColor = 'var(--blue)';
+    } else if (role === 1) { // MASTER
+      const [vol, shareBP, pending] = await Promise.all([
+        contracts.enterprise ? contracts.enterprise.masterAccumulatedOrganizationVolume(addr).catch(()=>0n) : Promise.resolve(0n),
+        contracts.enterprise ? contracts.enterprise.masterShareBP(addr).catch(()=>0) : Promise.resolve(0),
+        contracts.enterprise ? contracts.enterprise.masterPendingClaim(addr).catch(()=>0n) : Promise.resolve(0n),
+      ]);
+      if(iconEl)  iconEl.textContent  = '⭐';
+      if(labelEl) labelEl.textContent = 'Master';
+      if(detailEl) detailEl.textContent =
+        'Vol. org: '+fmt18s(vol)+' USDT · '+
+        'Tier: '+(Number(shareBP)/100)+'% · '+
+        'Pendiente: '+fmt18s(pending)+' USDT';
+      strip.querySelector('.panel').style.borderLeftColor = 'var(--amber)';
+    }
+  } catch(e) {
+    strip.style.display = 'none';
+    console.error('[updateOverviewRoleBadge]', e);
+  }
+}
+
+// ── Main commercial tab loader ──
+async function loadCommercialTab(addr) {
+  if (!addr) return;
+
+  // Reset sections
+  const roleHeader = document.getElementById('comm-role-header');
+  const noRole     = document.getElementById('comm-no-role');
+  const partSec    = document.getElementById('comm-partner-section');
+  const masterSec  = document.getElementById('comm-master-section');
+  const claimPBtn  = document.getElementById('btn-claim-partner');
+  const claimMBtn  = document.getElementById('btn-claim-master');
+  [roleHeader,noRole,partSec,masterSec].forEach(el=>{if(el)el.style.display='none';});
+  [claimPBtn,claimMBtn].forEach(el=>{if(el)el.style.display='none';});
+
+  if (!contracts.core || !contracts.enterprise) {
+    if(noRole) noRole.style.display='block';
+    return;
+  }
+
+  try {
+    // Get role
+    const info = await contracts.core.userCommercialInfo(addr).catch(()=>null);
+    if (!info) { if(noRole) noRole.style.display='block'; return; }
+
+    const role   = Number(info[0]);
+    const cpAddr = info[1];
+    const mAddr  = info[2];
+    const reason = info[3];
+
+    const isOwn = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
+    const ROLE_ICONS  = {0:'👤',1:'⭐',2:'🤝',3:'👑'};
+    const ROLE_LABELS = {0:'NORMAL',1:'Master',2:'Partner Comercial',3:'Root'};
+
+    if (role === 0) { if(noRole) noRole.style.display='block'; return; }
+
+    // Show role header
+    if (roleHeader) {
+      roleHeader.style.display = 'block';
+      const badge = document.getElementById('comm-role-badge');
+      const title = document.getElementById('comm-role-title');
+      const sub   = document.getElementById('comm-role-sub');
+      if(badge) badge.innerHTML = '<span style="font-size:28px;">'+ROLE_ICONS[role]+'</span>';
+      if(title) title.textContent = ROLE_LABELS[role];
+      if(sub)   sub.textContent   = addr;
+    }
+
+    // ── COMMERCIAL PARTNER ──
+    if (role === 2) {
+      if(partSec) partSec.style.display = 'block';
+
+      const [shareBP, status, statusReason, poolBal, totalAlloc, totalClaimed, totalFees] = await Promise.all([
+        contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0),
+        contracts.enterprise.commercialPartnerStatus(addr).catch(()=>0),
+        contracts.enterprise.commercialPartnerStatusReason(addr).catch(()=>''),
+        contracts.enterprise.commercialPartnerPoolBalance().catch(()=>0n),
+        contracts.enterprise.totalCommercialPartnerAllocated().catch(()=>0n),
+        contracts.enterprise.totalCommercialPartnerClaimed().catch(()=>0n),
+        contracts.enterprise.totalFeesCollected().catch(()=>0n),
+      ]);
+
+      const st = Number(status);
+      const stColor = {0:'var(--gray-400)',1:'var(--green)',2:'var(--amber)',3:'var(--red)',4:'var(--red)'}[st]||'var(--gray-400)';
+
+      setText('cp-share',      (Number(shareBP)/100).toFixed(2)+'%');
+      setText('cp-pool-bal',   fmt18s(poolBal)+' USDT');
+      setText('cp-status',     COMM_STATUS[st]||st);
+      setText('cp-total-alloc',fmt18s(totalAlloc)+' USDT');
+      setText('cp-total-claimed',fmt18s(totalClaimed)+' USDT');
+      setText('cp-total-fees', fmt18s(totalFees)+' USDT');
+      setText('cp-reason',     reason||statusReason||'—');
+
+      const stEl = document.getElementById('cp-status');
+      if(stEl) stEl.style.color = stColor;
+
+      if(isOwn && st===1) {
+        if(claimPBtn) claimPBtn.style.display='block';
+      }
+    }
+
+    // ── MASTER ──
+    if (role === 1) {
+      if(masterSec) masterSec.style.display = 'block';
+
+      const weekId = await contracts.enterprise.currentWeekIndex().catch(()=>0n);
+
+      const [accumVol, shareBP, pending, mStatus] = await Promise.all([
+        contracts.enterprise.masterAccumulatedOrganizationVolume(addr).catch(()=>0n),
+        contracts.enterprise.masterShareBP(addr).catch(()=>0),
+        contracts.enterprise.masterPendingClaim(addr).catch(()=>0n),
+        contracts.enterprise.masterStatus(addr).catch(()=>0),
+      ]);
+
+      setText('ms-accum-vol', fmt18s(accumVol)+' USDT');
+      setText('ms-share-bp',  (Number(shareBP)/100)+'%');
+      setText('ms-pending',   fmt18s(pending)+' USDT');
+      setText('ms-week',      'Semana '+Number(weekId));
+
+      if(isOwn && Number(pending)>0) {
+        if(claimMBtn) claimMBtn.style.display='block';
+      }
+
+      // Tier progress
+      const tierEl = document.getElementById('ms-tier-progress');
+      if(tierEl) {
+        const vol = Number(ethers.formatUnits(accumVol, 18));
+        const TIERS = [
+          {label:'Tier 1 (20%)', threshold:0,      next:10000, color:'var(--gray-300)'},
+          {label:'Tier 2 (30%)', threshold:10000,  next:35000, color:'var(--blue)'},
+          {label:'Tier 3 (40%)', threshold:35000,  next:null,  color:'var(--amber)'},
+        ];
+        tierEl.innerHTML = TIERS.map((t,i)=>{
+          const achieved  = vol >= t.threshold;
+          const isCurrent = !t.next ? vol>=t.threshold : (vol>=t.threshold && vol<t.next);
+          const pct = t.next ? Math.min(100, Math.round((vol-t.threshold)*100/(t.next-t.threshold))) : 100;
+          return `<div style="padding:12px 14px;border-radius:10px;border:1.5px solid ${isCurrent?t.color:'var(--gray-200)'};background:${isCurrent?'var(--blue-bg)':'var(--gray-50)'};">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div style="font-weight:700;font-size:13px;color:${isCurrent?t.color:'var(--gray-500)'};">${t.label} ${isCurrent?'← Actual':''} ${achieved&&!isCurrent?'✓':''}</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">${t.next?('Req: $'+t.threshold.toLocaleString()+' – $'+t.next.toLocaleString()):('Req: $'+t.threshold.toLocaleString()+'+')}</div>
+            </div>
+            <div class="prog"><div class="prog-fill" style="width:${pct}%;background:${t.color};"></div></div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:4px;font-family:var(--mono);">${fmt18s(accumVol)} / ${t.next?(t.next.toLocaleString()+' USDT'):'Máximo alcanzado'}</div>
+          </div>`;
+        }).join('');
+      }
+
+      // Weekly history (last 4 weeks)
+      const weekEl = document.getElementById('ms-weekly-table');
+      if(weekEl) {
+        const rows = await Promise.all(
+          [0,1,2,3].map(async off => {
+            const w = BigInt(Math.max(0, Number(weekId)-off));
+            const [vol, fees, closed] = await Promise.all([
+              contracts.enterprise.masterWeeklyVolume(addr,w).catch(()=>0n),
+              contracts.enterprise.masterWeeklyFees(addr,w).catch(()=>0n),
+              contracts.enterprise.masterWeekClosed(addr,w).catch(()=>false),
+            ]);
+            return {w:Number(w), vol, fees, closed};
+          })
+        );
+        weekEl.innerHTML = `<table class="tbl">
+          <thead><tr><th>Semana</th><th>Vol. org.</th><th>Fees generados</th><th>Estado</th></tr></thead>
+          <tbody>${rows.map(r=>`<tr>
+            <td style="font-family:var(--mono);">W${r.w}</td>
+            <td style="color:var(--blue);font-weight:700;">${fmt18s(r.vol)} USDT</td>
+            <td style="color:var(--amber);font-weight:700;">${fmt18s(r.fees)} USDT</td>
+            <td><span class="badge ${r.closed?'badge-green':'badge-gray'}">${r.closed?'Cerrado':'Abierto'}</span></td>
+          </tr>`).join('')}</tbody>
+        </table>`;
+      }
+    }
+
+  } catch(e) {
+    console.error('[loadCommercialTab]', e);
+    if(noRole) { noRole.style.display='block'; noRole.querySelector('.empty-title').textContent='Error al cargar'; }
+  }
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if(el) el.textContent = val;
+}
+
+async function claimPartnerRevenue() {
+  if(!signer){toast('Conecta wallet','error');return;}
+  try{
+    toast('Reclamando revenue de partner…','info');
+    await(await contracts.enterprise.connect(signer).claimCommercialPartnerRevenue()).wait();
+    toast('✅ Revenue de Partner reclamado','success');
+    loadCommercialTab(walletAddr);
+    updateOverviewRoleBadge(walletAddr);
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function claimMasterRevenueUser() {
+  if(!signer){toast('Conecta wallet','error');return;}
+  try{
+    toast('Reclamando revenue de Master…','info');
+    await(await contracts.enterprise.connect(signer).claimMasterRevenue()).wait();
+    toast('✅ Revenue de Master reclamado','success');
+    loadCommercialTab(walletAddr);
+    updateOverviewRoleBadge(walletAddr);
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
 
 
 </script>
