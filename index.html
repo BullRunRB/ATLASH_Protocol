@@ -1552,6 +1552,9 @@ footer .brand-mark{background:var(--blue);}
           <button class="stab" id="adm-pool-btn"  onclick="switchAdminTab('pool')">Pools</button>
           <button class="stab" id="adm-ent-btn"   onclick="switchAdminTab('ent')">Enterprise</button>
           <button class="stab" id="adm-roles-btn" onclick="switchAdminTab('roles')">Roles</button>
+          <button class="stab" id="adm-reg-btn"   onclick="switchAdminTab('reg')">Registro</button>
+          <button class="stab" id="adm-burn-btn"  onclick="switchAdminTab('burn')">Vol. Burn</button>
+          <button class="stab" id="adm-scan-btn"  onclick="switchAdminTab('scan')">Rank Scan</button>
         </div>
 
         <!-- ── CORE ADMIN ── -->
@@ -1748,6 +1751,156 @@ footer .brand-mark{background:var(--blue);}
           </div>
         </div>
 
+
+        <!-- ── REGISTRO ADMIN ── -->
+        <div id="adm-pane-reg" style="display:none;">
+          <div class="g2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">👤 Registrar usuario admin</div></div>
+              <div class="panel-body">
+                <div class="adm-field"><label class="adm-label">Wallet usuario</label>
+                  <input class="addr-inp" id="adm-reg-user" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">Upline / Patrocinador</label>
+                  <input class="addr-inp" id="adm-reg-upline" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">Rol (0=NORMAL, 1=MASTER, 2=COMMERCIAL_PARTNER)</label>
+                  <select class="addr-inp" id="adm-reg-role" style="max-width:200px;">
+                    <option value="0">0 — NORMAL</option>
+                    <option value="1">1 — MASTER</option>
+                    <option value="2">2 — COMMERCIAL_PARTNER</option>
+                  </select></div>
+                <div class="adm-field"><label class="adm-label">Commercial Partner (si aplica)</label>
+                  <input class="addr-inp" id="adm-reg-cp" placeholder="0x… o dejar vacío"/></div>
+                <div class="adm-field"><label class="adm-label">Razón</label>
+                  <input class="addr-inp" id="adm-reg-reason" placeholder="Admin registration"/></div>
+                <button class="btn-primary" onclick="admRegisterUser()" style="margin-top:8px;">Registrar usuario</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">🎰 Activar slot comercial (sin USDT)</div></div>
+              <div class="panel-body">
+                <div class="alert alert-info"><span>ℹ</span><span>Sin transferencia de USDT. Sin ROI. Solo para bonos comerciales.</span></div>
+                <div class="adm-field"><label class="adm-label">Wallet usuario</label>
+                  <input class="addr-inp" id="adm-cs-user" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">Upline</label>
+                  <input class="addr-inp" id="adm-cs-upline" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">Nivel de slot (1–14)</label>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;" id="adm-cs-chips">
+                    ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(l=>`<button class="chip" id="adm-cs-chip-${l}" onclick="selectAdmSlot(${l})">${l}</button>`).join('')}
+                  </div></div>
+                <div class="adm-field"><label class="adm-label">Rol</label>
+                  <select class="addr-inp" id="adm-cs-role" style="max-width:200px;">
+                    <option value="0">0 — NORMAL</option>
+                    <option value="1">1 — MASTER</option>
+                    <option value="2">2 — COMMERCIAL_PARTNER</option>
+                  </select></div>
+                <div class="adm-field"><label class="adm-label">Commercial Partner</label>
+                  <input class="addr-inp" id="adm-cs-cp" placeholder="0x… o vacío"/></div>
+                <div class="adm-field"><label class="adm-label">Razón</label>
+                  <input class="addr-inp" id="adm-cs-reason" placeholder="Admin commercial activation"/></div>
+                <button class="btn-primary" onclick="admActivateCommercialSlot()" style="margin-top:8px;">Activar slot comercial</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px;">
+            <div class="panel-head"><div class="panel-title">🔄 Estado de cuenta</div></div>
+            <div class="panel-body">
+              <div class="adm-field"><label class="adm-label">Wallet</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-status-addr" placeholder="0x…"/>
+                  <button class="btn-ghost" onclick="admQueryAccountStatus()">Consultar</button></div>
+                <div id="adm-status-result" style="margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--gray-600);"></div>
+              </div>
+              <div class="adm-field"><label class="adm-label">Cambiar estado (0=ACTIVE, 1=FROZEN, 2=SUSPENDED, 3=TERMINATED)</label>
+                <div class="adm-row">
+                  <select class="addr-inp" id="adm-status-val" style="max-width:200px;">
+                    <option value="0">0 — ACTIVE</option>
+                    <option value="1">1 — FROZEN</option>
+                    <option value="2">2 — SUSPENDED</option>
+                    <option value="3">3 — TERMINATED</option>
+                  </select>
+                  <input class="addr-inp" id="adm-status-reason" placeholder="Razón" style="max-width:180px;"/>
+                  <button class="btn-outline" onclick="admSetAccountStatus()">Aplicar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── VOLUME BURN ── -->
+        <div id="adm-pane-burn" style="display:none;">
+          <div class="g2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">🔥 Configuración de quema mensual</div><button class="btn-outline" onclick="loadAdminBurnStatus()" style="padding:5px 12px;font-size:11px;">↻ Cargar</button></div>
+              <div class="panel-body" id="adm-burn-status">
+                <div class="adm-field"><label class="adm-label">% quema mensual actual</label>
+                  <div id="adm-burn-current" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--blue);margin-bottom:8px;">—</div>
+                  <div class="adm-row">
+                    <input class="addr-inp" id="adm-burn-bp" placeholder="BP (ej. 2000 = 20%)" style="max-width:140px;"/>
+                    <button class="btn-ghost" onclick="admSetBurnBP()">Actualizar</button>
+                  </div>
+                  <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Máximo: 5000 BP (50%). Default: 2000 BP (20%).</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">🔥 Quema manual por usuario</div></div>
+              <div class="panel-body">
+                <div class="adm-field"><label class="adm-label">monthId</label>
+                  <input class="addr-inp" id="adm-burn-month" placeholder="monthId"/></div>
+                <div class="adm-field"><label class="adm-label">Wallet usuario</label>
+                  <input class="addr-inp" id="adm-burn-user" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">burnBP (ej. 2000 = 20%)</label>
+                  <input class="addr-inp" id="adm-burn-bp-user" placeholder="2000"/></div>
+                <div class="adm-field"><label class="adm-label">snapshotHash (bytes32)</label>
+                  <input class="addr-inp" id="adm-burn-hash" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">Razón</label>
+                  <input class="addr-inp" id="adm-burn-reason" placeholder="Ajuste manual"/></div>
+                <button class="btn-primary" onclick="admBurnForUser()" style="margin-top:8px;">Quemar volumen</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px;">
+            <div class="panel-head"><div class="panel-title">🔥 Quema por lotes (batch)</div></div>
+            <div class="panel-body">
+              <div class="alert alert-info"><span>ℹ</span><span>Ejecutar al inicio de cada mes, DESPUÉS de cerrar rank pools del mes anterior. Pegar lista de wallets separadas por coma o nueva línea.</span></div>
+              <div class="adm-field"><label class="adm-label">monthId</label>
+                <input class="addr-inp" id="adm-burnb-month" placeholder="monthId del mes anterior"/></div>
+              <div class="adm-field"><label class="adm-label">snapshotHash</label>
+                <input class="addr-inp" id="adm-burnb-hash" placeholder="0x… (mismo para todos los batches)"/></div>
+              <div class="adm-field"><label class="adm-label">Wallets (separadas por coma/línea)</label>
+                <textarea class="addr-inp" id="adm-burnb-users" style="height:80px;resize:vertical;" placeholder="0x..., 0x..., 0x..."></textarea></div>
+              <button class="btn-primary" onclick="admBurnBatch()">Ejecutar quema batch</button>
+              <div id="adm-burn-result" style="margin-top:8px;font-size:12px;color:var(--gray-500);font-family:var(--mono);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── RANK SCAN ── -->
+        <div id="adm-pane-scan" style="display:none;">
+          <div class="alert alert-info" style="margin-bottom:12px;"><span>ℹ</span><span>El Rank Scan lee todos los usuarios on-chain automáticamente. No necesitas enviar lista de candidatos. Procesa en batches hasta que el cursor alcance totalUsers().</span></div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">🔍 Control de Rank Scan</div><button class="btn-outline" onclick="loadAdminScanStatus()" style="padding:5px 12px;font-size:11px;">↻ Estado</button></div>
+            <div class="panel-body">
+              <div class="g2" style="margin-bottom:12px;">
+                <div class="adm-field"><label class="adm-label">monthId</label>
+                  <input class="addr-inp" id="adm-scan-month" placeholder="ej. 3"/></div>
+                <div class="adm-field"><label class="adm-label">Rango (1–7)</label>
+                  <input class="addr-inp" id="adm-scan-rank" placeholder="ej. 1" style="max-width:80px;"/></div>
+              </div>
+              <div id="adm-scan-status" style="margin-bottom:12px;font-family:var(--mono);font-size:12px;color:var(--gray-600);padding:10px;background:var(--gray-50);border-radius:8px;"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn-ghost" onclick="admStartScan()">1. Iniciar scan</button>
+                <button class="btn-ghost" onclick="admRunScanBatch()">2. Procesar batch (50)</button>
+                <button class="btn-primary" onclick="admFinalizeScanned()">3. Finalizar</button>
+              </div>
+              <div style="margin-top:8px;">
+                <button class="btn-outline" style="font-size:11px;padding:6px 14px;" onclick="admRunFullScan()">⚡ Auto-scan completo (todos los batches)</button>
+                <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Ejecuta batches automáticamente hasta completar el scan. Puede tardar varios segundos.</div>
+              </div>
+              <div id="adm-scan-log" style="margin-top:10px;font-size:11px;font-family:var(--mono);color:var(--gray-500);max-height:120px;overflow-y:auto;"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- ── CONTRACTS ── -->
@@ -1831,12 +1984,12 @@ const DEPLOY_MAINNET = {
 
 const DEPLOY_TESTNET = {
   usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x06211C5f3B9CFE492F44568628948B1Fb30E7DcC',
-  pool:       '0x3eb5C5A14890E652808f80f4b3B00077e3D9ECac',
-  rank:       '0x4DE7F22714f0259841EE3B86d11C0C2bAe37621a',
-  treasury:   '0xCf360550Ad10cf9bD5DEac4bA690b4EA2F6C431e',
-  slot:       '0xC870cc665bb28D04ADa1Fe6c7AF689306706b630',
-  rewards:    '0x942e6F24E5710Eb2a7D16b85edF6FF72AB7041dE',
+  core:       '0x506B51fD3a874Fc98b5F4eEF6848d609bD6BEEB3',
+  pool:       '0x2971593cf3d3e2CCDC4C297457569FC6F884A383',
+  rank:       '0x52F1C519F46820af79a87d1E15d3e17d3608734d',
+  treasury:   '0xDd5c1801a9D561DffD2C063B44C4774D2eCF0f80',
+  slot:       '0x862a4B85f48a811B20880A4208997369F2b3Ed65',
+  rewards:    '0x11926d1F0e7A785A1aa6c470c446F1A6A28A0fb7',
 };
 
 // Root user (company root wallet)
@@ -1873,7 +2026,11 @@ const CORE_ABI = [
   "function setCommercialPartnerRole(address, string) external",
   "function setMasterRole(address, address, string) external",
   "function clearSpecialRole(address, string) external",
-  "function setCommercialLineage(address, address, address, string) external"
+  "function setCommercialLineage(address, address, address, string) external",
+  // V16.4 new
+  "function adminRegisterUser(address user, address upline, uint8 role, address commercialPartner, string reason) external",
+  "function setUserAccountStatus(address user, uint8 status, string reason) external",
+  "function accountStatusOf(address) view returns (uint8)"
 ];
 
 const SLOT_ABI = [
@@ -1905,7 +2062,10 @@ const SLOT_ABI = [
   "function setDailyRateForDay(uint32, uint16) external",
   "function forceMaxRateForDay(uint32) external",
   "function clearManualDailyRate(uint32) external",
-  "function setForcedMaxRatePolicy(uint8, uint32) external"
+  "function setForcedMaxRatePolicy(uint8, uint32) external",
+  // V16.4: admin commercial activation
+  "function adminActivateCommercialSlot(address user, address upline, uint8 level, uint8 role, address commercialPartner, string reason) external returns (uint256)",
+  "function adminActivateCommercialSlots(address user, address upline, uint8[] levels, uint8 role, address commercialPartner, string reason) external returns (uint256[])"
 ];
 
 const RANK_ABI = [
@@ -1926,7 +2086,20 @@ const RANK_ABI = [
   "function claimSelectedRankPools(uint256, uint8[]) external",
   // Admin
   "function setRankConfig(uint8 rank, uint256 qualifiedVolumeRequired, uint8 minSlotLevel, bool enabled) external",
-  "function finalizeRankPoolMonth(uint256 monthId, uint8 rank, address[] calldata qualifiedUsers, bytes32 snapshotHash) external",
+  "function finalizeRankPoolMonth(uint256, uint8, address[], bytes32) external",
+  // V16.4: on-chain scan (no candidate list needed)
+  "function startRankPoolScan(uint256 monthId, uint8 rank, bytes32 snapshotHash) external",
+  "function scanRankPoolCandidatesBatch(uint256 monthId, uint8 rank, uint256 maxItems) external",
+  "function finalizeScannedRankPoolMonth(uint256 monthId, uint8 rank) external",
+  "function rankPoolScanCursor(uint256, uint8) view returns (uint256)",
+  "function scannedRankPoolCandidateCount(uint256, uint8) view returns (uint256)",
+  "function rankPoolScanStarted(uint256, uint8) view returns (bool)",
+  "function rankPoolSnapshotHash(uint256, uint8) view returns (bytes32)",
+  // V16.4: volume burn
+  "function monthlyVolumeBurnBP() view returns (uint16)",
+  "function setMonthlyVolumeBurnBP(uint16) external",
+  "function burnQualifiedVolumeForUser(uint256 monthId, address user, uint16 burnBP, bytes32 snapshotHash, string reason) external",
+  "function burnQualifiedVolumeBatch(uint256 monthId, address[] users, bytes32 snapshotHash) external"
 ];
 
 const POOL_ABI = [
@@ -3935,7 +4108,7 @@ async function loadNetworkTab(addr) {
 // ═══════════════════════════════════════════════════════════
 
 function switchAdminTab(name) {
-  ['core','slot','rank','pool','ent','roles'].forEach(t => {
+  ['core','slot','rank','pool','ent','roles','reg','burn','scan'].forEach(t => {
     const p = document.getElementById('adm-pane-'+t);
     const b = document.getElementById('adm-'+t+'-btn');
     if(p) p.style.display = t===name ? 'block' : 'none';
@@ -3945,6 +4118,8 @@ function switchAdminTab(name) {
   if (name === 'ent')  loadAdminEnterprise();
   if (name === 'rank') loadAdminRankConfig();
   if (name === 'core') loadAdminCoreStatus();
+  if (name === 'burn') loadAdminBurnStatus();
+  if (name === 'scan') loadAdminScanStatus();
 }
 
 async function loadAdminTab() {
@@ -4389,6 +4564,247 @@ async function admSetLineage() {
     toast('✅ Lineage comercial actualizado', 'success');
   } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
 }
+
+
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN V16.4 — Register, Commercial Slot, Status, Burn, Scan
+// ═══════════════════════════════════════════════════════════
+
+// ── REGISTER ──
+let admSelectedSlotLevel = 0;
+function selectAdmSlot(level) {
+  admSelectedSlotLevel = level;
+  for(let l=1;l<=14;l++){
+    const el=document.getElementById('adm-cs-chip-'+l);
+    if(el) el.className='chip'+(l===level?' sel':'');
+  }
+}
+
+async function admRegisterUser() {
+  const user   = document.getElementById('adm-reg-user')?.value?.trim();
+  const upline = document.getElementById('adm-reg-upline')?.value?.trim();
+  const role   = parseInt(document.getElementById('adm-reg-role')?.value||'0');
+  const cp     = document.getElementById('adm-reg-cp')?.value?.trim()||ethers.ZeroAddress;
+  const reason = document.getElementById('adm-reg-reason')?.value?.trim()||'Admin registration';
+  if(!user||!/^0x[0-9a-fA-F]{40}$/.test(user)){toast('Wallet usuario inválida','error');return;}
+  if(!upline||!/^0x[0-9a-fA-F]{40}$/.test(upline)){toast('Upline inválido','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    toast('Registrando usuario…','info');
+    await(await contracts.core.connect(signer).adminRegisterUser(user,upline,role,cp,reason)).wait();
+    toast('✅ Usuario registrado','success');
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admActivateCommercialSlot() {
+  const user   = document.getElementById('adm-cs-user')?.value?.trim();
+  const upline = document.getElementById('adm-cs-upline')?.value?.trim();
+  const role   = parseInt(document.getElementById('adm-cs-role')?.value||'0');
+  const cp     = document.getElementById('adm-cs-cp')?.value?.trim()||ethers.ZeroAddress;
+  const reason = document.getElementById('adm-cs-reason')?.value?.trim()||'Admin commercial activation';
+  if(!user||!/^0x[0-9a-fA-F]{40}$/.test(user)){toast('Wallet inválida','error');return;}
+  if(!admSelectedSlotLevel){toast('Selecciona un nivel de slot','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    toast('Activando slot comercial nivel '+admSelectedSlotLevel+'…','info');
+    await(await contracts.slot.connect(signer).adminActivateCommercialSlot(user,upline,admSelectedSlotLevel,role,cp,reason)).wait();
+    toast('✅ Slot comercial nivel '+admSelectedSlotLevel+' activado','success');
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admQueryAccountStatus() {
+  const addr = document.getElementById('adm-status-addr')?.value?.trim();
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  const el = document.getElementById('adm-status-result');
+  if(!el) return;
+  try{
+    const STATUS=['ACTIVE','FROZEN','SUSPENDED','TERMINATED'];
+    const st = await contracts.core.accountStatusOf(addr).catch(()=>null);
+    el.textContent = st!==null ? 'Estado: '+STATUS[Number(st)] : 'Sin datos';
+  }catch(e){el.textContent='Error: '+e.message;}
+}
+
+async function admSetAccountStatus() {
+  const addr   = document.getElementById('adm-status-addr')?.value?.trim();
+  const status = parseInt(document.getElementById('adm-status-val')?.value||'0');
+  const reason = document.getElementById('adm-status-reason')?.value?.trim()||'Admin status change';
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  const LABELS=['ACTIVE','FROZEN','SUSPENDED','TERMINATED'];
+  try{
+    await(await contracts.core.connect(signer).setUserAccountStatus(addr,status,reason)).wait();
+    toast('✅ Estado → '+LABELS[status],'success');
+    admQueryAccountStatus();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+// ── VOLUME BURN ──
+async function loadAdminBurnStatus() {
+  const el = document.getElementById('adm-burn-current');
+  if(!contracts.rank||!el) return;
+  try{
+    const bp = await contracts.rank.monthlyVolumeBurnBP().catch(()=>2000);
+    el.textContent = bp+' BP = '+(Number(bp)/100)+'%';
+    const inp = document.getElementById('adm-burn-bp');
+    if(inp&&!inp.value) inp.value = bp;
+  }catch(e){}
+}
+
+async function admSetBurnBP() {
+  const bp = parseInt(document.getElementById('adm-burn-bp')?.value||'0');
+  if(!bp||bp<1||bp>5000){toast('BP inválido (1–5000)','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    await(await contracts.rank.connect(signer).setMonthlyVolumeBurnBP(bp)).wait();
+    toast('✅ Volume Burn BP → '+bp+' ('+(bp/100)+'%)','success');
+    loadAdminBurnStatus();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admBurnForUser() {
+  const monthId= document.getElementById('adm-burn-month')?.value?.trim();
+  const user   = document.getElementById('adm-burn-user')?.value?.trim();
+  const bp     = parseInt(document.getElementById('adm-burn-bp-user')?.value||'0');
+  const hash   = document.getElementById('adm-burn-hash')?.value?.trim();
+  const reason = document.getElementById('adm-burn-reason')?.value?.trim()||'Manual burn';
+  if(!monthId||!user||!bp||!hash){toast('Todos los campos son requeridos','error');return;}
+  if(!/^0x[0-9a-fA-F]{64}$/.test(hash)){toast('snapshotHash debe ser bytes32 (0x…64 chars)','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    toast('Quemando volumen de '+user.slice(0,8)+'…','info');
+    await(await contracts.rank.connect(signer).burnQualifiedVolumeForUser(monthId,user,bp,hash,reason)).wait();
+    toast('✅ Volumen quemado','success');
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admBurnBatch() {
+  const monthId= document.getElementById('adm-burnb-month')?.value?.trim();
+  const hash   = document.getElementById('adm-burnb-hash')?.value?.trim();
+  const rawList= document.getElementById('adm-burnb-users')?.value?.trim();
+  const logEl  = document.getElementById('adm-burn-result');
+  if(!monthId||!hash||!rawList){toast('Todos los campos requeridos','error');return;}
+  if(!/^0x[0-9a-fA-F]{64}$/.test(hash)){toast('snapshotHash inválido','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  const users = rawList.split(/[\s,]+/).map(a=>a.trim()).filter(a=>/^0x[0-9a-fA-F]{40}$/.test(a));
+  if(!users.length){toast('Sin wallets válidas','error');return;}
+  if(logEl) logEl.textContent = 'Enviando '+users.length+' usuarios…';
+  try{
+    const tx = await contracts.rank.connect(signer).burnQualifiedVolumeBatch(monthId,users,hash);
+    await tx.wait();
+    toast('✅ Batch quemado: '+users.length+' usuarios','success');
+    if(logEl) logEl.textContent = '✅ Done: '+users.length+' usuarios · tx: '+tx.hash.slice(0,18)+'…';
+  }catch(e){
+    toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');
+    if(logEl) logEl.textContent = 'Error: '+(e?.reason||e?.message||'');
+  }
+}
+
+// ── RANK SCAN ──
+async function loadAdminScanStatus() {
+  const monthId= document.getElementById('adm-scan-month')?.value?.trim();
+  const rank   = parseInt(document.getElementById('adm-scan-rank')?.value||'0');
+  const el     = document.getElementById('adm-scan-status');
+  if(!el||!contracts.rank) return;
+  if(!monthId||!rank){el.textContent='Ingresa monthId y rango primero';return;}
+  try{
+    const [started,cursor,count,total,finalized] = await Promise.all([
+      contracts.rank.rankPoolScanStarted(monthId,rank).catch(()=>false),
+      contracts.rank.rankPoolScanCursor(monthId,rank).catch(()=>0n),
+      contracts.rank.scannedRankPoolCandidateCount(monthId,rank).catch(()=>0n),
+      contracts.core.totalUsers().catch(()=>0n),
+      contracts.rank.rankPoolFinalized(monthId,rank).catch(()=>false),
+    ]);
+    el.innerHTML = `Mes ${monthId} · Rank ${rank}<br>`+
+      `Scan iniciado: ${started?'✅ Sí':'❌ No'}<br>`+
+      `Cursor: ${Number(cursor)} / ${Number(total)} usuarios<br>`+
+      `Candidatos calificados: ${Number(count)}<br>`+
+      `Estado: ${finalized?'✅ FINALIZADO':'⏳ Pendiente'}`;
+  }catch(e){el.textContent='Error: '+e.message;}
+}
+
+async function admStartScan() {
+  const monthId= document.getElementById('adm-scan-month')?.value?.trim();
+  const rank   = parseInt(document.getElementById('adm-scan-rank')?.value||'0');
+  if(!monthId||!rank){toast('monthId y rango requeridos','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  const snap = ethers.keccak256(ethers.toUtf8Bytes('scan-'+monthId+'-rank-'+rank+'-'+Date.now()));
+  try{
+    toast('Iniciando scan mes '+monthId+' rank '+rank+'…','info');
+    await(await contracts.rank.connect(signer).startRankPoolScan(monthId,rank,snap)).wait();
+    toast('✅ Scan iniciado','success');
+    loadAdminScanStatus();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admRunScanBatch() {
+  const monthId= document.getElementById('adm-scan-month')?.value?.trim();
+  const rank   = parseInt(document.getElementById('adm-scan-rank')?.value||'0');
+  if(!monthId||!rank){toast('monthId y rango requeridos','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  const logEl = document.getElementById('adm-scan-log');
+  try{
+    toast('Procesando batch…','info');
+    await(await contracts.rank.connect(signer).scanRankPoolCandidatesBatch(monthId,rank,50)).wait();
+    toast('✅ Batch procesado','success');
+    loadAdminScanStatus();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admFinalizeScanned() {
+  const monthId= document.getElementById('adm-scan-month')?.value?.trim();
+  const rank   = parseInt(document.getElementById('adm-scan-rank')?.value||'0');
+  if(!monthId||!rank){toast('monthId y rango requeridos','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    toast('Finalizando scan…','info');
+    await(await contracts.rank.connect(signer).finalizeScannedRankPoolMonth(monthId,rank)).wait();
+    toast('✅ Rank '+rank+' mes '+monthId+' finalizado','success');
+    loadAdminScanStatus();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admRunFullScan() {
+  const monthId= document.getElementById('adm-scan-month')?.value?.trim();
+  const rank   = parseInt(document.getElementById('adm-scan-rank')?.value||'0');
+  if(!monthId||!rank){toast('monthId y rango requeridos','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  const logEl  = document.getElementById('adm-scan-log');
+  const addLog = msg => { if(logEl){logEl.innerHTML+='<div>'+msg+'</div>'; logEl.scrollTop=logEl.scrollHeight;} };
+  try{
+    // 1. Check if scan started
+    const started = await contracts.rank.rankPoolScanStarted(monthId,rank).catch(()=>false);
+    if(!started){
+      addLog('Iniciando scan…');
+      const snap = ethers.keccak256(ethers.toUtf8Bytes('scan-'+monthId+'-rank-'+rank+'-'+Date.now()));
+      await(await contracts.rank.connect(signer).startRankPoolScan(monthId,rank,snap)).wait();
+      addLog('✅ Scan iniciado');
+    }
+    // 2. Loop batches until cursor == totalUsers
+    let iterations = 0;
+    while(iterations < 100){
+      const [cursor, total] = await Promise.all([
+        contracts.rank.rankPoolScanCursor(monthId,rank),
+        contracts.core.totalUsers(),
+      ]);
+      if(cursor >= total){ addLog('Scan completo — '+Number(total)+' usuarios procesados'); break; }
+      addLog('Procesando '+(Number(cursor))+'/'+Number(total)+'…');
+      await(await contracts.rank.connect(signer).scanRankPoolCandidatesBatch(monthId,rank,50)).wait();
+      iterations++;
+    }
+    // 3. Finalize
+    addLog('Finalizando…');
+    await(await contracts.rank.connect(signer).finalizeScannedRankPoolMonth(monthId,rank)).wait();
+    toast('✅ Rank '+rank+' mes '+monthId+' completado','success');
+    addLog('✅ FINALIZADO');
+    loadAdminScanStatus();
+  }catch(e){
+    toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');
+    addLog('Error: '+(e?.reason||e?.message||''));
+  }
+}
+
+// switchAdminTab extension handled inline in original function
 
 
 </script>
