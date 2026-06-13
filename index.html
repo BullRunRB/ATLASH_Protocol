@@ -849,6 +849,13 @@ footer .brand-mark{background:var(--blue);}
   .slots-grid { grid-template-columns: 1fr 1fr; }
   .ranks-cards { grid-template-columns: 1fr; }
 }
+
+/* ── ADMIN TAB ── */
+.adm-field { margin-bottom:14px; }
+.adm-label { display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);margin-bottom:6px; }
+.adm-row { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+.adm-row .addr-inp { flex:1;min-width:0; }
+.sep { height:1px;background:var(--gray-100);margin:16px 0; }
 </style>
 </head>
 <body>
@@ -882,6 +889,7 @@ footer .brand-mark{background:var(--blue);}
       <button class="dtab" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
       <button class="dtab" onclick="goTab('treasury')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
       <button class="dtab" id="tab-contracts-btn" onclick="goTab('contracts')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Contratos</button>
+      <button class="dtab" id="tab-admin-btn" onclick="goTab('admin')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">⚙ Admin</button>
     </div>
   </div>
 
@@ -967,6 +975,7 @@ footer .brand-mark{background:var(--blue);}
     <div class="sidebar-item" id="sb-treasury" onclick="closeSidebar();goTab('treasury');">
       <div class="si-icon">💼</div><span class="si-label">Tesorería</span>
     </div>
+    <div class="sidebar-item" id="sb-admin" onclick="closeSidebar();goTab('admin');" style="display:none;"><div class="si-icon">⚙</div><span class="si-label">Admin</span><span class="si-badge">Owner</span></div>
     <div class="sidebar-item" id="sb-contracts" onclick="closeSidebar();goTab('contracts');" style="display:none;">
       <div class="si-icon">📄</div><span class="si-label">Contratos</span><span class="si-badge">Owner</span>
     </div>
@@ -990,7 +999,7 @@ footer .brand-mark{background:var(--blue);}
     <div>
       <div class="hero-eyebrow">
         <div class="hero-eyebrow-dot"></div>
-        Protocolo DeFi en BSC · 0.3% – 1.3% diario
+        Protocolo DeFi en BSC · 0.5% – 1.3% diario
       </div>
       <h1 class="hero-h1">Aprende.<br/>Invierte.<br/><span>Crece.</span></h1>
       <p class="hero-desc">ATLASH LearnEarn es un protocolo de inversión descentralizado sobre Binance Smart Chain. Compra Slots, gana rendimiento diario dinámico, construye tu red y desbloquea bonos de liderazgo.</p>
@@ -1048,7 +1057,7 @@ footer .brand-mark{background:var(--blue);}
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-h">Sincroniza y cobra</div>
-        <div class="step-desc">Haz Sync diario para cobrar tu ROI (0.3%–1.3% dinámico). Mantén tu streak para desbloquear boosts adicionales de hasta +20%. El cap es 200% del slot.</div>
+        <div class="step-desc">Haz Sync diario para cobrar tu ROI (0.5%–1.3% dinámico). Mantén tu streak para desbloquear boosts adicionales de hasta +20%. El cap es 200% del slot.</div>
       </div>
     </div>
   </div>
@@ -1061,14 +1070,14 @@ footer .brand-mark{background:var(--blue);}
       <h2 class="section-h2">14 valores, mismas reglas</h2>
       <p class="section-desc" style="color:var(--gray-500);">Cada slot genera entre 0.5% y 0.8% diario. Hasta 5 slots del mismo valor por usuario. El cap es siempre 200%.</p>
       <div class="slots-grid">
-        <div class="slot-item"><div class="slot-amount">$10</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $20</div></div>
-        <div class="slot-item"><div class="slot-amount">$20</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $40</div></div>
-        <div class="slot-item"><div class="slot-amount">$40</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $80</div></div>
-        <div class="slot-item featured"><div class="slot-amount">$80</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $160</div></div>
-        <div class="slot-item featured"><div class="slot-amount">$160</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $320</div></div>
-        <div class="slot-item featured"><div class="slot-amount">$320</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $640</div></div>
-        <div class="slot-item"><div class="slot-amount">$640</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $1,280</div></div>
-        <div class="slot-item"><div class="slot-amount">$1,280</div><div class="slot-roi">0.3% – 1.3% diario</div><div class="slot-cap">Cap: $2,560</div></div>
+        <div class="slot-item"><div class="slot-amount">$10</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $20</div></div>
+        <div class="slot-item"><div class="slot-amount">$20</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $40</div></div>
+        <div class="slot-item"><div class="slot-amount">$40</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $80</div></div>
+        <div class="slot-item featured"><div class="slot-amount">$80</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $160</div></div>
+        <div class="slot-item featured"><div class="slot-amount">$160</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $320</div></div>
+        <div class="slot-item featured"><div class="slot-amount">$320</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $640</div></div>
+        <div class="slot-item"><div class="slot-amount">$640</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $1,280</div></div>
+        <div class="slot-item"><div class="slot-amount">$1,280</div><div class="slot-roi">0.5% – 1.3% diario</div><div class="slot-cap">Cap: $2,560</div></div>
       </div>
       <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--gray-400);">+ 6 valores más hasta $81,920 USDT disponibles en el dashboard</p>
     </div>
@@ -1397,7 +1406,7 @@ footer .brand-mark{background:var(--blue);}
       <div class="tpane" id="tab-slots">
         <div class="g3">
           <div class="kpi"><div class="kpi-label">Principal activo (protocolo)</div><div class="kpi-value blue" id="sl-total-principal">—</div><div class="kpi-sub">USDT en slots activos</div></div>
-          <div class="kpi"><div class="kpi-label">Tasa diaria actual</div><div class="kpi-value amber" id="sl-daily-rate">—</div><div class="kpi-sub">Dinámica 0.3% – 1.3%</div></div>
+          <div class="kpi"><div class="kpi-label">Tasa diaria actual</div><div class="kpi-value amber" id="sl-daily-rate">—</div><div class="kpi-sub">Dinámica 0.5% – 1.3%</div></div>
           <div class="kpi"><div class="kpi-label">Liquidez de rewards</div><div class="kpi-value green" id="sl-liquidity">—</div><div class="kpi-sub">RewardTreasury disponible</div></div>
         </div>
         <div class="sec"><span class="sec-bar"></span><span class="sec-label">Mis posiciones</span><span class="sec-line"></span></div>
@@ -1526,6 +1535,221 @@ footer .brand-mark{background:var(--blue);}
         </div>
       </div>
 
+
+      <!-- ── ADMIN ── -->
+      <div class="tpane" id="tab-admin">
+
+        <div class="alert alert-info" style="margin-bottom:16px;">
+          <span>⚙</span>
+          <span>Panel administrativo — solo visible para owner/guardian. Los cambios se ejecutan on-chain y requieren firma de wallet.</span>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+          <button class="stab on" id="adm-core-btn"  onclick="switchAdminTab('core')">Core</button>
+          <button class="stab" id="adm-slot-btn"  onclick="switchAdminTab('slot')">Slots / Rate</button>
+          <button class="stab" id="adm-rank-btn"  onclick="switchAdminTab('rank')">Rangos</button>
+          <button class="stab" id="adm-pool-btn"  onclick="switchAdminTab('pool')">Pools</button>
+          <button class="stab" id="adm-ent-btn"   onclick="switchAdminTab('ent')">Enterprise</button>
+          <button class="stab" id="adm-roles-btn" onclick="switchAdminTab('roles')">Roles</button>
+        </div>
+
+        <!-- ── CORE ADMIN ── -->
+        <div id="adm-pane-core">
+          <div class="g2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">⏸ Estado del protocolo</div></div>
+              <div class="panel-body" id="adm-core-status"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">⚙ Configuración Core</div></div>
+              <div class="panel-body">
+                <div class="adm-field"><label class="adm-label">Guardian</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-guardian-inp" placeholder="0x…"/><button class="btn-ghost" onclick="admSetGuardian()">Actualizar</button></div></div>
+                <div class="adm-field"><label class="adm-label">Company Root</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-root-inp" placeholder="0x…"/><button class="btn-ghost" onclick="admSetCompanyRoot()">Actualizar</button></div></div>
+                <div class="adm-field"><label class="adm-label">Auto Volume Depth</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-depth-inp" placeholder="20" style="max-width:80px;"/><button class="btn-ghost" onclick="admSetDepth()">Actualizar</button></div></div>
+                <div class="sep"></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="btn-outline" onclick="admTogglePause('core')">⏸ Toggle Paused Core</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">🔧 Freeze usuario</div></div>
+            <div class="panel-body">
+              <div class="adm-row">
+                <input class="addr-inp" id="adm-freeze-addr" placeholder="0x… dirección a freeze/unfreeze" style="flex:1;"/>
+                <button class="btn-outline" onclick="admFreeze(true)">❄ Freeze</button>
+                <button class="btn-ghost" onclick="admFreeze(false)">▶ Unfreeze</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SLOT / RATE ADMIN ── -->
+        <div id="adm-pane-slot" style="display:none;">
+          <div class="g2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">📊 Estado actual</div></div>
+              <div class="panel-body" id="adm-slot-status"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">⏸ Pausas</div></div>
+              <div class="panel-body">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <button class="btn-outline" onclick="admTogglePause('buy')">Toggle buyPaused</button>
+                  <button class="btn-outline" onclick="admTogglePause('sync')">Toggle syncPaused</button>
+                  <button class="btn-outline" onclick="admTogglePause('slot')">Toggle paused (global)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">📈 Tasa diaria (Daily Rate Snapshot)</div></div>
+            <div class="panel-body">
+              <div class="adm-field"><label class="adm-label">Rango dinámico (BP) — min / max</label>
+                <div class="adm-row">
+                  <input class="addr-inp" id="adm-rate-min" placeholder="50 (0.5%)" style="max-width:100px;"/>
+                  <input class="addr-inp" id="adm-rate-max" placeholder="130 (1.3%)" style="max-width:100px;"/>
+                  <button class="btn-ghost" onclick="admSetRateBounds()">Aplicar</button>
+                </div>
+              </div>
+              <div class="adm-field"><label class="adm-label">Setear tasa manual para día específico</label>
+                <div class="adm-row">
+                  <input class="addr-inp" id="adm-day-id" placeholder="dayId (ej. hoy)" style="max-width:110px;"/>
+                  <input class="addr-inp" id="adm-day-rate" placeholder="rateBP (50-130)" style="max-width:110px;"/>
+                  <button class="btn-ghost" onclick="admSetDayRate()">Setear</button>
+                  <button class="btn-outline" onclick="admClearDayRate()">Limpiar</button>
+                </div>
+                <div style="margin-top:6px;"><button class="btn-ghost" onclick="admForceMaxToday()">⚡ Forzar tasa máxima HOY</button></div>
+              </div>
+              <div class="adm-field"><label class="adm-label">Política de días forzados (maxDaysPerMonthKey / minSpacingDays)</label>
+                <div class="adm-row">
+                  <input class="addr-inp" id="adm-policy-max" placeholder="4" style="max-width:80px;"/>
+                  <input class="addr-inp" id="adm-policy-spacing" placeholder="7" style="max-width:80px;"/>
+                  <button class="btn-ghost" onclick="admSetRatePolicy()">Aplicar política</button>
+                </div>
+              </div>
+              <div id="adm-today-rate" style="margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--gray-500);"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── RANK ADMIN ── -->
+        <div id="adm-pane-rank" style="display:none;">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">🏆 Configuración de Rangos (R1–R7)</div><button class="btn-outline" onclick="loadAdminRankConfig()" style="padding:5px 12px;font-size:11px;">↻ Cargar</button></div>
+            <div class="panel-body" id="adm-rank-config"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">✏ Editar configuración de rango</div></div>
+            <div class="panel-body">
+              <div class="adm-field"><label class="adm-label">Rango (1–7)</label>
+                <input class="addr-inp" id="adm-rk-rank" placeholder="1" style="max-width:60px;"/></div>
+              <div class="adm-field"><label class="adm-label">Vol. red calificado requerido (USDT)</label>
+                <input class="addr-inp" id="adm-rk-vol" placeholder="ej. 5000"/></div>
+              <div class="adm-field"><label class="adm-label">Nivel de slot mínimo (1–14)</label>
+                <input class="addr-inp" id="adm-rk-slot" placeholder="ej. 3"/></div>
+              <div class="adm-field"><label class="adm-label">Enabled</label>
+                <select id="adm-rk-enabled" class="addr-inp" style="max-width:100px;"><option value="true">Sí</option><option value="false">No</option></select></div>
+              <button class="btn-primary" onclick="admSetRankConfig()" style="margin-top:12px;">Guardar configuración</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── POOL ADMIN ── -->
+        <div id="adm-pane-pool" style="display:none;">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">🏊 Configuración de Pools</div></div>
+            <div class="panel-body">
+              <div class="adm-field"><label class="adm-label">Vol. mínimo mensual Top Five (USDT)</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-pool-topfive-min" placeholder="ej. 1000"/><button class="btn-ghost" onclick="admSetMinTopFive()">Aplicar</button></div></div>
+              <div class="adm-field"><label class="adm-label">Vol. mínimo mensual Liderazgo (USDT)</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-pool-lead-min" placeholder="ej. 5000"/><button class="btn-ghost" onclick="admSetMinLeadership()">Aplicar</button></div></div>
+              <div class="sep"></div>
+              <div class="adm-field"><label class="adm-label">Finalizar Top Five mes (monthId)</label>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <input class="addr-inp" id="adm-tf-month" placeholder="monthId"/>
+                  <input class="addr-inp" id="adm-tf-1" placeholder="Líder #1 0x…"/>
+                  <input class="addr-inp" id="adm-tf-2" placeholder="Líder #2 0x…"/>
+                  <input class="addr-inp" id="adm-tf-3" placeholder="Líder #3 0x…"/>
+                  <input class="addr-inp" id="adm-tf-4" placeholder="Líder #4 0x…"/>
+                  <input class="addr-inp" id="adm-tf-5" placeholder="Líder #5 0x…"/>
+                  <button class="btn-primary" onclick="admFinalizeTopFive()">Finalizar Top Five</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ENTERPRISE ADMIN ── -->
+        <div id="adm-pane-ent" style="display:none;">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">💼 Estado Enterprise</div><button class="btn-outline" onclick="loadAdminEnterprise()" style="padding:5px 12px;font-size:11px;">↻ Cargar</button></div>
+            <div class="panel-body" id="adm-ent-status"></div>
+          </div>
+          <div class="g2">
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">💰 Retiros</div></div>
+              <div class="panel-body">
+                <div class="adm-field"><label class="adm-label">Retirar Operaciones → dirección</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-ent-withdraw-addr" placeholder="0x…"/><input class="addr-inp" id="adm-ent-withdraw-amt" placeholder="USDT" style="max-width:100px;"/><button class="btn-ghost" onclick="admWithdrawOps()">Retirar</button></div></div>
+                <div class="adm-field"><label class="adm-label">Retirar Reserva Corporativa → dirección</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-corp-withdraw-addr" placeholder="0x…"/><input class="addr-inp" id="adm-corp-withdraw-amt" placeholder="USDT" style="max-width:100px;"/><button class="btn-ghost" onclick="admWithdrawCorp()">Retirar</button></div></div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head"><div class="panel-title">👥 Masters</div></div>
+              <div class="panel-body">
+                <div class="adm-field"><label class="adm-label">Registrar Master</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-master-addr" placeholder="0x…"/><button class="btn-ghost" onclick="admRegisterMaster()">Registrar</button></div></div>
+                <div class="adm-field"><label class="adm-label">Cerrar semana Masters (weekId)</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-week-id" placeholder="weekId"/><button class="btn-ghost" onclick="admCloseMasterWeek()">Cerrar semana</button></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ROLES ADMIN ── -->
+        <div id="adm-pane-roles" style="display:none;">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">🎭 Roles comerciales</div></div>
+            <div class="panel-body">
+              <div class="adm-field"><label class="adm-label">Consultar info comercial de usuario</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-role-query-addr" placeholder="0x…"/><button class="btn-ghost" onclick="admQueryRole()">Consultar</button></div>
+                <div id="adm-role-result" style="margin-top:8px;font-family:var(--mono);font-size:12px;color:var(--gray-600);"></div>
+              </div>
+              <div class="sep"></div>
+              <div class="adm-field"><label class="adm-label">Asignar rol Partner Comercial</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-cp-addr" placeholder="0x…"/><input class="addr-inp" id="adm-cp-reason" placeholder="Razón" style="max-width:180px;"/><button class="btn-ghost" onclick="admSetPartnerRole()">Asignar</button></div></div>
+              <div class="adm-field"><label class="adm-label">Asignar rol Master</label>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <input class="addr-inp" id="adm-master-role-addr" placeholder="0x… master"/>
+                  <input class="addr-inp" id="adm-master-cp-addr" placeholder="0x… commercial partner"/>
+                  <input class="addr-inp" id="adm-master-reason" placeholder="Razón"/>
+                  <button class="btn-ghost" onclick="admSetMasterRole()">Asignar rol Master</button>
+                </div>
+              </div>
+              <div class="adm-field"><label class="adm-label">Limpiar rol especial</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-clear-role-addr" placeholder="0x…"/><input class="addr-inp" id="adm-clear-role-reason" placeholder="Razón" style="max-width:180px;"/><button class="btn-outline" onclick="admClearRole()">Limpiar rol</button></div></div>
+              <div class="adm-field"><label class="adm-label">Setear lineage comercial manual</label>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <input class="addr-inp" id="adm-lineage-user" placeholder="0x… usuario"/>
+                  <input class="addr-inp" id="adm-lineage-cp" placeholder="0x… commercial partner"/>
+                  <input class="addr-inp" id="adm-lineage-master" placeholder="0x… master"/>
+                  <input class="addr-inp" id="adm-lineage-reason" placeholder="Razón"/>
+                  <button class="btn-ghost" onclick="admSetLineage()">Setear lineage</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- ── CONTRACTS ── -->
       <div class="tpane" id="tab-contracts">
         <div class="alert alert-info" style="margin-bottom:16px;"><span>ℹ</span><span>Contratos del ecosistema ATLASH LearnEarn en BSC.</span></div>
@@ -1607,12 +1831,12 @@ const DEPLOY_MAINNET = {
 
 const DEPLOY_TESTNET = {
   usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x9dF8756E14bFe631bB148dFe93E3B579D0794CD2',
-  pool:       '0xb3B0975992333DE1871756f10b18151c9a854792',
-  rank:       '0xF9CceC58ac5cC5883b86f1297dE651f53fd19006',
-  treasury:   '0xfcB62D0cdc8AE4d8CF5Da3Ec72e9021FB5fb549f',
-  slot:       '0xd719E8B409f86538E1e0b9Fdb5A150d49D93C798',
-  rewards:    '0x244aDe977955639077DDb6994e81cA9cfD4e2c61',
+  core:       '0x506B51fD3a874Fc98b5F4eEF6848d609bD6BEEB3',
+  pool:       '0x2971593cf3d3e2CCDC4C297457569FC6F884A383',
+  rank:       '0x52F1C519F46820af79a87d1E15d3e17d3608734d',
+  treasury:   '0xDd5c1801a9D561DffD2C063B44C4774D2eCF0f80',
+  slot:       '0x862a4B85f48a811B20880A4208997369F2b3Ed65',
+  rewards:    '0x11926d1F0e7A785A1aa6c470c446F1A6A28A0fb7',
 };
 
 // Root user (company root wallet)
@@ -1622,17 +1846,34 @@ const COMPANY_ROOT = '0x48173E34Cd6A58DA4F489a01144480Fb03070673';
 const CORE_ABI = [
   "function getUserStatus(address) view returns (uint8 activeFlag, uint256 validUntil, address upline, bool exists, bool frozen)",
   "function userInfo(address) view returns (bool exists, bool frozen, bool isRoot_, address upline, uint256 joinedAt, uint256 totalSlotVolume)",
+  "function userCommercialInfo(address) view returns (uint8 role, address commercialPartner, address master, string reason)",
+  "function commercialContextOf(address) view returns (address commercialPartner, address master)",
   "function isRoot(address) view returns (bool)",
   "function totalUsers() view returns (uint256)",
   "function directCount(address) view returns (uint256)",
   "function directAt(address, uint256) view returns (address)",
+  "function isDirectOf(address, address) view returns (bool)",
   "function currentMonthIndex() view returns (uint256)",
+  "function paused() view returns (bool)",
+  "function companyRoot() view returns (address)",
+  "function owner() view returns (address)",
+  "function guardian() view returns (address)",
+  "function autoVolumeDepth() view returns (uint8)",
   "function slotProgram() view returns (address)",
   "function ranksModule() view returns (address)",
   "function poolsModule() view returns (address)",
-  "function paused() view returns (bool)",
-  "function companyRoot() view returns (address)",
-  "function owner() view returns (address)"
+  "function setPaused(bool) external",
+  "function setGuardian(address) external",
+  "function setCompanyRoot(address) external",
+  "function setModules(address, address) external",
+  "function setSlotProgram(address) external",
+  "function setVolumeUpdater(address) external",
+  "function setAutoVolumeDepth(uint8) external",
+  "function freeze(address, bool) external",
+  "function setCommercialPartnerRole(address, string) external",
+  "function setMasterRole(address, address, string) external",
+  "function clearSpecialRole(address, string) external",
+  "function setCommercialLineage(address, address, address, string) external"
 ];
 
 const SLOT_ABI = [
@@ -1642,19 +1883,29 @@ const SLOT_ABI = [
   "function coverageBP() view returns (uint256)",
   "function minDailyRateBP() view returns (uint16)",
   "function maxDailyRateBP() view returns (uint16)",
-  // V15: isAllowedSlot removed — use slotLevelByAmount(amount) != 0
+  "function dayRateBP(uint32) view returns (uint16)",
   "function positionsOf(address) view returns (uint256[])",
-  "function isPositionActive(uint256) view returns (bool)",
   "function highestActiveSlotLevel(address) view returns (uint8)",
-  // V15 Position: 12 fields (removed commercialActive & isMasterGrant, added roiEnabled)
+  "function highestActiveOrGraceSlotLevel(address) view returns (uint8)",
+  "function activePositionByLevel(address, uint8) view returns (uint256)",
   "function positions(uint256) view returns (address user, uint8 slotLevel, uint256 slotAmount, uint256 paidOut, uint256 capMax, uint32 openedDay, uint32 lastSyncDay, uint32 currentStreak, uint32 bestStreak, bool rewardActive, bool completed, bool roiEnabled)",
   "function slotLevelByAmount(uint256) view returns (uint8)",
   "function slotAmountByLevel(uint8) view returns (uint256)",
   "function activationFeeByLevel(uint8) view returns (uint256)",
   "function paused() view returns (bool)",
+  "function buyPaused() view returns (bool)",
+  "function syncPaused() view returns (bool)",
   "function buySlot(uint256, address) external returns (uint256)",
   "function restartSlot(uint8) external returns (uint256)",
-  "function sync(uint256) external"
+  "function sync(uint256) external",
+  "function setPaused(bool) external",
+  "function setBuyPaused(bool) external",
+  "function setSyncPaused(bool) external",
+  "function setDynamicRateBounds(uint16, uint16) external",
+  "function setDailyRateForDay(uint32, uint16) external",
+  "function forceMaxRateForDay(uint32) external",
+  "function clearManualDailyRate(uint32) external",
+  "function setForcedMaxRatePolicy(uint8, uint32) external"
 ];
 
 const RANK_ABI = [
@@ -1662,6 +1913,7 @@ const RANK_ABI = [
   "function personalVolume(address) view returns (uint256)",
   "function qualifiedNetworkVolume(address) view returns (uint256)",
   "function totalNetworkVolume(address) view returns (uint256)",
+  "function canAccumulateQualifiedVolume(address) view returns (bool)",
   "function rankConfig(uint256) view returns (uint256 qualifiedVolumeRequired, uint8 minSlotLevel, bool enabled)",
   "function rankPoolByMonth(uint256, uint8) view returns (uint256)",
   "function rankPoolClaimable(uint256, uint8, address) view returns (uint256)",
@@ -1671,25 +1923,72 @@ const RANK_ABI = [
   "function refreshRank(address) external returns (uint8)",
   "function claimRankPool(uint256, uint8) external",
   "function claimRankPools(uint256) external",
-  "function claimSelectedRankPools(uint256, uint8[]) external"
+  "function claimSelectedRankPools(uint256, uint8[]) external",
+  // Admin
+  "function setRankConfig(uint8 rank, uint256 qualifiedVolumeRequired, uint8 minSlotLevel, bool enabled) external",
+  "function finalizeRankPoolMonth(uint256 monthId, uint8 rank, address[] calldata qualifiedUsers, bytes32 snapshotHash) external",
 ];
 
 const POOL_ABI = [
   "function leadershipPoolByMonth(uint256) view returns (uint256)",
   "function leadershipFinalized(uint256) view returns (bool)",
-  "function leadershipClaimable(uint256, address) view returns (uint256)",
   "function pendingTopFive(address, uint256) view returns (uint256)",
   "function monthlyVolume(address, uint256) view returns (uint256)",
+  "function minTopFiveMonthlyVolume() view returns (uint256)",
   "function minLeadershipMonthlyVolume() view returns (uint256)",
-  "function leadershipCarryOverBP() view returns (uint16)",
-  "function topFiveSharesBP(uint256) view returns (uint16)",
   "function claimTopFive(uint256) external",
   "function claimTopFiveMonths(uint256[]) external",
-  "function finalizeTopFiveLeadershipMonth(uint256, address[5]) external"
+  "function setMinTopFiveMonthlyVolume(uint256) external",
+  "function setMinLeadershipMonthlyVolume(uint256) external",
+  "function setTopFiveSharesBP(uint16[5], uint16) external",
+  "function finalizeTopFiveMonth(uint256, address[5], bytes32) external",
 ];
 
 const REWARD_ABI = ["function availableRewardsLiquidity() view returns (uint256)"];
-const ENTERPRISE_ABI = ["function operationPool() view returns (uint256)", "function feePool() view returns (uint256)", "function partnerAt(uint8 index) view returns (address wallet, uint16 shareBP)"];
+const ENTERPRISE_ABI = [
+  // View — buckets
+  "function founderPoolBalance() view returns (uint256)",
+  "function operationsBalance() view returns (uint256)",
+  "function commercialPartnerPoolBalance() view returns (uint256)",
+  "function activationFeeBalance() view returns (uint256)",
+  "function corporateFeeReserveBalance() view returns (uint256)",
+  "function masterRevenueBalance() view returns (uint256)",
+  "function totalFounderAllocated() view returns (uint256)",
+  "function totalFounderClaimed() view returns (uint256)",
+  "function totalOperationsWithdrawn() view returns (uint256)",
+  // Founders
+  "function founders(uint256) view returns (address)",
+  "function founderSharesBP(uint256) view returns (uint16)",
+  "function pendingFounderRevenue(address) view returns (uint256)",
+  // Commercial partners
+  "function commercialPartners(uint256) view returns (address)",
+  "function commercialPartnerShareBP(address) view returns (uint16)",
+  "function commercialPartnerStatus(address) view returns (uint8)",
+  "function commercialPartnerCount() view returns (uint256)",
+  // Masters
+  "function isMaster(address) view returns (bool)",
+  "function masterShareBP(address) view returns (uint16)",
+  "function currentWeekIndex() view returns (uint256)",
+  "function totalMasterAllocated() view returns (uint256)",
+  "function totalMasterClaimed() view returns (uint256)",
+  // Admin write
+  "function setInitialFounders(address[4], uint16[4]) external",
+  "function configureCommercialPartners(address[], uint16[]) external",
+  "function setCommercialPartnerStatus(address, uint8, string) external",
+  "function registerMaster(address) external",
+  "function setMasterStatus(address, uint8, string) external",
+  "function withdrawOperation(address, uint256) external",
+  "function withdrawCorporateFeeReserve(address, uint256) external",
+  "function withdrawFee(address, uint256) external",
+  "function closeMasterWeek(address, uint256, bytes32) external",
+  "function closeMasterWeeks(address[], uint256, bytes32) external",
+  "function setCore(address) external",
+  "function setSlotProgram(address) external",
+  // User write
+  "function claimFounderRevenue() external",
+  "function claimCommercialPartnerRevenue() external",
+  "function claimMasterRevenue() external",
+];
 const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)"];
 
 // ── STATE ──
@@ -1872,7 +2171,7 @@ function clearLearnProgress() {
 // ── MAIN goTab (merged) ──
 function goTab(name) {
   // Update tab buttons
-  const tabNames = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts'];
+  const tabNames = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts','admin'];
   document.querySelectorAll('.dtab').forEach((b, i) => {
     b.classList.toggle('on', tabNames[i] === name);
     b.style.color = tabNames[i] === name ? 'var(--blue)' : 'var(--gray-500)';
@@ -1882,6 +2181,7 @@ function goTab(name) {
   document.querySelectorAll('.tpane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
 
   if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
+  if (name === 'admin')     loadAdminTab();
   if (name === 'ranks')     loadRanksTab(currentUser);
   if (name === 'earnings')  loadEarningsTab();
   if (name === 'pools')     loadPoolsData();
@@ -1889,7 +2189,6 @@ function goTab(name) {
   if (name === 'treasury')  loadTreasury();
   if (name === 'slots' && contracts.slot) loadGlobalStats();
   if (name === 'learn')     initLearnTab();
-  // Update sidebar active state
   try { updateSidebarActive(name); } catch(e) {}
 }
 
@@ -2593,21 +2892,28 @@ async function loadTreasury(){
       : 0n;
     document.getElementById('tr-reward-liq').textContent = fmt18s(liq)+' USDT';
     document.getElementById('sl-liquidity').textContent  = fmt18s(liq)+' USDT';
-    // V15: enterprise has public operationPool and feePool
-    let opBal=0n, feeBal=0n;
+    // V16: enterprise has 6 separate buckets
+    let founderBal=0n, opBal=0n, cpBal=0n, feeBal=0n, corpBal=0n, masterBal=0n;
     if (contracts.enterprise) {
-      [opBal, feeBal] = await Promise.all([
-        contracts.enterprise.operationPool().catch(()=>0n),
-        contracts.enterprise.feePool().catch(()=>0n),
+      [founderBal,opBal,cpBal,feeBal,corpBal,masterBal] = await Promise.all([
+        contracts.enterprise.founderPoolBalance().catch(()=>0n),
+        contracts.enterprise.operationsBalance().catch(()=>0n),
+        contracts.enterprise.commercialPartnerPoolBalance().catch(()=>0n),
+        contracts.enterprise.activationFeeBalance().catch(()=>0n),
+        contracts.enterprise.corporateFeeReserveBalance().catch(()=>0n),
+        contracts.enterprise.masterRevenueBalance().catch(()=>0n),
       ]);
     }
-    document.getElementById('tr-enterprise').textContent = fmt18s(opBal)+' USDT';
-    document.getElementById('tr-operation').textContent  = fmt18s(feeBal)+' USDT';
+    document.getElementById('tr-enterprise').textContent = fmt18s(founderBal)+' USDT';
+    document.getElementById('tr-operation').textContent  = fmt18s(opBal)+' USDT';
     if(el) el.innerHTML=`
       <div class="mem-row"><span class="mem-label">Reward Reserve (ROI)</span><span class="mem-val" style="color:var(--green);">${fmt18s(liq)} USDT</span></div>
-      <div class="mem-row"><span class="mem-label">Pool Operación</span><span class="mem-val" style="color:var(--amber);">${fmt18s(opBal)} USDT</span></div>
-      <div class="mem-row"><span class="mem-label">Pool Fees</span><span class="mem-val" style="color:var(--blue);">${fmt18s(feeBal)} USDT</span></div>
-      <div class="mem-row"><span class="mem-label">Enterprise</span><span class="mem-val" style="color:var(--gray-500);">Distribución inmediata a 4 socios (V10)</span></div>`;
+      <div class="mem-row"><span class="mem-label">Pool Fundadores (30%)</span><span class="mem-val" style="color:var(--amber);">${fmt18s(founderBal)} USDT</span></div>
+      <div class="mem-row"><span class="mem-label">Operaciones (15%)</span><span class="mem-val" style="color:var(--blue);">${fmt18s(opBal)} USDT</span></div>
+      <div class="mem-row"><span class="mem-label">Partners Comerciales (5%)</span><span class="mem-val" style="color:var(--blue);">${fmt18s(cpBal)} USDT</span></div>
+      <div class="mem-row"><span class="mem-label">Fees de Activación</span><span class="mem-val">${fmt18s(feeBal)} USDT</span></div>
+      <div class="mem-row"><span class="mem-label">Reserva Corporativa</span><span class="mem-val">${fmt18s(corpBal)} USDT</span></div>
+      <div class="mem-row"><span class="mem-label">Revenue Masters</span><span class="mem-val">${fmt18s(masterBal)} USDT</span></div>`;
   }catch(e){if(el) el.innerHTML=`<div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Error cargando tesorería</div></div>`;}
 }
 
@@ -3102,8 +3408,13 @@ async function checkOwnerAccess() {
     ]);
     const isOwner = owner && owner.toLowerCase() === walletAddr.toLowerCase();
     const isRootWallet = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
-    btn.style.display = (isOwner || isRootUser || isRootWallet) ? '' : 'none';
-    if (isOwner || isRootUser || isRootWallet) toast('👑 Acceso owner/root activado', 'info');
+    const hasAccess = isOwner || isRootUser || isRootWallet;
+    btn.style.display = hasAccess ? '' : 'none';
+    const adminBtn = document.getElementById('tab-admin-btn');
+    if (adminBtn) adminBtn.style.display = hasAccess ? '' : 'none';
+    const sbAdmin = document.getElementById('sb-admin');
+    if (sbAdmin) sbAdmin.style.display = hasAccess ? 'flex' : 'none';
+    if (hasAccess) toast('👑 Acceso owner/root activado', 'info');
   } catch { btn.style.display = 'none'; }
 }
 
@@ -3401,7 +3712,7 @@ function updateSidebarState() {
 
 // ── Sync sidebar active item with goTab ──
 function updateSidebarActive(name) {
-  const map = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts'];
+  const map = ['overview','learn','slots','earnings','ranks','pools','network','treasury','contracts','admin'];
   map.forEach(n => {
     const el = document.getElementById('sb-' + n);
     if (el) el.classList.toggle('on', n === name);
@@ -3615,6 +3926,468 @@ async function loadNetworkTab(addr) {
     await loadDirectsList(addr, dcnt);
 
   } catch(e) { console.error('[loadNetworkTab]', e); }
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN TAB — V16 full admin panel JS
+// ═══════════════════════════════════════════════════════════
+
+function switchAdminTab(name) {
+  ['core','slot','rank','pool','ent','roles'].forEach(t => {
+    const p = document.getElementById('adm-pane-'+t);
+    const b = document.getElementById('adm-'+t+'-btn');
+    if(p) p.style.display = t===name ? 'block' : 'none';
+    if(b) b.classList.toggle('on', t===name);
+  });
+  if (name === 'slot') loadAdminSlotStatus();
+  if (name === 'ent')  loadAdminEnterprise();
+  if (name === 'rank') loadAdminRankConfig();
+  if (name === 'core') loadAdminCoreStatus();
+}
+
+async function loadAdminTab() {
+  // Pre-fill today's dayId
+  const dayId = Math.floor(Date.now() / 86400000);
+  const dayInp = document.getElementById('adm-day-id');
+  if (dayInp && !dayInp.value) dayInp.value = dayId;
+  // Load first sub-tab
+  switchAdminTab('core');
+}
+
+// ── CORE ADMIN ──
+async function loadAdminCoreStatus() {
+  const el = document.getElementById('adm-core-status');
+  if (!el || !contracts.core) return;
+  el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Cargando…</div>';
+  try {
+    const [paused, owner, guardian, root, depth, total, month] = await Promise.all([
+      contracts.core.paused().catch(()=>false),
+      contracts.core.owner().catch(()=>'—'),
+      contracts.core.guardian().catch(()=>'—'),
+      contracts.core.companyRoot().catch(()=>'—'),
+      contracts.core.autoVolumeDepth().catch(()=>0),
+      contracts.core.totalUsers().catch(()=>0n),
+      contracts.core.currentMonthIndex().catch(()=>0n),
+    ]);
+    // Pre-fill fields
+    const gInp = document.getElementById('adm-guardian-inp');
+    const rInp = document.getElementById('adm-root-inp');
+    const dInp = document.getElementById('adm-depth-inp');
+    if(gInp && !gInp.value) gInp.value = guardian;
+    if(rInp && !rInp.value) rInp.value = root;
+    if(dInp && !dInp.value) dInp.value = Number(depth);
+
+    el.innerHTML = `
+      <div class="g2" style="margin:0;gap:8px;">
+        <div class="mem-row"><span class="mem-label">Estado</span><span class="mem-val" style="color:${paused?'var(--red)':'var(--green)'};">${paused?'⏸ PAUSADO':'▶ ACTIVO'}</span></div>
+        <div class="mem-row"><span class="mem-label">Usuarios</span><span class="mem-val">${Number(total).toLocaleString()}</span></div>
+        <div class="mem-row"><span class="mem-label">Mes actual</span><span class="mem-val">${Number(month)}</span></div>
+        <div class="mem-row"><span class="mem-label">Vol. depth</span><span class="mem-val">${Number(depth)} niveles</span></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="mem-row"><span class="mem-label">Owner</span><span class="mem-val" style="font-size:11px;font-family:var(--mono);">${owner}</span></div>
+        <div class="mem-row"><span class="mem-label">Guardian</span><span class="mem-val" style="font-size:11px;font-family:var(--mono);">${guardian}</span></div>
+        <div class="mem-row"><span class="mem-label">Company Root</span><span class="mem-val" style="font-size:11px;font-family:var(--mono);">${root}</span></div>
+      </div>`;
+  } catch(e) { el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>'+e.message+'</span></div>'; }
+}
+
+async function admTogglePause(target) {
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    if (target === 'core') {
+      const p = await contracts.core.paused();
+      await (await contracts.core.connect(signer).setPaused(!p)).wait();
+      toast('Core paused → ' + (!p), 'success');
+      loadAdminCoreStatus();
+    } else if (target === 'buy') {
+      const p = await contracts.slot.buyPaused();
+      await (await contracts.slot.connect(signer).setBuyPaused(!p)).wait();
+      toast('buyPaused → ' + (!p), 'success');
+      loadAdminSlotStatus();
+    } else if (target === 'sync') {
+      const p = await contracts.slot.syncPaused();
+      await (await contracts.slot.connect(signer).setSyncPaused(!p)).wait();
+      toast('syncPaused → ' + (!p), 'success');
+      loadAdminSlotStatus();
+    } else if (target === 'slot') {
+      const p = await contracts.slot.paused();
+      await (await contracts.slot.connect(signer).setPaused(!p)).wait();
+      toast('Slot paused → ' + (!p), 'success');
+      loadAdminSlotStatus();
+    }
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetGuardian() {
+  const addr = document.getElementById('adm-guardian-inp')?.value?.trim();
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).setGuardian(addr)).wait();
+    toast('✅ Guardian actualizado', 'success');
+    loadAdminCoreStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetCompanyRoot() {
+  const addr = document.getElementById('adm-root-inp')?.value?.trim();
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).setCompanyRoot(addr)).wait();
+    toast('✅ Company Root actualizado', 'success');
+    loadAdminCoreStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetDepth() {
+  const v = parseInt(document.getElementById('adm-depth-inp')?.value);
+  if (!v || v < 1 || v > 100) { toast('Valor inválido (1-100)', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).setAutoVolumeDepth(v)).wait();
+    toast('✅ Auto Volume Depth → ' + v, 'success');
+    loadAdminCoreStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admFreeze(freeze) {
+  const addr = document.getElementById('adm-freeze-addr')?.value?.trim();
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).freeze(addr, freeze)).wait();
+    toast('✅ ' + (freeze ? 'Usuario congelado' : 'Usuario descongelado'), 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+// ── SLOT / RATE ADMIN ──
+async function loadAdminSlotStatus() {
+  const el = document.getElementById('adm-slot-status');
+  if (!el || !contracts.slot) return;
+  el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Cargando…</div>';
+  try {
+    const dayId = Math.floor(Date.now() / 86400000);
+    const [paused, buyP, syncP, minR, maxR, rate, dayRate, principal, coverage] = await Promise.all([
+      contracts.slot.paused().catch(()=>false),
+      contracts.slot.buyPaused().catch(()=>false),
+      contracts.slot.syncPaused().catch(()=>false),
+      contracts.slot.minDailyRateBP().catch(()=>0),
+      contracts.slot.maxDailyRateBP().catch(()=>0),
+      contracts.slot.previewDynamicRateBP().catch(()=>0),
+      contracts.slot.dayRateBP(dayId).catch(()=>0),
+      contracts.slot.totalActivePrincipal().catch(()=>0n),
+      contracts.slot.coverageBP().catch(()=>0n),
+    ]);
+
+    const todayEl = document.getElementById('adm-today-rate');
+    if (todayEl) todayEl.textContent = `Day ${dayId} — Tasa snapshot: ${Number(dayRate)/100}% (${Number(dayRate)} BP) | Dinámica: ${Number(rate)/100}% | Cobertura: ${Number(coverage)/100}%`;
+
+    el.innerHTML = `
+      <div class="g2" style="margin:0;gap:6px;">
+        <div class="mem-row"><span class="mem-label">Global</span><span class="mem-val" style="color:${paused?'var(--red)':'var(--green)'};">${paused?'⏸ PAUSADO':'▶ ACTIVO'}</span></div>
+        <div class="mem-row"><span class="mem-label">Buy</span><span class="mem-val" style="color:${buyP?'var(--red)':'var(--green)'};">${buyP?'⏸ PAUSADO':'▶ OK'}</span></div>
+        <div class="mem-row"><span class="mem-label">Sync</span><span class="mem-val" style="color:${syncP?'var(--red)':'var(--green)'};">${syncP?'⏸ PAUSADO':'▶ OK'}</span></div>
+        <div class="mem-row"><span class="mem-label">Tasa hoy</span><span class="mem-val" style="color:var(--blue);">${Number(dayRate)?Number(dayRate)/100+'%':'(no snapshot)'}</span></div>
+        <div class="mem-row"><span class="mem-label">Dinámica</span><span class="mem-val">${(Number(rate)/100).toFixed(2)}%</span></div>
+        <div class="mem-row"><span class="mem-label">Rango BP</span><span class="mem-val">${minR}–${maxR} BP</span></div>
+        <div class="mem-row"><span class="mem-label">Principal activo</span><span class="mem-val">${fmt18s(principal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Cobertura</span><span class="mem-val">${(Number(coverage)/100).toFixed(2)}%</span></div>
+      </div>`;
+  } catch(e) { el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>'+e.message+'</span></div>'; }
+}
+
+async function admSetRateBounds() {
+  const min = parseInt(document.getElementById('adm-rate-min')?.value);
+  const max = parseInt(document.getElementById('adm-rate-max')?.value);
+  if (!min || !max || min > max) { toast('Valores inválidos', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.slot.connect(signer).setDynamicRateBounds(min, max)).wait();
+    toast(`✅ Rango actualizado: ${min/100}% – ${max/100}%`, 'success');
+    loadAdminSlotStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetDayRate() {
+  const dayId = parseInt(document.getElementById('adm-day-id')?.value);
+  const rateBP = parseInt(document.getElementById('adm-day-rate')?.value);
+  if (!dayId || !rateBP) { toast('dayId y rateBP requeridos', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.slot.connect(signer).setDailyRateForDay(dayId, rateBP)).wait();
+    toast(`✅ Tasa day ${dayId} → ${rateBP/100}%`, 'success');
+    loadAdminSlotStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admForceMaxToday() {
+  const dayId = Math.floor(Date.now() / 86400000);
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.slot.connect(signer).forceMaxRateForDay(dayId)).wait();
+    toast(`✅ Tasa máxima forzada para day ${dayId}`, 'success');
+    loadAdminSlotStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admClearDayRate() {
+  const dayId = parseInt(document.getElementById('adm-day-id')?.value);
+  if (!dayId) { toast('dayId requerido', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.slot.connect(signer).clearManualDailyRate(dayId)).wait();
+    toast(`✅ Tasa manual day ${dayId} limpiada`, 'success');
+    loadAdminSlotStatus();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetRatePolicy() {
+  const maxDays = parseInt(document.getElementById('adm-policy-max')?.value);
+  const spacing = parseInt(document.getElementById('adm-policy-spacing')?.value);
+  if (!maxDays || !spacing) { toast('Valores requeridos', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.slot.connect(signer).setForcedMaxRatePolicy(maxDays, spacing)).wait();
+    toast(`✅ Política: ${maxDays} días / spacing ${spacing}`, 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+// ── RANK ADMIN ──
+async function loadAdminRankConfig() {
+  const el = document.getElementById('adm-rank-config');
+  if (!el || !contracts.rank) return;
+  el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Cargando…</div>';
+  try {
+    const rows = await Promise.all(
+      Array.from({length:7},(_,i)=>i+1).map(r =>
+        contracts.rank.rankConfig(r).catch(()=>null).then(cfg=>({r, cfg}))
+      )
+    );
+    el.innerHTML = `<table class="tbl">
+      <thead><tr><th>Rango</th><th>Vol. red calificado</th><th>Slot mín.</th><th>Activo</th></tr></thead>
+      <tbody>${rows.map(({r,cfg})=>`<tr>
+        <td><span class="badge badge-blue">R${r}</span></td>
+        <td style="font-family:var(--mono);">${cfg?fmt18s(cfg[0]||0n)+' USDT':'—'}</td>
+        <td>${cfg?('Slot '+Number(cfg[1])):'—'}</td>
+        <td>${cfg?(cfg[2]?'<span class="badge badge-green">✓ Sí</span>':'<span class="badge badge-red">No</span>'):'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) { el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>'+e.message+'</span></div>'; }
+}
+
+async function admSetRankConfig() {
+  const rank = parseInt(document.getElementById('adm-rk-rank')?.value);
+  const vol  = document.getElementById('adm-rk-vol')?.value?.trim();
+  const slot = parseInt(document.getElementById('adm-rk-slot')?.value);
+  const en   = document.getElementById('adm-rk-enabled')?.value === 'true';
+  if (!rank || rank<1 || rank>7) { toast('Rango inválido (1-7)', 'error'); return; }
+  if (!vol || isNaN(parseFloat(vol))) { toast('Volumen inválido', 'error'); return; }
+  if (!slot || slot<1 || slot>14) { toast('Slot mín inválido (1-14)', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    const volWei = ethers.parseUnits(vol, 18);
+    await (await contracts.rank.connect(signer).setRankConfig(rank, volWei, slot, en)).wait();
+    toast(`✅ Rank ${rank} configurado`, 'success');
+    loadAdminRankConfig();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+// ── POOL ADMIN ──
+async function admSetMinTopFive() {
+  const v = document.getElementById('adm-pool-topfive-min')?.value?.trim();
+  if (!v) { toast('Valor requerido', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.pool.connect(signer).setMinTopFiveMonthlyVolume(ethers.parseUnits(v,18))).wait();
+    toast('✅ Min Top Five → ' + v + ' USDT', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetMinLeadership() {
+  const v = document.getElementById('adm-pool-lead-min')?.value?.trim();
+  if (!v) { toast('Valor requerido', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.pool.connect(signer).setMinLeadershipMonthlyVolume(ethers.parseUnits(v,18))).wait();
+    toast('✅ Min Liderazgo → ' + v + ' USDT', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admFinalizeTopFive() {
+  const month = document.getElementById('adm-tf-month')?.value?.trim();
+  const addrs = [1,2,3,4,5].map(i=>document.getElementById('adm-tf-'+i)?.value?.trim()||ethers.ZeroAddress);
+  if (!month) { toast('monthId requerido', 'error'); return; }
+  if (addrs.some(a => !/^0x[0-9a-fA-F]{40}$/.test(a))) { toast('Verifica las 5 direcciones', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    const snap = ethers.keccak256(ethers.toUtf8Bytes(month + addrs.join('')));
+    await (await contracts.pool.connect(signer).finalizeTopFiveMonth(month, addrs, snap)).wait();
+    toast(`✅ Top Five mes ${month} finalizado`, 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+// ── ENTERPRISE ADMIN ──
+async function loadAdminEnterprise() {
+  const el = document.getElementById('adm-ent-status');
+  if (!el || !contracts.enterprise) return;
+  el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Cargando…</div>';
+  try {
+    const [fBal,opBal,cpBal,feeBal,corpBal,mBal,weekId,mAllocated,mClaimed,fAllocated,fClaimed] = await Promise.all([
+      contracts.enterprise.founderPoolBalance().catch(()=>0n),
+      contracts.enterprise.operationsBalance().catch(()=>0n),
+      contracts.enterprise.commercialPartnerPoolBalance().catch(()=>0n),
+      contracts.enterprise.activationFeeBalance().catch(()=>0n),
+      contracts.enterprise.corporateFeeReserveBalance().catch(()=>0n),
+      contracts.enterprise.masterRevenueBalance().catch(()=>0n),
+      contracts.enterprise.currentWeekIndex().catch(()=>0n),
+      contracts.enterprise.totalMasterAllocated().catch(()=>0n),
+      contracts.enterprise.totalMasterClaimed().catch(()=>0n),
+      contracts.enterprise.totalFounderAllocated().catch(()=>0n),
+      contracts.enterprise.totalFounderClaimed().catch(()=>0n),
+    ]);
+
+    // Load founders
+    const founders = await Promise.all([0,1,2,3].map(i=>
+      Promise.all([
+        contracts.enterprise.founders(i).catch(()=>'—'),
+        contracts.enterprise.founderSharesBP(i).catch(()=>0),
+        contracts.enterprise.pendingFounderRevenue(/* need addr */'0x0000000000000000000000000000000000000000').catch(()=>0n),
+      ]).then(([addr,bp])=>({addr,bp:Number(bp)}))
+    ));
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
+        <div class="mem-row"><span class="mem-label">Pool Fundadores</span><span class="mem-val amber">${fmt18s(fBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Operaciones</span><span class="mem-val blue">${fmt18s(opBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Partners Com.</span><span class="mem-val">${fmt18s(cpBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Fees Activación</span><span class="mem-val">${fmt18s(feeBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Reserva Corp.</span><span class="mem-val">${fmt18s(corpBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Revenue Masters</span><span class="mem-val">${fmt18s(mBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Semana actual</span><span class="mem-val">${Number(weekId)}</span></div>
+        <div class="mem-row"><span class="mem-label">Masters asignado</span><span class="mem-val">${fmt18s(mAllocated)} / reclamado: ${fmt18s(mClaimed)}</span></div>
+        <div class="mem-row"><span class="mem-label">Fundadores asignado</span><span class="mem-val">${fmt18s(fAllocated)} / reclamado: ${fmt18s(fClaimed)}</span></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:6px;text-transform:uppercase;">Fundadores</div>
+      ${founders.map((f,i)=>`<div class="mem-row"><span class="mem-label">F${i+1} (${f.bp/100}%)</span><span class="mem-val" style="font-size:11px;">${f.addr}</span></div>`).join('')}`;
+  } catch(e) { el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>'+e.message+'</span></div>'; }
+}
+
+async function admWithdrawOps() {
+  const addr = document.getElementById('adm-ent-withdraw-addr')?.value?.trim();
+  const amt  = document.getElementById('adm-ent-withdraw-amt')?.value?.trim();
+  if (!addr || !amt) { toast('Dirección y monto requeridos', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.enterprise.connect(signer).withdrawOperation(addr, ethers.parseUnits(amt,18))).wait();
+    toast('✅ Operaciones retiradas', 'success');
+    loadAdminEnterprise();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admWithdrawCorp() {
+  const addr = document.getElementById('adm-corp-withdraw-addr')?.value?.trim();
+  const amt  = document.getElementById('adm-corp-withdraw-amt')?.value?.trim();
+  if (!addr || !amt) { toast('Dirección y monto requeridos', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.enterprise.connect(signer).withdrawCorporateFeeReserve(addr, ethers.parseUnits(amt,18))).wait();
+    toast('✅ Reserva corporativa retirada', 'success');
+    loadAdminEnterprise();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admRegisterMaster() {
+  const addr = document.getElementById('adm-master-addr')?.value?.trim();
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.enterprise.connect(signer).registerMaster(addr)).wait();
+    toast('✅ Master registrado', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admCloseMasterWeek() {
+  const weekId = document.getElementById('adm-week-id')?.value?.trim();
+  if (!weekId) { toast('weekId requerido', 'error'); return; }
+  // For batch, use closeMasterWeeks — for single, need to know master addr
+  toast('Para cerrar semana de un master específico, usa closeMasterWeek(master, weekId, hash)', 'info');
+}
+
+// ── ROLES ADMIN ──
+async function admQueryRole() {
+  const addr = document.getElementById('adm-role-query-addr')?.value?.trim();
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  const el = document.getElementById('adm-role-result');
+  if (!el) return;
+  el.textContent = 'Consultando…';
+  try {
+    const ROLES = ['NONE','COMMERCIAL_PARTNER','MASTER','ROOT','NORMAL'];
+    const [info, ctx] = await Promise.all([
+      contracts.core.userCommercialInfo(addr).catch(()=>null),
+      contracts.core.commercialContextOf(addr).catch(()=>null),
+    ]);
+    if (!info) { el.textContent = 'Sin datos'; return; }
+    el.innerHTML = `
+      <div>Rol: <strong>${ROLES[Number(info[0])]||info[0]}</strong></div>
+      <div>Commercial Partner: ${info[1]||'—'}</div>
+      <div>Master: ${info[2]||'—'}</div>
+      <div>Razón: ${info[3]||'—'}</div>
+      ${ctx?`<div>Contexto CP: ${ctx[0]} / Master: ${ctx[1]}</div>`:''}`;
+  } catch(e) { el.textContent = 'Error: ' + e.message; }
+}
+
+async function admSetPartnerRole() {
+  const addr   = document.getElementById('adm-cp-addr')?.value?.trim();
+  const reason = document.getElementById('adm-cp-reason')?.value?.trim() || 'Admin assign';
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).setCommercialPartnerRole(addr, reason)).wait();
+    toast('✅ Rol Commercial Partner asignado', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetMasterRole() {
+  const addr   = document.getElementById('adm-master-role-addr')?.value?.trim();
+  const cp     = document.getElementById('adm-master-cp-addr')?.value?.trim();
+  const reason = document.getElementById('adm-master-reason')?.value?.trim() || 'Admin assign';
+  if (!addr||!cp||!/^0x[0-9a-fA-F]{40}$/.test(addr)||!/^0x[0-9a-fA-F]{40}$/.test(cp)) {
+    toast('Direcciones inválidas', 'error'); return;
+  }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).setMasterRole(addr, cp, reason)).wait();
+    toast('✅ Rol Master asignado', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admClearRole() {
+  const addr   = document.getElementById('adm-clear-role-addr')?.value?.trim();
+  const reason = document.getElementById('adm-clear-role-reason')?.value?.trim() || 'Admin clear';
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Dirección inválida', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).clearSpecialRole(addr, reason)).wait();
+    toast('✅ Rol limpiado', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+}
+
+async function admSetLineage() {
+  const user   = document.getElementById('adm-lineage-user')?.value?.trim();
+  const cp     = document.getElementById('adm-lineage-cp')?.value?.trim();
+  const master = document.getElementById('adm-lineage-master')?.value?.trim();
+  const reason = document.getElementById('adm-lineage-reason')?.value?.trim() || 'Admin lineage';
+  const addrs  = [user,cp,master];
+  if (addrs.some(a=>!/^0x[0-9a-fA-F]{40}$/.test(a))) { toast('Verifica las 3 direcciones', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  try {
+    await (await contracts.core.connect(signer).setCommercialLineage(user, cp, master, reason)).wait();
+    toast('✅ Lineage comercial actualizado', 'success');
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
 }
 
 
