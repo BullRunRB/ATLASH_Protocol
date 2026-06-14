@@ -3917,14 +3917,53 @@ async function checkRegistrationGate() {
     return;
   }
   try {
+    // ── 1. Check owner/root FIRST — bypass registration gate ──
+    const ownerAbi = [
+      "function owner() view returns (address)",
+      "function isRoot(address) view returns (bool)"
+    ];
+    const co = new ethers.Contract(
+      addrs.core || DEPLOY_TESTNET.core, ownerAbi, provider
+    );
+    const [onChainOwner, isRootUser] = await Promise.all([
+      co.owner().catch(() => ''),
+      co.isRoot(walletAddr).catch(() => false),
+    ]);
+    const isOwner      = onChainOwner && onChainOwner.toLowerCase() === walletAddr.toLowerCase();
+    const isRootHard   = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
+    const isPrivileged = isOwner || isRootUser || isRootHard;
+
+    if (isPrivileged) {
+      // Owner/root bypasses registration — show full dashboard + admin tabs
+      showDappGate('content');
+      // Activate admin tabs immediately
+      const adminBtn = document.getElementById('tab-admin-btn');
+      const contractsBtn = document.getElementById('tab-contracts-btn');
+      const sbAdmin = document.getElementById('sb-admin');
+      const sbContracts = document.getElementById('sb-contracts');
+      if (adminBtn)    adminBtn.style.display    = '';
+      if (contractsBtn) contractsBtn.style.display = '';
+      if (sbAdmin)     sbAdmin.style.display     = 'flex';
+      if (sbContracts) sbContracts.style.display = 'flex';
+      toast('👑 Acceso owner/root activado', 'info');
+      // Try to load user data if registered, but don't block
+      const info = await contracts.core.userInfo(walletAddr).catch(() => null);
+      if (info && (info[0] || info.exists)) {
+        document.getElementById('search-inp').value = walletAddr;
+        searchUser();
+        if (contracts.slot) loadLearnSlots();
+      }
+      return;
+    }
+
+    // ── 2. Normal user — check registration ──
     const info = await contracts.core.userInfo(walletAddr);
-    const registered = info[0] || info.exists || false;
+    const registered = !!(info[0] || info.exists);
     const addrEl = document.getElementById('gate-wallet-addr');
-    if(addrEl) addrEl.textContent = walletAddr;
+    if (addrEl) addrEl.textContent = walletAddr;
 
     if (registered) {
       showDappGate('content');
-      // Load own data
       document.getElementById('search-inp').value = walletAddr;
       searchUser();
       checkOwnerAccess();
@@ -3934,7 +3973,7 @@ async function checkRegistrationGate() {
     }
   } catch(e) {
     console.error('[checkRegistrationGate]', e);
-    // On error, show content anyway to not block admin/debug
+    // On error show content — don't block
     showDappGate('content');
   }
 }
