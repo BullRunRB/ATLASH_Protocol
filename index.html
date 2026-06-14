@@ -4978,51 +4978,59 @@ const USER_ROLES  = ['NORMAL','MASTER','COMMERCIAL_PARTNER','ROOT'];
 // ── Show role badge in Overview ──
 async function updateOverviewRoleBadge(addr) {
   const strip = document.getElementById('ov-role-strip');
-  if (!strip || !contracts.core) return;
+  if (!strip || !contracts.core || !contracts.enterprise) return;
 
   try {
-    const info = await contracts.core.userCommercialInfo(addr).catch(()=>null);
-    if (!info) { strip.style.display='none'; return; }
+    // Check all roles independently
+    const [info, isMasterEnt, isCPEnt, masterCode] = await Promise.all([
+      contracts.core.userCommercialInfo(addr).catch(()=>null),
+      contracts.enterprise.isMaster(addr).catch(()=>false),
+      contracts.enterprise.isCommercialPartner(addr).catch(()=>false),
+      contracts.core.masterCodeOf(addr).catch(()=>false),
+    ]);
 
-    const role = Number(info[0]);
-    // 0=NORMAL, 1=MASTER, 2=COMMERCIAL_PARTNER, 3=ROOT
-    if (role === 0) { strip.style.display='none'; return; }
+    const role = info ? Number(info[0]) : 0;
+    const isCP     = (role===2) || isCPEnt;
+    const isMaster = (role===1) || isMasterEnt;
+    const isRoot   = role===3;
+
+    if (!isCP && !isMaster && !isRoot) { strip.style.display='none'; return; }
 
     strip.style.display = 'block';
     const iconEl   = document.getElementById('ov-role-icon');
     const labelEl  = document.getElementById('ov-role-label');
     const detailEl = document.getElementById('ov-role-detail');
+    const panel    = strip.querySelector('.panel');
 
-    if (role === 3) { // ROOT
-      if(iconEl)  iconEl.textContent  = '👑';
-      if(labelEl) labelEl.textContent = 'Root del Protocolo';
-      if(detailEl) detailEl.textContent = 'Wallet raíz — acceso total al protocolo';
-      strip.querySelector('.panel').style.borderLeftColor = 'var(--amber)';
-    } else if (role === 2) { // COMMERCIAL_PARTNER
-      const shareBP = contracts.enterprise
-        ? await contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0)
-        : 0;
-      const status = contracts.enterprise
-        ? await contracts.enterprise.commercialPartnerStatus(addr).catch(()=>0)
-        : 0;
-      if(iconEl)  iconEl.textContent  = '🤝';
-      if(labelEl) labelEl.textContent = 'Partner Comercial';
-      if(detailEl) detailEl.textContent = (Number(shareBP)/100)+'% del pool · Estado: '+COMM_STATUS[Number(status)];
-      strip.querySelector('.panel').style.borderLeftColor = 'var(--blue)';
-    } else if (role === 1) { // MASTER
-      const [vol, shareBP, pending] = await Promise.all([
-        contracts.enterprise ? contracts.enterprise.masterAccumulatedOrganizationVolume(addr).catch(()=>0n) : Promise.resolve(0n),
-        contracts.enterprise ? contracts.enterprise.masterShareBP(addr).catch(()=>0) : Promise.resolve(0),
-        contracts.enterprise ? contracts.enterprise.masterPendingClaim(addr).catch(()=>0n) : Promise.resolve(0n),
+    // Build icon string for all roles
+    const icons = [isRoot&&'👑', isCP&&'🤝', isMaster&&'⭐', masterCode&&'🔑'].filter(Boolean).join(' ');
+    if(iconEl) iconEl.textContent = icons;
+
+    // Label
+    const labels = [isRoot&&'Root', isCP&&'Partner Comercial', isMaster&&'Master'].filter(Boolean);
+    if(labelEl) labelEl.textContent = labels.join(' + ');
+
+    // Detail — load financial info
+    const details = [];
+    if (isCP && contracts.enterprise) {
+      const [shareBP, pendingRev] = await Promise.all([
+        contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0),
+        contracts.enterprise.pendingCommercialPartnerRevenue(addr).catch(()=>0n),
       ]);
-      if(iconEl)  iconEl.textContent  = '⭐';
-      if(labelEl) labelEl.textContent = 'Master';
-      if(detailEl) detailEl.textContent =
-        'Vol. org: '+fmt18s(vol)+' USDT · '+
-        'Tier: '+(Number(shareBP)/100)+'% · '+
-        'Pendiente: '+fmt18s(pending)+' USDT';
-      strip.querySelector('.panel').style.borderLeftColor = 'var(--amber)';
+      details.push('CP: '+(Number(shareBP)/100)+'% · Pendiente: '+fmt18s(pendingRev)+' USDT');
     }
+    if (isMaster && contracts.enterprise) {
+      const [shareBP, pendingClaim] = await Promise.all([
+        contracts.enterprise.masterShareBP(addr).catch(()=>0),
+        contracts.enterprise.masterPendingClaim(addr).catch(()=>0n),
+      ]);
+      details.push('Master: '+(Number(shareBP)/100)+'% fees · Pendiente: '+fmt18s(pendingClaim)+' USDT');
+    }
+    if(detailEl) detailEl.textContent = details.join('  |  ');
+
+    // Border color priority
+    if(panel) panel.style.borderLeftColor = isRoot?'var(--amber)': isMaster?'#b45309':'var(--blue)';
+
   } catch(e) {
     strip.style.display = 'none';
     console.error('[updateOverviewRoleBadge]', e);
@@ -5030,56 +5038,76 @@ async function updateOverviewRoleBadge(addr) {
 }
 
 // ── Main commercial tab loader ──
+// ── Main commercial tab loader — supports dual role CP+Master ──
 async function loadCommercialTab(addr) {
   if (!addr) return;
 
-  // Reset sections
-  const roleHeader = document.getElementById('comm-role-header');
-  const noRole     = document.getElementById('comm-no-role');
-  const partSec    = document.getElementById('comm-partner-section');
-  const masterSec  = document.getElementById('comm-master-section');
-  const claimPBtn  = document.getElementById('btn-claim-partner');
-  const claimMBtn  = document.getElementById('btn-claim-master');
-  [roleHeader,noRole,partSec,masterSec].forEach(el=>{if(el)el.style.display='none';});
+  const noRole   = document.getElementById('comm-no-role');
+  const partSec  = document.getElementById('comm-partner-section');
+  const masterSec= document.getElementById('comm-master-section');
+  const hdr      = document.getElementById('comm-role-header');
+  const claimPBtn= document.getElementById('btn-claim-partner');
+  const claimMBtn= document.getElementById('btn-claim-master');
+
+  [hdr,noRole,partSec,masterSec].forEach(el=>{if(el)el.style.display='none';});
   [claimPBtn,claimMBtn].forEach(el=>{if(el)el.style.display='none';});
 
   if (!contracts.core || !contracts.enterprise) {
-    if(noRole) noRole.style.display='block';
-    return;
+    if(noRole) noRole.style.display='block'; return;
   }
 
   try {
-    // Get role
-    const info = await contracts.core.userCommercialInfo(addr).catch(()=>null);
+    // Detect ALL roles independently — a CP can also be a Master
+    const [info, isMasterEnt, isCPEnt, masterCodeActive] = await Promise.all([
+      contracts.core.userCommercialInfo(addr).catch(()=>null),
+      contracts.enterprise.isMaster(addr).catch(()=>false),
+      contracts.enterprise.isCommercialPartner(addr).catch(()=>false),
+      contracts.core.masterCodeOf(addr).catch(()=>false),
+    ]);
+
     if (!info) { if(noRole) noRole.style.display='block'; return; }
 
-    const role   = Number(info[0]);
-    const cpAddr = info[1];
-    const mAddr  = info[2];
-    const reason = info[3];
+    const coreRole = Number(info[0]); // 0=NORMAL 1=MASTER 2=CP 3=ROOT
+    const reason   = info[3];
+    const isOwn    = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
 
-    const isOwn = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
-    const ROLE_ICONS  = {0:'👤',1:'⭐',2:'🤝',3:'👑'};
-    const ROLE_LABELS = {0:'NORMAL',1:'Master',2:'Partner Comercial',3:'Root'};
+    // Independent role flags — CP can simultaneously be Master
+    const isCP     = (coreRole === 2) || isCPEnt;
+    const isMaster = (coreRole === 1) || isMasterEnt;
+    const isRoot   = (coreRole === 3);
 
-    if (role === 0) { if(noRole) noRole.style.display='block'; return; }
+    if (!isCP && !isMaster && !isRoot) {
+      if(noRole) noRole.style.display='block'; return;
+    }
 
-    // Show role header
-    if (roleHeader) {
-      roleHeader.style.display = 'block';
+    // ── Role header with ALL active roles ──
+    if (hdr) {
+      hdr.style.display = 'block';
+      const badges = [];
+      if (isRoot)           badges.push('<span style="background:var(--amber);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">👑 ROOT</span>');
+      if (isCP)             badges.push('<span style="background:var(--blue);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">🤝 Partner Comercial</span>');
+      if (isMaster)         badges.push('<span style="background:#b45309;color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">⭐ Master</span>');
+      if (masterCodeActive) badges.push('<span style="background:var(--green);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">🔑 Master Code</span>');
+
       const badge = document.getElementById('comm-role-badge');
       const title = document.getElementById('comm-role-title');
       const sub   = document.getElementById('comm-role-sub');
-      if(badge) badge.innerHTML = '<span style="font-size:28px;">'+ROLE_ICONS[role]+'</span>';
-      if(title) title.textContent = ROLE_LABELS[role];
-      if(sub)   sub.textContent   = addr;
+      if(badge) badge.innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+badges.join('')+'</div>';
+      if(title) title.textContent =
+        [isCP&&'Partner Comercial', isMaster&&'Master', isRoot&&'Root']
+          .filter(Boolean).join(' + ');
+      if(sub)   sub.textContent = addr.slice(0,18)+'…'+addr.slice(-6) +
+        (masterCodeActive ? ' · Master Code activo' : '');
     }
 
-    // ── COMMERCIAL PARTNER ──
-    if (role === 2) {
+    // ══════════════════════════════════════
+    // PARTNER COMERCIAL SECTION
+    // ══════════════════════════════════════
+    if (isCP) {
       if(partSec) partSec.style.display = 'block';
 
-      const [shareBP, status, statusReason, poolBal, totalAlloc, totalClaimed, totalFees, pendingRev] = await Promise.all([
+      const [shareBP, status, statusReason, poolBal,
+             totalAlloc, totalClaimed, totalFees, pendingRev] = await Promise.all([
         contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0),
         contracts.enterprise.commercialPartnerStatus(addr).catch(()=>0),
         contracts.enterprise.commercialPartnerStatusReason(addr).catch(()=>''),
@@ -5091,100 +5119,117 @@ async function loadCommercialTab(addr) {
       ]);
 
       const st = Number(status);
-      const stColor = {0:'var(--gray-400)',1:'var(--green)',2:'var(--amber)',3:'var(--red)',4:'var(--red)'}[st]||'var(--gray-400)';
-
-      setText('cp-share',      (Number(shareBP)/100).toFixed(2)+'%');
-      setText('cp-pool-bal',   fmt18s(poolBal)+' USDT');
-      setText('cp-pending',     fmt18s(pendingRev)+' USDT');
-      setText('cp-status',     COMM_STATUS[st]||st);
-      setText('cp-total-alloc',fmt18s(totalAlloc)+' USDT');
+      const ST_C = {0:'var(--gray-400)',1:'var(--green)',2:'var(--amber)',3:'var(--red)',4:'var(--red)'};
+      setText('cp-share',        (Number(shareBP)/100).toFixed(2)+'% del pool 5%');
+      setText('cp-pool-bal',     fmt18s(poolBal)+' USDT');
+      setText('cp-pending',      fmt18s(pendingRev)+' USDT');
+      setText('cp-status',       COMM_STATUS[st]||String(st));
+      setText('cp-total-alloc',  fmt18s(totalAlloc)+' USDT');
       setText('cp-total-claimed',fmt18s(totalClaimed)+' USDT');
-      setText('cp-total-fees', fmt18s(totalFees)+' USDT');
-      setText('cp-reason',     reason||statusReason||'—');
-
+      setText('cp-total-fees',   fmt18s(totalFees)+' USDT');
+      setText('cp-reason',       reason||statusReason||'—');
       const stEl = document.getElementById('cp-status');
-      if(stEl) stEl.style.color = stColor;
+      if(stEl) stEl.style.color = ST_C[st]||'var(--gray-500)';
 
-      // Use pendingCommercialPartnerRevenue (V16.7)
-      if(isOwn && st===1) {
+      if (isOwn && st===1 && pendingRev>0n) {
         if(claimPBtn) {
-          claimPBtn.style.display = pendingRev>0n ? 'block' : 'none';
-          claimPBtn.textContent = '💰 Cobrar Partner · '+fmt18s(pendingRev)+' USDT';
+          claimPBtn.style.display = 'block';
+          claimPBtn.textContent   = '💰 Cobrar Partner · '+fmt18s(pendingRev)+' USDT';
         }
       }
     }
 
-    // ── MASTER ──
-    if (role === 1) {
+    // ══════════════════════════════════════
+    // MASTER SECTION (independent of CP role)
+    // ══════════════════════════════════════
+    if (isMaster) {
       if(masterSec) masterSec.style.display = 'block';
 
-      const weekId = BigInt(Math.floor(Date.now() / (7*24*3600*1000))); // week index from timestamp
-
-      const [accumVol, shareBP, pending, mStatus] = await Promise.all([
+      const [accumVol, shareBP, pendingClaim, mStatus] = await Promise.all([
         contracts.enterprise.masterAccumulatedOrganizationVolume(addr).catch(()=>0n),
         contracts.enterprise.masterShareBP(addr).catch(()=>0),
         contracts.enterprise.masterPendingClaim(addr).catch(()=>0n),
         contracts.enterprise.masterStatus(addr).catch(()=>0),
       ]);
 
+      const mSt = Number(mStatus);
+      const vol  = Number(ethers.formatUnits(accumVol, 18));
+
       setText('ms-accum-vol', fmt18s(accumVol)+' USDT');
-      setText('ms-share-bp',  (Number(shareBP)/100)+'%');
-      setText('ms-pending',   fmt18s(pending)+' USDT');
-      setText('ms-week',      'Semana '+Number(weekId));
+      setText('ms-share-bp',  (Number(shareBP)/100)+'% de fees org.');
+      setText('ms-pending',   fmt18s(pendingClaim)+' USDT');
+      setText('ms-week',      'Estado: '+COMM_STATUS[mSt]);
 
-      // Use masterPendingClaim directly (V16.7 — immediate fees)
-      const pendingClaim = await contracts.enterprise.masterPendingClaim(addr).catch(()=>0n);
-      setText('ms-pending', fmt18s(pendingClaim)+' USDT');
-
-      if(isOwn && Number(pendingClaim)>0) {
-        if(claimMBtn) claimMBtn.style.display='block';
+      if (isOwn && mSt===1 && pendingClaim>0n) {
+        if(claimMBtn) {
+          claimMBtn.style.display = 'block';
+          claimMBtn.textContent   = '💰 Cobrar Master · '+fmt18s(pendingClaim)+' USDT';
+        }
       }
 
       // Tier progress
       const tierEl = document.getElementById('ms-tier-progress');
-      if(tierEl) {
-        const vol = Number(ethers.formatUnits(accumVol, 18));
+      if (tierEl) {
         const TIERS = [
-          {label:'Tier 1 (20%)', threshold:0,      next:10000, color:'var(--gray-300)'},
-          {label:'Tier 2 (30%)', threshold:10000,  next:35000, color:'var(--blue)'},
-          {label:'Tier 3 (40%)', threshold:35000,  next:null,  color:'var(--amber)'},
+          {label:'Tier 1',pct:'20%',threshold:0,     next:10000, color:'var(--gray-400)'},
+          {label:'Tier 2',pct:'30%',threshold:10000,  next:35000, color:'var(--blue)'},
+          {label:'Tier 3',pct:'40%',threshold:35000,  next:null,  color:'#b45309'},
         ];
-        tierEl.innerHTML = TIERS.map((t,i)=>{
-          const achieved  = vol >= t.threshold;
-          const isCurrent = !t.next ? vol>=t.threshold : (vol>=t.threshold && vol<t.next);
-          const pct = t.next ? Math.min(100, Math.round((vol-t.threshold)*100/(t.next-t.threshold))) : 100;
-          return `<div style="padding:12px 14px;border-radius:10px;border:1.5px solid ${isCurrent?t.color:'var(--gray-200)'};background:${isCurrent?'var(--blue-bg)':'var(--gray-50)'};">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <div style="font-weight:700;font-size:13px;color:${isCurrent?t.color:'var(--gray-500)'};">${t.label} ${isCurrent?'← Actual':''} ${achieved&&!isCurrent?'✓':''}</div>
-              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">${t.next?('Req: $'+t.threshold.toLocaleString()+' – $'+t.next.toLocaleString()):('Req: $'+t.threshold.toLocaleString()+'+')}</div>
+        tierEl.innerHTML = TIERS.map(t=>{
+          const isCurr  = t.next ? (vol>=t.threshold && vol<t.next) : vol>=t.threshold;
+          const done    = t.next ? vol>=t.next : vol>=t.threshold;
+          const prog    = t.next
+            ? Math.min(100,Math.round(Math.max(0,vol-t.threshold)*100/(t.next-t.threshold)))
+            : (vol>=t.threshold?100:0);
+          return `<div style="padding:12px 14px;border-radius:10px;
+            border:1.5px solid ${isCurr?t.color:'var(--gray-200)'};
+            background:${isCurr?'var(--blue-bg)':'var(--gray-50)'};">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+              <div style="font-weight:700;font-size:13px;color:${isCurr?t.color:'var(--gray-500)'};">
+                ${t.label} (${t.pct} fees)
+                ${isCurr?`<span style="font-size:10px;background:${t.color};color:#fff;padding:2px 7px;border-radius:20px;margin-left:4px;">ACTUAL</span>`:''}
+                ${done&&!isCurr?'<span style="color:var(--green);margin-left:4px;">✓</span>':''}
+              </div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">
+                ${t.next?'$'+t.threshold.toLocaleString()+' – $'+t.next.toLocaleString()+' USDT':'$'+t.threshold.toLocaleString()+'+ USDT'}
+              </div>
             </div>
-            <div class="prog"><div class="prog-fill" style="width:${pct}%;background:${t.color};"></div></div>
-            <div style="font-size:11px;color:var(--gray-400);margin-top:4px;font-family:var(--mono);">${fmt18s(accumVol)} / ${t.next?(t.next.toLocaleString()+' USDT'):'Máximo alcanzado'}</div>
+            <div class="prog"><div class="prog-fill" style="width:${prog}%;background:${t.color};"></div></div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:4px;font-family:var(--mono);">
+              ${vol.toLocaleString(undefined,{maximumFractionDigits:2})} / ${t.next?t.next.toLocaleString()+' USDT':'Sin límite superior'}
+            </div>
           </div>`;
         }).join('');
       }
 
-      // V16.7: Master fees are immediate — no weekly tracking
-      // Show accumulated volume and tier info instead
+      // Protocol stats
       const weekEl = document.getElementById('ms-weekly-table');
-      if(weekEl) {
-        const [tAllocated, tClaimed] = await Promise.all([
+      if (weekEl) {
+        const [tAlloc,tClaimed] = await Promise.all([
           contracts.enterprise.totalMasterAllocated().catch(()=>0n),
           contracts.enterprise.totalMasterClaimed().catch(()=>0n),
         ]);
-        weekEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div class="mem-row"><span class="mem-label">Total asignado (protocolo)</span><span class="mem-val amber">${fmt18s(tAllocated)} USDT</span></div>
-          <div class="mem-row"><span class="mem-label">Total reclamado (protocolo)</span><span class="mem-val green">${fmt18s(tClaimed)} USDT</span></div>
-        </div>
-        <div class="alert alert-info" style="margin-top:12px;"><span>ℹ</span><span>En V16.7 los fees de Master son inmediatos — se acumulan en <strong>masterPendingClaim</strong> y se cobran con el botón de arriba. No hay historial semanal.</span></div>`;
+        weekEl.innerHTML = `
+          <div class="g2" style="margin-bottom:12px;">
+            <div class="mem-row"><span class="mem-label">Total asignado (protocolo)</span><span class="mem-val amber">${fmt18s(tAlloc)} USDT</span></div>
+            <div class="mem-row"><span class="mem-label">Total reclamado (protocolo)</span><span class="mem-val green">${fmt18s(tClaimed)} USDT</span></div>
+          </div>
+          <div class="alert alert-info"><span>ℹ</span>
+            <span>Fees inmediatos — se acumulan en <strong>masterPendingClaim</strong> con cada compra en tu organización y se cobran con el botón de arriba.</span>
+          </div>`;
       }
     }
 
   } catch(e) {
     console.error('[loadCommercialTab]', e);
-    if(noRole) { noRole.style.display='block'; noRole.querySelector('.empty-title').textContent='Error al cargar'; }
+    if(noRole) {
+      noRole.style.display = 'block';
+      const t = noRole.querySelector('.empty-title');
+      if(t) t.textContent = 'Error al cargar';
+    }
   }
 }
+
 
 function setText(id, val) {
   const el = document.getElementById(id);
