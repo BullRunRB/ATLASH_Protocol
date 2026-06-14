@@ -5498,22 +5498,24 @@ async function loadFoundersTab() {
       )
     );
 
-    // ── Show/hide sections ──
+    // Debug — log what we got from the contract
+    console.log('[loadFoundersTab] founders from contract:', founders.map(f=>f.addr));
+    console.log('[loadFoundersTab] walletAddr:', walletAddr);
+    console.log('[loadFoundersTab] myFounder:', myFounder);
+
+    // Always show content — let user see the table even if not a founder
     if (content) content.style.display = 'block';
+    if (noAccess) noAccess.style.display = 'none';
 
-    if (!myFounder) {
-      if(noAccess) noAccess.style.display = 'block';
-      if(content)  content.style.display  = 'none';
-    }
+    // ── KPIs — show for everyone, highlight own row ──
+    setText('fnd-pool-bal',     fmt18s(poolBal)+' USDT');
+    setText('fnd-total-claimed',fmt18s(totalClaimed)+' USDT');
 
-    // ── KPIs ──
     if (myFounder) {
-      setText('fnd-my-share',    (myFounder.shareBP/100).toFixed(2)+'%');
-      setText('fnd-pending',     fmt18s(myPending)+' USDT');
-      setText('fnd-pool-bal',    fmt18s(poolBal)+' USDT');
-      setText('fnd-total-claimed',fmt18s(totalClaimed)+' USDT');
+      // Connected wallet IS a founder
+      setText('fnd-my-share', (myFounder.shareBP/100).toFixed(2)+'%');
+      setText('fnd-pending',  fmt18s(myPending)+' USDT');
 
-      // Claim block
       if (claimWrap) claimWrap.style.display = 'block';
       const det = document.getElementById('fnd-claim-detail');
       if(det) det.textContent =
@@ -5521,12 +5523,22 @@ async function loadFoundersTab() {
         'Disponible: '+fmt18s(myPending)+' USDT';
       const btn = document.getElementById('btn-claim-founder');
       if(btn) {
-        btn.disabled  = myPending === 0n;
+        btn.disabled = myPending === 0n;
         btn.style.opacity = myPending > 0n ? '1' : '0.5';
-        btn.textContent = myPending > 0n
+        btn.textContent   = myPending > 0n
           ? '💰 Cobrar ' + fmt18s(myPending) + ' USDT'
           : '💰 Sin pendiente ahora';
       }
+    } else if (walletAddr) {
+      // Wallet connected but not a founder — show info only
+      setText('fnd-my-share', '—');
+      setText('fnd-pending',  '—');
+      // Small note instead of blocking screen
+      const note = document.createElement('div');
+      note.className = 'alert alert-info';
+      note.style.marginBottom = '12px';
+      note.innerHTML = '<span>ℹ</span><span>Tu wallet no está en la lista de fundadores. Puedes ver los datos del pool.</span>';
+      if (content) content.insertBefore(note, content.firstChild);
     }
 
     // ── Stats ──
