@@ -4004,36 +4004,44 @@ async function checkRegistrationGate() {
     return;
   }
   try {
-    // ── 1. Check owner/root FIRST — bypass registration gate ──
+    // ── 1. Check privileged roles FIRST — bypass registration gate ──
     const ownerAbi = [
       "function owner() view returns (address)",
       "function isRoot(address) view returns (bool)"
     ];
-    const co = new ethers.Contract(
-      addrs.core || DEPLOY_TESTNET.core, ownerAbi, provider
-    );
-    const [onChainOwner, isRootUser] = await Promise.all([
+    const co = new ethers.Contract(addrs.core || DEPLOY_TESTNET.core, ownerAbi, provider);
+
+    // Check all bypass conditions in parallel
+    const [onChainOwner, isRootUser, isFounder, isMasterEnt, isCPEnt] = await Promise.all([
       co.owner().catch(() => ''),
       co.isRoot(walletAddr).catch(() => false),
+      // Check if wallet is one of the 4 founders in Enterprise
+      contracts.enterprise
+        ? Promise.all([0,1,2,3].map(i =>
+            contracts.enterprise.founders(i).catch(() => '')
+          )).then(addrs => addrs.some(a => a.toLowerCase() === walletAddr.toLowerCase()))
+        : Promise.resolve(false),
+      // Check if master or CP in Enterprise
+      contracts.enterprise ? contracts.enterprise.isMaster(walletAddr).catch(() => false) : Promise.resolve(false),
+      contracts.enterprise ? contracts.enterprise.isCommercialPartner(walletAddr).catch(() => false) : Promise.resolve(false),
     ]);
-    const isOwner      = onChainOwner && onChainOwner.toLowerCase() === walletAddr.toLowerCase();
-    const isRootHard   = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
-    const isPrivileged = isOwner || isRootUser || isRootHard;
+
+    const isOwner        = onChainOwner && onChainOwner.toLowerCase() === walletAddr.toLowerCase();
+    const isRootHard     = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
+    const isPrivileged   = isOwner || isRootUser || isRootHard;
+    // These roles can also bypass gate (they exist in Enterprise, not necessarily in Core)
+    const hasEnterpriseRole = isFounder || isMasterEnt || isCPEnt;
 
     if (isPrivileged) {
-      // Owner/root bypasses registration — show full dashboard + admin tabs
+      // Owner/root — full access including admin tabs
       showDappGate('content');
-      // Activate admin tabs immediately
-      const adminBtn = document.getElementById('tab-admin-btn');
-      const contractsBtn = document.getElementById('tab-contracts-btn');
-      const sbAdmin = document.getElementById('sb-admin');
-      const sbContracts = document.getElementById('sb-contracts');
-      if (adminBtn)    adminBtn.style.display    = '';
-      if (contractsBtn) contractsBtn.style.display = '';
-      if (sbAdmin)     sbAdmin.style.display     = 'flex';
-      if (sbContracts) sbContracts.style.display = 'flex';
+      ['tab-admin-btn','tab-contracts-btn'].forEach(id => {
+        const el = document.getElementById(id); if(el) el.style.display = '';
+      });
+      ['sb-admin','sb-contracts'].forEach(id => {
+        const el = document.getElementById(id); if(el) el.style.display = 'flex';
+      });
       toast('👑 Acceso owner/root activado', 'info');
-      // Try to load user data if registered, but don't block
       const info = await contracts.core.userInfo(walletAddr).catch(() => null);
       if (info && (info[0] || info.exists)) {
         document.getElementById('search-inp').value = walletAddr;
@@ -4043,7 +4051,27 @@ async function checkRegistrationGate() {
       return;
     }
 
-    // ── 2. Normal user — check registration ──
+    if (hasEnterpriseRole) {
+      // Founder / Master / CP — show dashboard without registration requirement
+      showDappGate('content');
+      const roleLabels = [
+        isFounder  && '🏛 Fundador',
+        isMasterEnt && '⭐ Master',
+        isCPEnt    && '🤝 Partner Comercial',
+      ].filter(Boolean).join(' · ');
+      toast(roleLabels + ' — acceso habilitado', 'success');
+      // Try to load data but don't block if not in Core
+      const info = await contracts.core.userInfo(walletAddr).catch(() => null);
+      if (info && (info[0] || info.exists)) {
+        document.getElementById('search-inp').value = walletAddr;
+        searchUser();
+        if (contracts.slot) loadLearnSlots();
+      }
+      checkOwnerAccess();
+      return;
+    }
+
+    // ── 2. Normal user — check Core registration ──
     const info = await contracts.core.userInfo(walletAddr);
     const registered = !!(info[0] || info.exists);
     const addrEl = document.getElementById('gate-wallet-addr');
