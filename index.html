@@ -1813,8 +1813,8 @@ footer .brand-mark{background:var(--blue);}
               <div class="panel-body">
                 <div class="adm-field"><label class="adm-label">Registrar Master</label>
                   <div class="adm-row"><input class="addr-inp" id="adm-master-addr" placeholder="0x…"/><button class="btn-ghost" onclick="admRegisterMaster()">Registrar</button></div></div>
-                <div class="adm-field"><label class="adm-label">Cerrar semana Masters (weekId)</label>
-                  <div class="adm-row"><input class="addr-inp" id="adm-week-id" placeholder="weekId"/><button class="btn-ghost" onclick="admCloseMasterWeek()">Cerrar semana</button></div></div>
+                <div class="adm-field"><label class="adm-label">Remover Master</label>
+                  <div class="adm-row"><input class="addr-inp" id="adm-remove-master-addr" placeholder="0x…"/><button class="btn-outline" onclick="admRemoveMaster()">Remover Master</button></div></div>
               </div>
             </div>
           </div>
@@ -1842,6 +1842,23 @@ footer .brand-mark{background:var(--blue);}
               </div>
               <div class="adm-field"><label class="adm-label">Limpiar rol especial</label>
                 <div class="adm-row"><input class="addr-inp" id="adm-clear-role-addr" placeholder="0x…"/><input class="addr-inp" id="adm-clear-role-reason" placeholder="Razón" style="max-width:180px;"/><button class="btn-outline" onclick="admClearRole()">Limpiar rol</button></div></div>
+              <div class="adm-field"><label class="adm-label">Master Code (habilitar como código de referido Master)</label>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <input class="addr-inp" id="adm-mcode-addr" placeholder="0x…"/>
+                  <div class="adm-row">
+                    <button class="btn-ghost" onclick="admSetMasterCode(true)">✅ Activar Master Code</button>
+                    <button class="btn-outline" onclick="admSetMasterCode(false)">❌ Desactivar</button>
+                    <button class="btn-ghost" onclick="admQueryMasterCode()">🔍 Consultar</button>
+                  </div>
+                  <div id="adm-mcode-result" style="font-size:12px;font-family:var(--mono);color:var(--gray-500);"></div>
+                </div>
+              </div>
+              <div class="adm-field"><label class="adm-label">Master Code para Commercial Partner</label>
+                <div class="adm-row"><input class="addr-inp" id="adm-cp-mcode-addr" placeholder="0x… CP address"/>
+                  <button class="btn-ghost" onclick="admSetCPMasterCode(true)">✅ Activar</button>
+                  <button class="btn-outline" onclick="admSetCPMasterCode(false)">❌ Desactivar</button>
+                </div>
+              </div>
               <div class="adm-field"><label class="adm-label">Setear lineage comercial manual</label>
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   <input class="addr-inp" id="adm-lineage-user" placeholder="0x… usuario"/>
@@ -2088,12 +2105,12 @@ const DEPLOY_MAINNET = {
 
 const DEPLOY_TESTNET = {
   usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x91DAE5219a5B06f367F364403212C13087A67b71',
-  pool:       '0x60B66674d7663d730092B84fb2447c3e6a86A68e',
-  rank:       '0x49dfE3B312502126c4610423466650168F050151',
-  treasury:   '0x451FBee46DF09Ca4bC2eDC451D78aE38e30660Aa',
-  slot:       '0x1e07181bd9daDb92dFCCe44361eb8d606a0e6677',
-  rewards:    '0x97cFCdC05DBC24f9CbEdeE9e4a777aF33Dd505F8',
+  core:       '0x5e04E85f99fB296D2d3990FC7069E52c32f9FAD8',
+  pool:       '0x0D9369d388346EA6CF59447F236bf9Da02d9DFBf',
+  rank:       '0x20323Ef3D59180a405e4dc7740269A3fDe7E0d18',
+  treasury:   '0xB7B54A47510144C099156b3368A31f2F8631dF62',
+  slot:       '0xa204bd369d9dC21030C752E5BDcc57Bf871633f8',
+  rewards:    '0xfD600A25120B2e4a86F46d74c29F8ADF656D549d',
 };
 
 // Root user (company root wallet)
@@ -2101,15 +2118,18 @@ const COMPANY_ROOT = '0x48173E34Cd6A58DA4F489a01144480Fb03070673';
 
 // ── ABIs ──
 const CORE_ABI = [
+  // View
   "function getUserStatus(address) view returns (uint8 activeFlag, uint256 validUntil, address upline, bool exists, bool frozen)",
   "function userInfo(address) view returns (bool exists, bool frozen, bool isRoot_, address upline, uint256 joinedAt, uint256 totalSlotVolume)",
   "function userCommercialInfo(address) view returns (uint8 role, address commercialPartner, address master, string reason)",
   "function commercialContextOf(address) view returns (address commercialPartner, address master)",
   "function isRoot(address) view returns (bool)",
+  "function masterCodeOf(address) view returns (bool)",
+  "function accountStatusOf(address) view returns (uint8)",
   "function totalUsers() view returns (uint256)",
+  "function userAt(uint256) view returns (address)",
   "function directCount(address) view returns (uint256)",
   "function directAt(address, uint256) view returns (address)",
-  "function isDirectOf(address, address) view returns (bool)",
   "function currentMonthIndex() view returns (uint256)",
   "function paused() view returns (bool)",
   "function companyRoot() view returns (address)",
@@ -2119,6 +2139,7 @@ const CORE_ABI = [
   "function slotProgram() view returns (address)",
   "function ranksModule() view returns (address)",
   "function poolsModule() view returns (address)",
+  // Admin write
   "function setPaused(bool) external",
   "function setGuardian(address) external",
   "function setCompanyRoot(address) external",
@@ -2127,17 +2148,18 @@ const CORE_ABI = [
   "function setVolumeUpdater(address) external",
   "function setAutoVolumeDepth(uint8) external",
   "function freeze(address, bool) external",
+  "function setUserAccountStatus(address, uint8, string) external",
+  "function adminRegisterUser(address, address, uint8, address, string) external",
   "function setCommercialPartnerRole(address, string) external",
   "function setMasterRole(address, address, string) external",
+  "function setMasterCode(address, bool, string) external",
+  "function setCommercialPartnerMasterCode(address, bool, string) external",
   "function clearSpecialRole(address, string) external",
-  "function setCommercialLineage(address, address, address, string) external",
-  // V16.4 new
-  "function adminRegisterUser(address user, address upline, uint8 role, address commercialPartner, string reason) external",
-  "function setUserAccountStatus(address user, uint8 status, string reason) external",
-  "function accountStatusOf(address) view returns (uint8)"
+  "function setCommercialLineage(address, address, address, string) external"
 ];
 
 const SLOT_ABI = [
+  // View
   "function nextPositionId() view returns (uint256)",
   "function totalActivePrincipal() view returns (uint256)",
   "function previewDynamicRateBP() view returns (uint16)",
@@ -2156,9 +2178,11 @@ const SLOT_ABI = [
   "function paused() view returns (bool)",
   "function buyPaused() view returns (bool)",
   "function syncPaused() view returns (bool)",
+  // User write
   "function buySlot(uint256, address) external returns (uint256)",
   "function restartSlot(uint8) external returns (uint256)",
   "function sync(uint256) external",
+  // Admin write
   "function setPaused(bool) external",
   "function setBuyPaused(bool) external",
   "function setSyncPaused(bool) external",
@@ -2167,12 +2191,12 @@ const SLOT_ABI = [
   "function forceMaxRateForDay(uint32) external",
   "function clearManualDailyRate(uint32) external",
   "function setForcedMaxRatePolicy(uint8, uint32) external",
-  // V16.4: admin commercial activation
-  "function adminActivateCommercialSlot(address user, address upline, uint8 level, uint8 role, address commercialPartner, string reason) external returns (uint256)",
-  "function adminActivateCommercialSlots(address user, address upline, uint8[] levels, uint8 role, address commercialPartner, string reason) external returns (uint256[])"
+  "function adminActivateCommercialSlot(address, address, uint8, uint8, address, string) external returns (uint256)",
+  "function adminActivateCommercialSlots(address, address, uint8[], uint8, address, string) external returns (uint256[])"
 ];
 
 const RANK_ABI = [
+  // View
   "function userRank(address) view returns (uint8)",
   "function personalVolume(address) view returns (uint256)",
   "function qualifiedNetworkVolume(address) view returns (uint256)",
@@ -2182,113 +2206,89 @@ const RANK_ABI = [
   "function rankPoolByMonth(uint256, uint8) view returns (uint256)",
   "function rankPoolClaimable(uint256, uint8, address) view returns (uint256)",
   "function rankPoolFinalized(uint256, uint8) view returns (bool)",
+  "function rankPoolScanStarted(uint256, uint8) view returns (bool)",
+  "function rankPoolScanCursor(uint256, uint8) view returns (uint256)",
+  "function scannedRankPoolCandidateCount(uint256, uint8) view returns (uint256)",
   "function pendingRankPools(address, uint256) view returns (uint256)",
   "function isQualifiedForPool(address, uint8) view returns (bool)",
+  "function monthlyVolumeBurnBP() view returns (uint16)",
+  // User write
   "function refreshRank(address) external returns (uint8)",
   "function claimRankPool(uint256, uint8) external",
   "function claimRankPools(uint256) external",
   "function claimSelectedRankPools(uint256, uint8[]) external",
-  // Admin
-  "function setRankConfig(uint8 rank, uint256 qualifiedVolumeRequired, uint8 minSlotLevel, bool enabled) external",
-  "function finalizeRankPoolMonth(uint256, uint8, address[], bytes32) external",
-  // V16.4: on-chain scan (no candidate list needed)
-  "function startRankPoolScan(uint256 monthId, uint8 rank, bytes32 snapshotHash) external",
-  "function scanRankPoolCandidatesBatch(uint256 monthId, uint8 rank, uint256 maxItems) external",
-  "function finalizeScannedRankPoolMonth(uint256 monthId, uint8 rank) external",
-  "function rankPoolScanCursor(uint256, uint8) view returns (uint256)",
-  "function scannedRankPoolCandidateCount(uint256, uint8) view returns (uint256)",
-  "function rankPoolScanStarted(uint256, uint8) view returns (bool)",
-  "function rankPoolSnapshotHash(uint256, uint8) view returns (bytes32)",
-  // V16.4: volume burn
-  "function monthlyVolumeBurnBP() view returns (uint16)",
+  // Admin write (scan-based only — no manual list)
+  "function setRankConfig(uint8, uint256, uint8, bool) external",
+  "function startRankPoolScan(uint256, uint8, bytes32) external",
+  "function scanRankPoolCandidatesBatch(uint256, uint8, uint256) external",
+  "function finalizeScannedRankPoolMonth(uint256, uint8) external",
   "function setMonthlyVolumeBurnBP(uint16) external",
-  "function burnQualifiedVolumeForUser(uint256 monthId, address user, uint16 burnBP, bytes32 snapshotHash, string reason) external",
-  "function burnQualifiedVolumeBatch(uint256 monthId, address[] users, bytes32 snapshotHash) external"
+  "function burnQualifiedVolumeForUser(uint256, address, uint16, bytes32, string) external",
+  "function burnQualifiedVolumeBatch(uint256, address[], bytes32) external"
 ];
 
 const POOL_ABI = [
+  // View
   "function leadershipPoolByMonth(uint256) view returns (uint256)",
   "function leadershipFinalized(uint256) view returns (bool)",
   "function pendingTopFive(address, uint256) view returns (uint256)",
   "function monthlyVolume(address, uint256) view returns (uint256)",
   "function minTopFiveMonthlyVolume() view returns (uint256)",
-  "function minLeadershipMonthlyVolume() view returns (uint256)",
+  // User write
   "function claimTopFive(uint256) external",
   "function claimTopFiveMonths(uint256[]) external",
+  // Admin write
   "function setMinTopFiveMonthlyVolume(uint256) external",
-  "function setMinLeadershipMonthlyVolume(uint256) external",
   "function setTopFiveSharesBP(uint16[5], uint16) external",
-  "function finalizeTopFiveMonth(uint256, address[5], bytes32) external",
+  "function finalizeTopFiveMonth(uint256, address[5], bytes32) external"
 ];
 
 const REWARD_ABI = ["function availableRewardsLiquidity() view returns (uint256)"];
 const ENTERPRISE_ABI = [
-  // View — buckets
+  // Bucket balances
   "function founderPoolBalance() view returns (uint256)",
   "function operationsBalance() view returns (uint256)",
   "function commercialPartnerPoolBalance() view returns (uint256)",
   "function activationFeeBalance() view returns (uint256)",
   "function corporateFeeReserveBalance() view returns (uint256)",
   "function masterRevenueBalance() view returns (uint256)",
+  // Founders
+  "function pendingFounderRevenue(address) view returns (uint256)",
   "function totalFounderAllocated() view returns (uint256)",
   "function totalFounderClaimed() view returns (uint256)",
-  "function totalOperationsWithdrawn() view returns (uint256)",
-  // Founders
-  "function founders(uint256) view returns (address)",
-  "function founderSharesBP(uint256) view returns (uint16)",
-  "function pendingFounderRevenue(address) view returns (uint256)",
-  // Commercial partners
-  "function commercialPartners(uint256) view returns (address)",
-  "function commercialPartnerShareBP(address) view returns (uint16)",
-  "function commercialPartnerStatus(address) view returns (uint8)",
-  "function commercialPartnerCount() view returns (uint256)",
-  // Masters
-  "function isMaster(address) view returns (bool)",
-  "function masterShareBP(address) view returns (uint16)",
-  "function currentWeekIndex() view returns (uint256)",
-  "function totalMasterAllocated() view returns (uint256)",
-  "function totalMasterClaimed() view returns (uint256)",
-  // Admin write
-  "function setInitialFounders(address[4], uint16[4]) external",
-  "function configureCommercialPartners(address[], uint16[]) external",
-  "function setCommercialPartnerStatus(address, uint8, string) external",
-  "function registerMaster(address) external",
-  "function setMasterStatus(address, uint8, string) external",
-  "function withdrawOperation(address, uint256) external",
-  "function withdrawCorporateFeeReserve(address, uint256) external",
-  "function withdrawFee(address, uint256) external",
-  "function closeMasterWeek(address, uint256, bytes32) external",
-  "function closeMasterWeeks(address[], uint256, bytes32) external",
-  "function setCore(address) external",
-  "function setSlotProgram(address) external",
-  // Partner state (public mappings = auto-getters)
+  // Partners
+  "function isCommercialPartner(address) view returns (bool)",
   "function commercialPartnerShareBP(address) view returns (uint16)",
   "function commercialPartnerStatus(address) view returns (uint8)",
   "function commercialPartnerStatusReason(address) view returns (string)",
-  // Master state
+  "function pendingCommercialPartnerRevenue(address) view returns (uint256)",
+  "function commercialPartnerCount() view returns (uint256)",
+  "function totalCommercialPartnerAllocated() view returns (uint256)",
+  "function totalCommercialPartnerClaimed() view returns (uint256)",
+  // Masters
   "function isMaster(address) view returns (bool)",
   "function masterStatus(address) view returns (uint8)",
   "function masterStatusReason(address) view returns (string)",
   "function masterShareBP(address) view returns (uint16)",
   "function masterAccumulatedOrganizationVolume(address) view returns (uint256)",
   "function masterPendingClaim(address) view returns (uint256)",
-  "function masterWeeklyVolume(address, uint256) view returns (uint256)",
-  "function masterWeeklyFees(address, uint256) view returns (uint256)",
-  "function masterWeekClosed(address, uint256) view returns (bool)",
-  // Founder state
-  "function founders(uint256) view returns (address)",
-  "function founderSharesBP(uint256) view returns (uint16)",
-  "function pendingFounderRevenue(address) view returns (uint256)",
-  // Totals
-  "function totalFeesCollected() view returns (uint256)",
   "function totalMasterAllocated() view returns (uint256)",
   "function totalMasterClaimed() view returns (uint256)",
-  "function totalCommercialPartnerAllocated() view returns (uint256)",
-  "function totalCommercialPartnerClaimed() view returns (uint256)",
+  "function totalFeesCollected() view returns (uint256)",
   // User write
   "function claimFounderRevenue() external",
   "function claimCommercialPartnerRevenue() external",
   "function claimMasterRevenue() external",
+  // Admin write
+  "function setInitialFounders(address[4], uint16[4]) external",
+  "function configureCommercialPartners(address[], uint16[]) external",
+  "function setCommercialPartnerStatus(address, uint8, string) external",
+  "function registerMaster(address) external",
+  "function removeMaster(address) external",
+  "function setMasterStatus(address, uint8, string) external",
+  "function withdrawOperation(address, uint256) external",
+  "function withdrawCorporateFeeReserve(address, uint256) external",
+  "function withdrawFee(address, uint256) external"
 ];
 const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)"];
 
@@ -4540,43 +4540,35 @@ async function loadAdminEnterprise() {
   if (!el || !contracts.enterprise) return;
   el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Cargando…</div>';
   try {
-    const [fBal,opBal,cpBal,feeBal,corpBal,mBal,weekId,mAllocated,mClaimed,fAllocated,fClaimed] = await Promise.all([
+    const [fBal,opBal,cpBal,feeBal,corpBal,mBal,mAllocated,mClaimed,fAllocated,fClaimed,totalFees,cpAllocated,cpClaimed] = await Promise.all([
       contracts.enterprise.founderPoolBalance().catch(()=>0n),
       contracts.enterprise.operationsBalance().catch(()=>0n),
       contracts.enterprise.commercialPartnerPoolBalance().catch(()=>0n),
       contracts.enterprise.activationFeeBalance().catch(()=>0n),
       contracts.enterprise.corporateFeeReserveBalance().catch(()=>0n),
       contracts.enterprise.masterRevenueBalance().catch(()=>0n),
-      contracts.enterprise.currentWeekIndex().catch(()=>0n),
       contracts.enterprise.totalMasterAllocated().catch(()=>0n),
       contracts.enterprise.totalMasterClaimed().catch(()=>0n),
       contracts.enterprise.totalFounderAllocated().catch(()=>0n),
       contracts.enterprise.totalFounderClaimed().catch(()=>0n),
+      contracts.enterprise.totalFeesCollected().catch(()=>0n),
+      contracts.enterprise.totalCommercialPartnerAllocated().catch(()=>0n),
+      contracts.enterprise.totalCommercialPartnerClaimed().catch(()=>0n),
     ]);
-
-    // Load founders
-    const founders = await Promise.all([0,1,2,3].map(i=>
-      Promise.all([
-        contracts.enterprise.founders(i).catch(()=>'—'),
-        contracts.enterprise.founderSharesBP(i).catch(()=>0),
-        contracts.enterprise.pendingFounderRevenue(/* need addr */'0x0000000000000000000000000000000000000000').catch(()=>0n),
-      ]).then(([addr,bp])=>({addr,bp:Number(bp)}))
-    ));
 
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">
-        <div class="mem-row"><span class="mem-label">Pool Fundadores</span><span class="mem-val amber">${fmt18s(fBal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Operaciones</span><span class="mem-val blue">${fmt18s(opBal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Partners Com.</span><span class="mem-val">${fmt18s(cpBal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Fees Activación</span><span class="mem-val">${fmt18s(feeBal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Reserva Corp.</span><span class="mem-val">${fmt18s(corpBal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Revenue Masters</span><span class="mem-val">${fmt18s(mBal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Semana actual</span><span class="mem-val">${Number(weekId)}</span></div>
-        <div class="mem-row"><span class="mem-label">Masters asignado</span><span class="mem-val">${fmt18s(mAllocated)} / reclamado: ${fmt18s(mClaimed)}</span></div>
-        <div class="mem-row"><span class="mem-label">Fundadores asignado</span><span class="mem-val">${fmt18s(fAllocated)} / reclamado: ${fmt18s(fClaimed)}</span></div>
-      </div>
-      <div style="font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:6px;text-transform:uppercase;">Fundadores</div>
-      ${founders.map((f,i)=>`<div class="mem-row"><span class="mem-label">F${i+1} (${f.bp/100}%)</span><span class="mem-val" style="font-size:11px;">${f.addr}</span></div>`).join('')}`;
+        <div class="mem-row"><span class="mem-label">Pool Fundadores (30%)</span><span class="mem-val amber">${fmt18s(fBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Operaciones (15%)</span><span class="mem-val blue">${fmt18s(opBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Partners Comerciales (5%)</span><span class="mem-val">${fmt18s(cpBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Fees Activación → Masters</span><span class="mem-val">${fmt18s(feeBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Reserva Corporativa</span><span class="mem-val">${fmt18s(corpBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Revenue Masters (pendiente)</span><span class="mem-val">${fmt18s(mBal)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Fees totales recaudados</span><span class="mem-val">${fmt18s(totalFees)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Masters: asignado / reclamado</span><span class="mem-val">${fmt18s(mAllocated)} / ${fmt18s(mClaimed)}</span></div>
+        <div class="mem-row"><span class="mem-label">Fundadores: asignado / reclamado</span><span class="mem-val">${fmt18s(fAllocated)} / ${fmt18s(fClaimed)}</span></div>
+        <div class="mem-row"><span class="mem-label">Partners: asignado / reclamado</span><span class="mem-val">${fmt18s(cpAllocated)} / ${fmt18s(cpClaimed)}</span></div>
+      </div>`;
   } catch(e) { el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>'+e.message+'</span></div>'; }
 }
 
@@ -4618,7 +4610,7 @@ async function admCloseMasterWeek() {
   const weekId = document.getElementById('adm-week-id')?.value?.trim();
   if (!weekId) { toast('weekId requerido', 'error'); return; }
   // For batch, use closeMasterWeeks — for single, need to know master addr
-  toast('Para cerrar semana de un master específico, usa closeMasterWeek(master, weekId, hash)', 'info');
+  toast('En V16.7, los fees de Master son inmediatos. Usa claimMasterRevenue() para cobrar.', 'info');
 }
 
 // ── ROLES ADMIN ──
@@ -5048,7 +5040,7 @@ async function loadCommercialTab(addr) {
     if (role === 2) {
       if(partSec) partSec.style.display = 'block';
 
-      const [shareBP, status, statusReason, poolBal, totalAlloc, totalClaimed, totalFees] = await Promise.all([
+      const [shareBP, status, statusReason, poolBal, totalAlloc, totalClaimed, totalFees, pendingRev] = await Promise.all([
         contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0),
         contracts.enterprise.commercialPartnerStatus(addr).catch(()=>0),
         contracts.enterprise.commercialPartnerStatusReason(addr).catch(()=>''),
@@ -5056,6 +5048,7 @@ async function loadCommercialTab(addr) {
         contracts.enterprise.totalCommercialPartnerAllocated().catch(()=>0n),
         contracts.enterprise.totalCommercialPartnerClaimed().catch(()=>0n),
         contracts.enterprise.totalFeesCollected().catch(()=>0n),
+        contracts.enterprise.pendingCommercialPartnerRevenue(addr).catch(()=>0n),
       ]);
 
       const st = Number(status);
@@ -5063,6 +5056,7 @@ async function loadCommercialTab(addr) {
 
       setText('cp-share',      (Number(shareBP)/100).toFixed(2)+'%');
       setText('cp-pool-bal',   fmt18s(poolBal)+' USDT');
+      setText('cp-pending',     fmt18s(pendingRev)+' USDT');
       setText('cp-status',     COMM_STATUS[st]||st);
       setText('cp-total-alloc',fmt18s(totalAlloc)+' USDT');
       setText('cp-total-claimed',fmt18s(totalClaimed)+' USDT');
@@ -5072,8 +5066,12 @@ async function loadCommercialTab(addr) {
       const stEl = document.getElementById('cp-status');
       if(stEl) stEl.style.color = stColor;
 
+      // Use pendingCommercialPartnerRevenue (V16.7)
       if(isOwn && st===1) {
-        if(claimPBtn) claimPBtn.style.display='block';
+        if(claimPBtn) {
+          claimPBtn.style.display = pendingRev>0n ? 'block' : 'none';
+          claimPBtn.textContent = '💰 Cobrar Partner · '+fmt18s(pendingRev)+' USDT';
+        }
       }
     }
 
@@ -5081,7 +5079,7 @@ async function loadCommercialTab(addr) {
     if (role === 1) {
       if(masterSec) masterSec.style.display = 'block';
 
-      const weekId = await contracts.enterprise.currentWeekIndex().catch(()=>0n);
+      const weekId = BigInt(Math.floor(Date.now() / (7*24*3600*1000))); // week index from timestamp
 
       const [accumVol, shareBP, pending, mStatus] = await Promise.all([
         contracts.enterprise.masterAccumulatedOrganizationVolume(addr).catch(()=>0n),
@@ -5095,7 +5093,11 @@ async function loadCommercialTab(addr) {
       setText('ms-pending',   fmt18s(pending)+' USDT');
       setText('ms-week',      'Semana '+Number(weekId));
 
-      if(isOwn && Number(pending)>0) {
+      // Use masterPendingClaim directly (V16.7 — immediate fees)
+      const pendingClaim = await contracts.enterprise.masterPendingClaim(addr).catch(()=>0n);
+      setText('ms-pending', fmt18s(pendingClaim)+' USDT');
+
+      if(isOwn && Number(pendingClaim)>0) {
         if(claimMBtn) claimMBtn.style.display='block';
       }
 
@@ -5123,29 +5125,19 @@ async function loadCommercialTab(addr) {
         }).join('');
       }
 
-      // Weekly history (last 4 weeks)
+      // V16.7: Master fees are immediate — no weekly tracking
+      // Show accumulated volume and tier info instead
       const weekEl = document.getElementById('ms-weekly-table');
       if(weekEl) {
-        const rows = await Promise.all(
-          [0,1,2,3].map(async off => {
-            const w = BigInt(Math.max(0, Number(weekId)-off));
-            const [vol, fees, closed] = await Promise.all([
-              contracts.enterprise.masterWeeklyVolume(addr,w).catch(()=>0n),
-              contracts.enterprise.masterWeeklyFees(addr,w).catch(()=>0n),
-              contracts.enterprise.masterWeekClosed(addr,w).catch(()=>false),
-            ]);
-            return {w:Number(w), vol, fees, closed};
-          })
-        );
-        weekEl.innerHTML = `<table class="tbl">
-          <thead><tr><th>Semana</th><th>Vol. org.</th><th>Fees generados</th><th>Estado</th></tr></thead>
-          <tbody>${rows.map(r=>`<tr>
-            <td style="font-family:var(--mono);">W${r.w}</td>
-            <td style="color:var(--blue);font-weight:700;">${fmt18s(r.vol)} USDT</td>
-            <td style="color:var(--amber);font-weight:700;">${fmt18s(r.fees)} USDT</td>
-            <td><span class="badge ${r.closed?'badge-green':'badge-gray'}">${r.closed?'Cerrado':'Abierto'}</span></td>
-          </tr>`).join('')}</tbody>
-        </table>`;
+        const [tAllocated, tClaimed] = await Promise.all([
+          contracts.enterprise.totalMasterAllocated().catch(()=>0n),
+          contracts.enterprise.totalMasterClaimed().catch(()=>0n),
+        ]);
+        weekEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="mem-row"><span class="mem-label">Total asignado (protocolo)</span><span class="mem-val amber">${fmt18s(tAllocated)} USDT</span></div>
+          <div class="mem-row"><span class="mem-label">Total reclamado (protocolo)</span><span class="mem-val green">${fmt18s(tClaimed)} USDT</span></div>
+        </div>
+        <div class="alert alert-info" style="margin-top:12px;"><span>ℹ</span><span>En V16.7 los fees de Master son inmediatos — se acumulan en <strong>masterPendingClaim</strong> y se cobran con el botón de arriba. No hay historial semanal.</span></div>`;
       }
     }
 
@@ -5181,6 +5173,64 @@ async function claimMasterRevenueUser() {
     updateOverviewRoleBadge(walletAddr);
   }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
 }
+
+
+
+// ═══════════════════════════════════════════════════════════
+// V16.7.2 — New admin functions
+// ═══════════════════════════════════════════════════════════
+
+// Master Code management
+async function admQueryMasterCode() {
+  const addr = document.getElementById('adm-mcode-addr')?.value?.trim();
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  const el = document.getElementById('adm-mcode-result');
+  try{
+    const hasMC = await contracts.core.masterCodeOf(addr).catch(()=>false);
+    const role  = await contracts.core.userCommercialInfo(addr).catch(()=>null);
+    const ROLES = ['NORMAL','MASTER','COMMERCIAL_PARTNER','ROOT'];
+    if(el) el.textContent = 'Master Code: ' + (hasMC?'✅ ACTIVO':'❌ Inactivo') +
+      (role?' · Rol: '+ROLES[Number(role[0])]:'');
+  }catch(e){ if(el) el.textContent='Error: '+e.message; }
+}
+
+async function admSetMasterCode(enabled) {
+  const addr   = document.getElementById('adm-mcode-addr')?.value?.trim();
+  const reason = 'Admin '+(enabled?'enable':'disable')+' master code';
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    await(await contracts.core.connect(signer).setMasterCode(addr,enabled,reason)).wait();
+    toast('✅ Master Code '+(enabled?'activado':'desactivado')+' para '+addr.slice(0,10),'success');
+    admQueryMasterCode();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+async function admSetCPMasterCode(enabled) {
+  const addr   = document.getElementById('adm-cp-mcode-addr')?.value?.trim();
+  const reason = 'Admin '+(enabled?'enable':'disable')+' CP master code';
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    await(await contracts.core.connect(signer).setCommercialPartnerMasterCode(addr,enabled,reason)).wait();
+    toast('✅ CP Master Code '+(enabled?'activado':'desactivado'),'success');
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+// Remove master
+async function admRemoveMaster() {
+  const addr = document.getElementById('adm-remove-master-addr')?.value?.trim();
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  if(!confirm('¿Confirmas remover a '+addr.slice(0,10)+'… como Master?')) return;
+  try{
+    await(await contracts.enterprise.connect(signer).removeMaster(addr)).wait();
+    toast('✅ Master removido','success');
+    loadAdminEnterprise();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+}
+
+// V16.7: closeMasterWeek removed — fees are immediate via masterPendingClaim
 
 
 </script>
