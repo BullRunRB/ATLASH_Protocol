@@ -881,17 +881,17 @@ footer .brand-mark{background:var(--blue);}
   <div class="dapp-tabs-nav" id="dapp-tabs-nav" style="display:none;flex:1;overflow-x:auto;">
     <div style="display:flex;gap:2px;padding:0 20px;">
       <button class="dtab on" onclick="goTab('overview')" style="border:none;padding:14px 16px;border-bottom:2px solid var(--blue);color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Overview</button>
-      <button class="dtab" onclick="goTab('learn')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Aprender</button>
-      <button class="dtab" onclick="goTab('slots')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Slots</button>
-      <button class="dtab" onclick="goTab('founders')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Fundadores</button>
-      <button class="dtab" onclick="goTab('commercial')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Comercial</button>
-      <button class="dtab" onclick="goTab('earnings')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Ganancias</button>
-      <button class="dtab" onclick="goTab('ranks')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Rangos</button>
-      <button class="dtab" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
-      <button class="dtab" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
-      <button class="dtab" onclick="goTab('treasury')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
-      <button class="dtab" id="tab-contracts-btn" onclick="goTab('contracts')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Contratos</button>
-      <button class="dtab" id="tab-admin-btn" onclick="goTab('admin')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">⚙ Admin</button>
+      <button class="dtab" data-tab="learn" onclick="goTab('learn')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Aprender</button>
+      <button class="dtab" data-tab="slots" onclick="goTab('slots')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Slots</button>
+      <button class="dtab" data-tab="founders" onclick="goTab('founders')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Fundadores</button>
+      <button class="dtab" data-tab="commercial" onclick="goTab('commercial')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Comercial</button>
+      <button class="dtab" data-tab="earnings" onclick="goTab('earnings')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Ganancias</button>
+      <button class="dtab" data-tab="ranks" onclick="goTab('ranks')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Rangos</button>
+      <button class="dtab" data-tab="pools" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
+      <button class="dtab" data-tab="network" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
+      <button class="dtab" data-tab="treasury" onclick="goTab('treasury')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
+      <button class="dtab" data-tab="contracts" id="tab-contracts-btn" onclick="goTab('contracts')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Contratos</button>
+      <button class="dtab" data-tab="admin" id="tab-admin-btn" onclick="goTab('admin')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">⚙ Admin</button>
     </div>
   </div>
 
@@ -2557,13 +2557,13 @@ function clearLearnProgress() {
 
 // ── MAIN goTab (merged) ──
 function goTab(name) {
-  // Update tab buttons
-  const tabNames = ['overview','learn','slots','founders','commercial','earnings','ranks','pools','network','treasury','contracts','admin'];
-  document.querySelectorAll('.dtab').forEach((b, i) => {
-    b.classList.toggle('on', tabNames[i] === name);
-    b.style.color = tabNames[i] === name ? 'var(--blue)' : 'var(--gray-500)';
-    b.style.borderBottomColor = tabNames[i] === name ? 'var(--blue)' : 'transparent';
-    b.style.fontWeight = tabNames[i] === name ? '700' : '500';
+  // Update tab buttons by data-tab attribute (not index — avoids misalignment)
+  document.querySelectorAll('.dtab').forEach(b => {
+    const isActive = b.dataset.tab === name;
+    b.classList.toggle('on', isActive);
+    b.style.color = isActive ? 'var(--blue)' : 'var(--gray-500)';
+    b.style.borderBottomColor = isActive ? 'var(--blue)' : 'transparent';
+    b.style.fontWeight = isActive ? '700' : '500';
   });
   document.querySelectorAll('.tpane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
 
@@ -4140,8 +4140,9 @@ function updateSidebarState() {
 
 // ── Sync sidebar active item with goTab ──
 function updateSidebarActive(name) {
-  const map = ['overview','learn','slots','founders','commercial','earnings','ranks','pools','network','treasury','contracts','admin'];
-  map.forEach(n => {
+  // Use tab names array for sidebar — sb-{name} IDs
+  ['overview','learn','slots','founders','commercial','earnings',
+   'ranks','pools','network','treasury','contracts','admin'].forEach(n => {
     const el = document.getElementById('sb-' + n);
     if (el) el.classList.toggle('on', n === name);
   });
