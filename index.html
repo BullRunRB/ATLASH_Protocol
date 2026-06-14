@@ -4004,36 +4004,20 @@ async function checkRegistrationGate() {
     return;
   }
   try {
-    // ── 1. Check privileged roles FIRST — bypass registration gate ──
+    // ── 1. Owner / Root — bypass + admin tabs ──
     const ownerAbi = [
       "function owner() view returns (address)",
       "function isRoot(address) view returns (bool)"
     ];
     const co = new ethers.Contract(addrs.core || DEPLOY_TESTNET.core, ownerAbi, provider);
-
-    // Check all bypass conditions in parallel
-    const [onChainOwner, isRootUser, isFounder, isMasterEnt, isCPEnt] = await Promise.all([
+    const [onChainOwner, isRootUser] = await Promise.all([
       co.owner().catch(() => ''),
       co.isRoot(walletAddr).catch(() => false),
-      // Check if wallet is one of the 4 founders in Enterprise
-      contracts.enterprise
-        ? Promise.all([0,1,2,3].map(i =>
-            contracts.enterprise.founders(i).catch(() => '')
-          )).then(addrs => addrs.some(a => a.toLowerCase() === walletAddr.toLowerCase()))
-        : Promise.resolve(false),
-      // Check if master or CP in Enterprise
-      contracts.enterprise ? contracts.enterprise.isMaster(walletAddr).catch(() => false) : Promise.resolve(false),
-      contracts.enterprise ? contracts.enterprise.isCommercialPartner(walletAddr).catch(() => false) : Promise.resolve(false),
     ]);
+    const isOwner    = onChainOwner && onChainOwner.toLowerCase() === walletAddr.toLowerCase();
+    const isRootHard = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
 
-    const isOwner        = onChainOwner && onChainOwner.toLowerCase() === walletAddr.toLowerCase();
-    const isRootHard     = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
-    const isPrivileged   = isOwner || isRootUser || isRootHard;
-    // These roles can also bypass gate (they exist in Enterprise, not necessarily in Core)
-    const hasEnterpriseRole = isFounder || isMasterEnt || isCPEnt;
-
-    if (isPrivileged) {
-      // Owner/root — full access including admin tabs
+    if (isOwner || isRootUser || isRootHard) {
       showDappGate('content');
       ['tab-admin-btn','tab-contracts-btn'].forEach(id => {
         const el = document.getElementById(id); if(el) el.style.display = '';
@@ -4051,27 +4035,39 @@ async function checkRegistrationGate() {
       return;
     }
 
-    if (hasEnterpriseRole) {
-      // Founder / Master / CP — show dashboard without registration requirement
-      showDappGate('content');
-      const roleLabels = [
-        isFounder  && '🏛 Fundador',
-        isMasterEnt && '⭐ Master',
-        isCPEnt    && '🤝 Partner Comercial',
-      ].filter(Boolean).join(' · ');
-      toast(roleLabels + ' — acceso habilitado', 'success');
-      // Try to load data but don't block if not in Core
-      const info = await contracts.core.userInfo(walletAddr).catch(() => null);
-      if (info && (info[0] || info.exists)) {
-        document.getElementById('search-inp').value = walletAddr;
-        searchUser();
-        if (contracts.slot) loadLearnSlots();
+    // ── 2. Enterprise roles (Founder / Master / CP) — bypass Core registration ──
+    if (contracts.enterprise) {
+      const founderAddrs = await Promise.all(
+        [0,1,2,3].map(i => contracts.enterprise.founders(i).catch(() => ''))
+      );
+      console.log('[gate] founderAddrs:', founderAddrs, 'wallet:', walletAddr);
+      const isFounder = founderAddrs.some(a =>
+        a && a !== '0x0000000000000000000000000000000000000000' &&
+        a.toLowerCase() === walletAddr.toLowerCase()
+      );
+      const isMasterEnt = await contracts.enterprise.isMaster(walletAddr).catch(() => false);
+      const isCPEnt     = await contracts.enterprise.isCommercialPartner(walletAddr).catch(() => false);
+
+      if (isFounder || isMasterEnt || isCPEnt) {
+        showDappGate('content');
+        const labels = [
+          isFounder  && '🏛 Fundador',
+          isMasterEnt && '⭐ Master',
+          isCPEnt    && '🤝 Partner Comercial',
+        ].filter(Boolean).join(' · ');
+        toast(labels + ' — acceso habilitado', 'success');
+        const info = await contracts.core.userInfo(walletAddr).catch(() => null);
+        if (info && (info[0] || info.exists)) {
+          document.getElementById('search-inp').value = walletAddr;
+          searchUser();
+          if (contracts.slot) loadLearnSlots();
+        }
+        checkOwnerAccess();
+        return;
       }
-      checkOwnerAccess();
-      return;
     }
 
-    // ── 2. Normal user — check Core registration ──
+    // ── 3. Normal flow — must be registered in Core ──
     const info = await contracts.core.userInfo(walletAddr);
     const registered = !!(info[0] || info.exists);
     const addrEl = document.getElementById('gate-wallet-addr');
@@ -4084,12 +4080,15 @@ async function checkRegistrationGate() {
       checkOwnerAccess();
       if (contracts.slot) loadLearnSlots();
     } else {
-      showDappGate('notreg');
+      showDappGate('notreg'); // ← bloqueado correctamente
     }
+
   } catch(e) {
     console.error('[checkRegistrationGate]', e);
-    // On error show content — don't block
-    showDappGate('content');
+    // Error — do NOT open dashboard — show notreg to be safe
+    const addrEl = document.getElementById('gate-wallet-addr');
+    if (addrEl) addrEl.textContent = walletAddr;
+    showDappGate('notreg');
   }
 }
 
