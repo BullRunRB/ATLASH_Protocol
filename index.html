@@ -5802,69 +5802,72 @@ function showFounderTab() {
 }
 
 async function applyTabVisibility() {
-  // Always start clean
   hideAllSpecialTabs();
-
   if (!walletAddr) return;
   const wallet = walletAddr.toLowerCase();
 
-  // ── Owner / Guardian / Root → full admin ──
-  const isRootHard = COMPANY_ROOT.toLowerCase() === wallet;
-  if (isRootHard) { showAdminTabs(); showFounderTab(); return; }
+  console.log('[tabs] applying visibility for', wallet);
 
+  // ── Tier 1: COMPANY_ROOT → full admin ──
+  if (COMPANY_ROOT.toLowerCase() === wallet) {
+    showAdminTabs(); showFounderTab(); return;
+  }
+
+  // ── Tier 2: owner / guardian → full admin ──
   try {
-    const [onChainOwner, onChainGuardian] = await Promise.all([
+    const [owner, guardian] = await Promise.all([
       contracts.core.owner().catch(()=>''),
       contracts.core.guardian().catch(()=>''),
     ]);
-    const isOwner    = onChainOwner    && onChainOwner.toLowerCase()    === wallet;
-    const isGuardian = onChainGuardian && onChainGuardian.toLowerCase() === wallet;
-
-    if (isOwner || isGuardian) {
+    if ((owner && owner.toLowerCase()===wallet) ||
+        (guardian && guardian.toLowerCase()===wallet)) {
       showAdminTabs();
-      // Owners who are also founders see the founder tab too
       if (PROTOCOL_FOUNDERS.includes(wallet)) showFounderTab();
+      console.log('[tabs] admin access granted');
       return;
     }
-  } catch(e) { console.warn('[applyTabVisibility] admin check failed:', e.message); }
+  } catch(e) { console.warn('[tabs] admin check error:', e.message); }
 
-  // ── Founder only? ──
+  // ── Tier 3: determine what roles this wallet actually has ──
   const isFounder = PROTOCOL_FOUNDERS.includes(wallet);
 
-  // Check if also a regular user (registered in Core) or has commercial role
-  let isRegisteredUser = false;
-  let isMasterEnt = false, isCPEnt = false;
+  // Check for active slots (real user activity, not just registration)
+  let hasSlots    = false;
+  let isMaster    = false;
+  let isCP        = false;
   try {
-    const [info, mst, cp] = await Promise.all([
-      contracts.core.userInfo(walletAddr).catch(()=>null),
+    const [slotIds, mst, cp] = await Promise.all([
+      contracts.slot ? contracts.slot.positionsOf(walletAddr).catch(()=>[]) : [],
       contracts.enterprise ? contracts.enterprise.isMaster(walletAddr).catch(()=>false) : false,
       contracts.enterprise ? contracts.enterprise.isCommercialPartner(walletAddr).catch(()=>false) : false,
     ]);
-    isRegisteredUser = info && !!(info[0] || info.exists);
-    isMasterEnt = mst;
-    isCPEnt     = cp;
-  } catch(e) {}
+    hasSlots = slotIds && slotIds.length > 0;
+    isMaster = mst;
+    isCP     = cp;
+  } catch(e) { console.warn('[tabs] role check error:', e.message); }
 
-  const hasOtherRole = isRegisteredUser || isMasterEnt || isCPEnt;
+  console.log('[tabs] isFounder:', isFounder, 'hasSlots:', hasSlots, 'isMaster:', isMaster, 'isCP:', isCP);
 
-  if (isFounder) {
-    showFounderTab();
-    // If ONLY a founder (not registered user / master / CP), don't show other dapp tabs
-    // The gate already decided to show them the dashboard, but we hide irrelevant tabs
-    if (!hasOtherRole) {
-      // Hide non-founder tabs from nav — leave only Fundadores visible
-      const allTabs = ['learn','slots','commercial','earnings','ranks','pools','network'];
-      allTabs.forEach(name => {
-        const btn = document.querySelector('[data-tab="' + name + '"]');
-        if(btn) btn.style.display = 'none';
-        const sb = document.getElementById('sb-'+name);
-        if(sb) sb.style.display = 'none';
-      });
-      // Navigate to founders tab
-      goTab('founders');
-    }
-    // If has other role → all regular tabs stay visible + founders tab
+  // Founder tab always visible for founders
+  if (isFounder) showFounderTab();
+
+  // If founder with NO slots, NO master role, NO CP role → only show Founders tab
+  if (isFounder && !hasSlots && !isMaster && !isCP) {
+    const toHide = ['learn','slots','commercial','earnings','ranks','pools','network'];
+    toHide.forEach(name => {
+      const btn = document.querySelector('[data-tab="' + name + '"]');
+      if(btn) btn.style.display = 'none';
+      const sb = document.getElementById('sb-'+name);
+      if(sb) sb.style.display = 'none';
+    });
+    console.log('[tabs] founder-only mode — hiding regular tabs');
+    goTab('founders');
+    return;
   }
+
+  // Otherwise: regular user tabs stay visible, plus any extra tabs earned above
+  // (Nothing to hide — all regular tabs are visible by default)
+  console.log('[tabs] full access — all regular tabs visible');
 }
 
 
