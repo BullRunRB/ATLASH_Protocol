@@ -3078,7 +3078,11 @@ async function loadUserSlots(addr){
             <span class="badge ${isActive?'badge-blue':'badge-gray'}">${isActive?'Activo':'Completado'}</span>
             Slot #${p.id} · ${amt.toLocaleString()} USDT
           </div>
-          ${canSync&&isActive?`<button class="btn-ghost" onclick="syncSlot(${p.id})" style="padding:5px 14px;font-size:12px;">💰 Reclamar Recompensa</button>`:''}
+          ${canSync&&isActive
+            ? p.roiEnabled
+              ? `<button class="btn-ghost" onclick="syncSlot(${p.id})" style="padding:5px 14px;font-size:12px;">💰 Reclamar Recompensa</button>`
+              : `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;background:var(--gray-100);border:1px solid var(--gray-200);font-size:11px;font-weight:700;color:var(--gray-500);">🤝 Slot Comercial</span>`
+            : ''}
         </div>
         <div class="slot-pos-body">
           <div class="slot-stats-grid">
@@ -3816,7 +3820,9 @@ async function loadLearnSlots() {
       if (synced) {
         btn = `<div class="btn-sync-done">✅ Reclamado hoy</div>`;
       } else if (learnState.videoUnlocked) {
-        btn = `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})">💰 Reclamar Recompensa</button>`;
+        btn = p.roiEnabled
+          ? `<button class="btn-sync-ready" onclick="doLearnSync(${p.id})">💰 Reclamar Recompensa</button>`
+          : `<div class="btn-sync-done" style="background:var(--gray-100);border-color:var(--gray-200);color:var(--gray-500);">🤝 Slot Comercial</div>`;
       } else {
         const wp = Math.min(100, Math.round((learnState.secondsWatched / MIN_WATCH_SECONDS) * 100));
         btn = `<div class="btn-sync-locked">
