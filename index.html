@@ -5331,16 +5331,41 @@ async function admRegisterUser() {
   const user   = document.getElementById('adm-reg-user')?.value?.trim();
   const upline = document.getElementById('adm-reg-upline')?.value?.trim();
   const role   = parseInt(document.getElementById('adm-reg-role')?.value||'0');
-  const cp     = document.getElementById('adm-reg-cp')?.value?.trim()||ethers.ZeroAddress;
+  const cpRaw  = document.getElementById('adm-reg-cp')?.value?.trim();
   const reason = document.getElementById('adm-reg-reason')?.value?.trim()||'Admin registration';
+
   if(!user||!/^0x[0-9a-fA-F]{40}$/.test(user)){toast('Wallet usuario inválida','error');return;}
   if(!upline||!/^0x[0-9a-fA-F]{40}$/.test(upline)){toast('Upline inválido','error');return;}
+  if(role>3){toast('Rol inválido (máx 3)','error');return;}
+
+  // CP: optional (only matters if role=MASTER)
+  const cp = (cpRaw&&/^0x[0-9a-fA-F]{40}$/.test(cpRaw)) ? cpRaw : ethers.ZeroAddress;
+
   if(!signer){toast('Conecta wallet owner','error');return;}
+
+  // Pre-checks before sending tx
+  try {
+    const [paused, uplineExists] = await Promise.all([
+      contracts.core.paused().catch(()=>false),
+      contracts.core.userInfo(upline).then(i=>!!(i[0]||i.exists)).catch(()=>false),
+    ]);
+    if(paused){toast('❌ Protocolo pausado — despausa primero','error');return;}
+    if(!uplineExists){toast('❌ El upline '+upline.slice(0,10)+'… no está registrado en Core','error');return;}
+  } catch(e){ console.warn('pre-check error',e); }
+
   try{
     toast('Registrando usuario…','info');
-    await(await contracts.core.connect(signer).adminRegisterUser(user,upline,role,cp,reason)).wait();
-    toast('✅ Usuario registrado','success');
-  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+    const tx = await contracts.core.connect(signer).adminRegisterUser(user,upline,role,cp,reason);
+    await tx.wait();
+    toast('✅ Usuario registrado · tx: '+tx.hash.slice(0,18)+'…','success');
+  }catch(e){
+    const msg = e?.reason||e?.message||String(e);
+    console.error('[admRegisterUser]', e);
+    if(msg.includes('BadUpline'))  toast('❌ Upline no registrado en Core','error');
+    else if(msg.includes('BadRole')) toast('❌ Rol inválido (usar 0-3)','error');
+    else if(msg.includes('Paused')||msg.includes('paused')) toast('❌ Protocolo pausado','error');
+    else toast('Error: '+msg.slice(0,80),'error');
+  }
 }
 
 async function admActivateCommercialSlots() {
@@ -5738,34 +5763,30 @@ async function updateOverviewRoleBadge(addr) {
   }
 }
 
-// ── Main commercial tab loader ──
-// ── Main commercial tab loader — supports dual role CP+Master ──
+// ── Commercial tab — V16.8 (Core role is primary) ──
 async function loadCommercialTab(addr) {
+  if (!addr) { addr = walletAddr; }
   if (!addr) return;
 
-  const noRole   = document.getElementById('comm-no-role');
-  const partSec  = document.getElementById('comm-partner-section');
-  const masterSec= document.getElementById('comm-master-section');
-  const hdr      = document.getElementById('comm-role-header');
-  const claimPBtn= document.getElementById('btn-claim-partner');
-  const claimMBtn= document.getElementById('btn-claim-master');
+  const noRole    = document.getElementById('comm-no-role');
+  const partSec   = document.getElementById('comm-partner-section');
+  const masterSec = document.getElementById('comm-master-section');
+  const hdr       = document.getElementById('comm-role-header');
+  const claimPBtn = document.getElementById('btn-claim-partner');
+  const claimMBtn = document.getElementById('btn-claim-master');
 
   [hdr,noRole,partSec,masterSec].forEach(el=>{if(el)el.style.display='none';});
   [claimPBtn,claimMBtn].forEach(el=>{if(el)el.style.display='none';});
 
-  if (!contracts.core || !contracts.enterprise) {
-    if(noRole) noRole.style.display='block'; return;
+  if (!contracts.core) {
+    if(noRole) { noRole.style.display='block'; noRole.querySelector('.empty-desc').textContent='Core no inicializado.'; }
+    return;
   }
 
   try {
-    // V16.8: Core userCommercialInfo is the PRIMARY source of roles
-    // Enterprise.isMaster/isCommercialPartner require a SEPARATE registerMaster() call
-    // and may not be set even if the user has the role in Core
-    const [info, isMasterEnt, isCPEnt] = await Promise.all([
-      contracts.core.userCommercialInfo(addr).catch(()=>null),
-      contracts.enterprise ? contracts.enterprise.isMaster(addr).catch(()=>false) : Promise.resolve(false),
-      contracts.enterprise ? contracts.enterprise.isCommercialPartner(addr).catch(()=>false) : Promise.resolve(false),
-    ]);
+    // V16.8: Core.userCommercialInfo is the PRIMARY source of truth for roles
+    const info = await contracts.core.userCommercialInfo(addr).catch(()=>null);
+    console.log('[commercial] addr:', addr, 'info:', info);
 
     if (!info) { if(noRole) noRole.style.display='block'; return; }
 
@@ -5773,44 +5794,47 @@ async function loadCommercialTab(addr) {
     const reason   = info[3];
     const isOwn    = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
 
-    // Core role is definitive. CP_MASTER(3) activates both sections.
-    // Enterprise flags are fallback for users registered via registerMaster()
+    // Enterprise flags as secondary check (require separate registerMaster call)
+    let isMasterEnt = false, isCPEnt = false;
+    if (contracts.enterprise) {
+      [isMasterEnt, isCPEnt] = await Promise.all([
+        contracts.enterprise.isMaster(addr).catch(()=>false),
+        contracts.enterprise.isCommercialPartner(addr).catch(()=>false),
+      ]);
+    }
+
     const isCP     = coreRole === 2 || coreRole === 3 || isCPEnt;
     const isMaster = coreRole === 1 || coreRole === 3 || isMasterEnt;
     const isRoot   = coreRole === 4;
 
-    console.log('[commercial] coreRole:', coreRole, 'isCP:', isCP, 'isMaster:', isMaster);
+    console.log('[commercial] coreRole:', coreRole, 'isCP:', isCP, 'isMaster:', isMaster, 'isRoot:', isRoot);
 
     if (!isCP && !isMaster && !isRoot) {
-      if(noRole) noRole.style.display='block'; return;
+      if(noRole) noRole.style.display='block';
+      return;
     }
 
-    // ── Role header with ALL active roles ──
+    // ── Role header ──
     if (hdr) {
       hdr.style.display = 'block';
       const badges = [];
-      if (isRoot)           badges.push('<span style="background:var(--amber);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">👑 Wallet Raíz</span>');
-      if (isCP)             badges.push('<span style="background:var(--blue);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">🤝 Partner Comercial</span>');
-      if (isMaster)         badges.push('<span style="background:#b45309;color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">⭐ Master</span>');
-      if (masterCodeActive) badges.push('<span style="background:var(--green);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">🔑 Master Code</span>');
+      if (isRoot)   badges.push('<span style="background:var(--amber);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;">👑 Wallet Raíz</span>');
+      if (isCP)     badges.push('<span style="background:var(--blue);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;">🤝 Partner Comercial</span>');
+      if (isMaster) badges.push('<span style="background:#b45309;color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;">⭐ Master</span>');
 
       const badge = document.getElementById('comm-role-badge');
       const title = document.getElementById('comm-role-title');
       const sub   = document.getElementById('comm-role-sub');
       if(badge) badge.innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+badges.join('')+'</div>';
-      if(title) title.textContent =
-        [isCP&&'Partner Comercial', isMaster&&'Master', isRoot&&'Root']
-          .filter(Boolean).join(' + ');
-      if(sub)   sub.textContent = addr.slice(0,18)+'…'+addr.slice(-6) +
-        (masterCodeActive ? ' · Master Code activo' : '');
+      if(title) title.textContent = [isCP&&'Partner Comercial', isMaster&&'Master', isRoot&&'Wallet Raíz'].filter(Boolean).join(' + ');
+      if(sub)   sub.textContent = addr.slice(0,18)+'…'+addr.slice(-6);
     }
 
-    // ══════════════════════════════════════
-    // PARTNER COMERCIAL SECTION
-    // ══════════════════════════════════════
-    if (isCP) {
+    // ════════════════════════════════
+    // PARTNER SECTION
+    // ════════════════════════════════
+    if (isCP && contracts.enterprise) {
       if(partSec) partSec.style.display = 'block';
-
       const [shareBP, status, statusReason, poolBal,
              totalAlloc, totalClaimed, totalFees, pendingRev] = await Promise.all([
         contracts.enterprise.commercialPartnerShareBP(addr).catch(()=>0),
@@ -5822,7 +5846,6 @@ async function loadCommercialTab(addr) {
         contracts.enterprise.totalFeesCollected().catch(()=>0n),
         contracts.enterprise.pendingCommercialPartnerRevenue(addr).catch(()=>0n),
       ]);
-
       const st = Number(status);
       const ST_C = {0:'var(--gray-400)',1:'var(--green)',2:'var(--amber)',3:'var(--red)',4:'var(--red)'};
       setText('cp-share',        (Number(shareBP)/100).toFixed(2)+'% del pool 5%');
@@ -5835,74 +5858,58 @@ async function loadCommercialTab(addr) {
       setText('cp-reason',       reason||statusReason||'—');
       const stEl = document.getElementById('cp-status');
       if(stEl) stEl.style.color = ST_C[st]||'var(--gray-500)';
-
-      if (isOwn && st===1 && pendingRev>0n) {
-        if(claimPBtn) {
-          claimPBtn.style.display = 'block';
-          claimPBtn.textContent   = '💰 Cobrar Partner · '+fmt18s(pendingRev)+' USDT';
-        }
+      if (isOwn && st===1 && pendingRev>0n && claimPBtn) {
+        claimPBtn.style.display = 'block';
+        claimPBtn.textContent   = '💰 Cobrar Partner · '+fmt18s(pendingRev)+' USDT';
       }
     }
 
-    // ══════════════════════════════════════
-    // MASTER SECTION (independent of CP role)
-    // ══════════════════════════════════════
-    if (isMaster) {
+    // ════════════════════════════════
+    // MASTER SECTION
+    // ════════════════════════════════
+    if (isMaster && contracts.enterprise) {
       if(masterSec) masterSec.style.display = 'block';
-
       const [accumVol, shareBP, pendingClaim, mStatus] = await Promise.all([
         contracts.enterprise.masterAccumulatedOrganizationVolume(addr).catch(()=>0n),
         contracts.enterprise.masterShareBP(addr).catch(()=>0),
         contracts.enterprise.masterPendingClaim(addr).catch(()=>0n),
         contracts.enterprise.masterStatus(addr).catch(()=>0),
       ]);
-
       const mSt = Number(mStatus);
       const vol  = Number(ethers.formatUnits(accumVol, 18));
 
       setText('ms-accum-vol', fmt18s(accumVol)+' USDT');
       setText('ms-share-bp',  (Number(shareBP)/100)+'% de fees org.');
       setText('ms-pending',   fmt18s(pendingClaim)+' USDT');
-      setText('ms-week',      'Estado: '+COMM_STATUS[mSt]);
+      setText('ms-week',      'Estado: '+(COMM_STATUS[mSt]||'—'));
 
-      if (isOwn && mSt===1 && pendingClaim>0n) {
-        if(claimMBtn) {
-          claimMBtn.style.display = 'block';
-          claimMBtn.textContent   = '💰 Cobrar Master · '+fmt18s(pendingClaim)+' USDT';
-        }
+      if (isOwn && mSt===1 && pendingClaim>0n && claimMBtn) {
+        claimMBtn.style.display = 'block';
+        claimMBtn.textContent   = '💰 Cobrar Master · '+fmt18s(pendingClaim)+' USDT';
       }
 
       // Tier progress
       const tierEl = document.getElementById('ms-tier-progress');
       if (tierEl) {
         const TIERS = [
-          {label:'Tier 1',pct:'20%',threshold:0,     next:10000, color:'var(--gray-400)'},
-          {label:'Tier 2',pct:'30%',threshold:10000,  next:35000, color:'var(--blue)'},
-          {label:'Tier 3',pct:'40%',threshold:35000,  next:null,  color:'#b45309'},
+          {label:'Tier 1',pct:'20%',threshold:0,    next:10000, color:'var(--gray-400)'},
+          {label:'Tier 2',pct:'30%',threshold:10000, next:35000, color:'var(--blue)'},
+          {label:'Tier 3',pct:'40%',threshold:35000, next:null,  color:'#b45309'},
         ];
         tierEl.innerHTML = TIERS.map(t=>{
           const isCurr  = t.next ? (vol>=t.threshold && vol<t.next) : vol>=t.threshold;
           const done    = t.next ? vol>=t.next : vol>=t.threshold;
-          const prog    = t.next
-            ? Math.min(100,Math.round(Math.max(0,vol-t.threshold)*100/(t.next-t.threshold)))
-            : (vol>=t.threshold?100:0);
-          return `<div style="padding:12px 14px;border-radius:10px;
-            border:1.5px solid ${isCurr?t.color:'var(--gray-200)'};
-            background:${isCurr?'var(--blue-bg)':'var(--gray-50)'};">
+          const prog    = t.next ? Math.min(100,Math.round(Math.max(0,vol-t.threshold)*100/(t.next-t.threshold))) : (vol>=t.threshold?100:0);
+          return `<div style="padding:12px 14px;border-radius:10px;border:1.5px solid ${isCurr?t.color:'var(--gray-200)'};background:${isCurr?'var(--blue-bg)':'var(--gray-50)'};">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
               <div style="font-weight:700;font-size:13px;color:${isCurr?t.color:'var(--gray-500)'};">
                 ${t.label} (${t.pct} fees)
                 ${isCurr?`<span style="font-size:10px;background:${t.color};color:#fff;padding:2px 7px;border-radius:20px;margin-left:4px;">ACTUAL</span>`:''}
-                ${done&&!isCurr?'<span style="color:var(--green);margin-left:4px;">✓</span>':''}
               </div>
-              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">
-                ${t.next?'$'+t.threshold.toLocaleString()+' – $'+t.next.toLocaleString()+' USDT':'$'+t.threshold.toLocaleString()+'+ USDT'}
-              </div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--gray-400);">${t.next?'$'+t.threshold.toLocaleString()+' – $'+t.next.toLocaleString()+' USDT':'$'+t.threshold.toLocaleString()+'+ USDT'}</div>
             </div>
             <div class="prog"><div class="prog-fill" style="width:${prog}%;background:${t.color};"></div></div>
-            <div style="font-size:11px;color:var(--gray-400);margin-top:4px;font-family:var(--mono);">
-              ${vol.toLocaleString(undefined,{maximumFractionDigits:2})} / ${t.next?t.next.toLocaleString()+' USDT':'Sin límite superior'}
-            </div>
+            <div style="font-size:11px;color:var(--gray-400);margin-top:4px;font-family:var(--mono);">${vol.toLocaleString(undefined,{maximumFractionDigits:2})} / ${t.next?t.next.toLocaleString()+' USDT':'Sin límite'}</div>
           </div>`;
         }).join('');
       }
@@ -5914,23 +5921,29 @@ async function loadCommercialTab(addr) {
           contracts.enterprise.totalMasterAllocated().catch(()=>0n),
           contracts.enterprise.totalMasterClaimed().catch(()=>0n),
         ]);
-        weekEl.innerHTML = `
-          <div class="g2" style="margin-bottom:12px;">
-            <div class="mem-row"><span class="mem-label">Total asignado (protocolo)</span><span class="mem-val amber">${fmt18s(tAlloc)} USDT</span></div>
-            <div class="mem-row"><span class="mem-label">Total reclamado (protocolo)</span><span class="mem-val green">${fmt18s(tClaimed)} USDT</span></div>
-          </div>
-          <div class="alert alert-info"><span>ℹ</span>
-            <span>Fees inmediatos — se acumulan en <strong>masterPendingClaim</strong> con cada compra en tu organización y se cobran con el botón de arriba.</span>
-          </div>`;
+        weekEl.innerHTML = `<div class="g2" style="margin-bottom:12px;">
+          <div class="mem-row"><span class="mem-label">Total asignado (protocolo)</span><span class="mem-val amber">${fmt18s(tAlloc)} USDT</span></div>
+          <div class="mem-row"><span class="mem-label">Total reclamado (protocolo)</span><span class="mem-val green">${fmt18s(tClaimed)} USDT</span></div>
+        </div>
+        <div class="alert alert-info"><span>ℹ</span><span>Fees inmediatos — se acumulan en <strong>masterPendingClaim</strong> con cada compra en tu organización.</span></div>`;
       }
+    }
+
+    // No Enterprise data available
+    if (!contracts.enterprise && (isCP || isMaster)) {
+      const note = '<div class="alert alert-warn"><span>⚠</span><span>EnterpriseTreasury no inicializado — datos de revenue no disponibles.</span></div>';
+      if(partSec && isCP)    partSec.innerHTML   = note;
+      if(masterSec && isMaster) masterSec.innerHTML = note;
+      if(partSec && isCP)    partSec.style.display   = 'block';
+      if(masterSec && isMaster) masterSec.style.display = 'block';
     }
 
   } catch(e) {
     console.error('[loadCommercialTab]', e);
     if(noRole) {
       noRole.style.display = 'block';
-      const t = noRole.querySelector('.empty-title');
-      if(t) t.textContent = 'Error al cargar';
+      const t = noRole.querySelector('.empty-desc');
+      if(t) t.textContent = 'Error: '+e.message;
     }
   }
 }
