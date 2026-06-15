@@ -6170,19 +6170,18 @@ function hideAllSpecialTabs() {
 }
 
 function showAdminTabs() {
-  ['tab-treasury-btn','tab-contracts-btn','tab-admin-btn'].forEach(id => {
+  _isAdminSession = true; // lock — prevent applyTabVisibility from re-showing tabs
+
+  // Hide ALL tabs first
+  document.querySelectorAll('.dtab').forEach(btn => btn.style.display = 'none');
+  document.querySelectorAll('.sidebar-item').forEach(el => el.style.display = 'none');
+
+  // Show only admin tabs
+  ['tab-treasury-btn','tab-contracts-btn','tab-admin-btn','tab-dashboard-btn'].forEach(id => {
     const el=document.getElementById(id); if(el) el.style.display='';
   });
-  ['sb-treasury','sb-contracts','sb-admin'].forEach(id => {
+  ['sb-treasury','sb-contracts','sb-admin','sb-dashboard'].forEach(id => {
     const el=document.getElementById(id); if(el) el.style.display='flex';
-  });
-  // For admin: hide all regular user tabs — they only need dashboard, contracts, admin
-  const regularTabs = ['overview','learn','slots','founders','commercial','earnings','ranks','pools','network'];
-  regularTabs.forEach(name => {
-    const btn = document.querySelector('[data-tab="' + name + '"]');
-    if(btn) btn.style.display = 'none';
-    const sb = document.getElementById('sb-'+name);
-    if(sb) sb.style.display = 'none';
   });
 }
 
@@ -6203,6 +6202,8 @@ function showFounderTab() {
 }
 
 async function applyTabVisibility() {
+  // Skip if already configured as admin — showAdminTabs() already ran
+  if (_isAdminSession) return;
   hideAllSpecialTabs();
   if (!walletAddr) return;
   const wallet = walletAddr.toLowerCase();
@@ -6279,6 +6280,7 @@ async function applyTabVisibility() {
 
 let _lastTopFiveSnap = null;
 let _lastBurnSnap    = null;
+let _isAdminSession  = false; // true = owner/guardian, skip applyTabVisibility
 
 // Shared: iterate all users and read volumes in batches
 async function _readAllUserVolumes(monthId, onProgress) {
