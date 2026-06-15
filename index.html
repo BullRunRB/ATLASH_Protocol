@@ -4353,30 +4353,26 @@ async function checkRegistrationGate() {
   const isRootHard     = COMPANY_ROOT.toLowerCase() === wallet;
 
   if (isFounderHard || isRootHard) {
-    // These wallets always get in — check if also owner for admin tabs
     showDappGate('content');
     if (isRootHard) {
-      ['tab-admin-btn','tab-contracts-btn'].forEach(id => {
-        const el = document.getElementById(id); if(el) el.style.display = '';
-      });
-      ['sb-admin','sb-contracts'].forEach(id => {
-        const el = document.getElementById(id); if(el) el.style.display = 'flex';
-      });
+      showDappGate('content');
+      setTimeout(() => {
+        showAdminTabs();
+        showDashboardTabs();
+        goTab('dashboard');
+      }, 50);
       toast('👑 Acceso root activado', 'info');
     } else {
       toast('🏛 Fundador — acceso habilitado', 'success');
-      // Apply tab visibility FIRST — determines what this founder can see
+      contracts.core.userInfo(walletAddr).then(info => {
+        if (info && (info[0] || info.exists)) {
+          document.getElementById('search-inp').value = walletAddr;
+          searchUser();
+          if (contracts.slot) loadLearnSlots();
+        }
+      }).catch(() => {});
       applyTabVisibility();
     }
-    // Load own data if registered in core (optional — don't block)
-    contracts.core.userInfo(walletAddr).then(info => {
-      if (info && (info[0] || info.exists)) {
-        document.getElementById('search-inp').value = walletAddr;
-        searchUser();
-        if (contracts.slot) loadLearnSlots();
-      }
-    }).catch(() => {});
-    checkOwnerAccess();
     return;
   }
 
@@ -4393,20 +4389,13 @@ async function checkRegistrationGate() {
 
     if (isOwner || isRootUser) {
       showDappGate('content');
-      ['tab-admin-btn','tab-contracts-btn'].forEach(id => {
-        const el = document.getElementById(id); if(el) el.style.display = '';
-      });
-      ['sb-admin','sb-contracts'].forEach(id => {
-        const el = document.getElementById(id); if(el) el.style.display = 'flex';
-      });
+      // Use setTimeout to ensure DOM is fully rendered before hiding tabs
+      setTimeout(() => {
+        showAdminTabs();
+        showDashboardTabs();
+        goTab('dashboard');
+      }, 50);
       toast('👑 Acceso owner/root activado', 'info');
-      setTimeout(() => goTab('dashboard'), 300);
-      const info = await contracts.core.userInfo(walletAddr).catch(() => null);
-      if (info && (info[0] || info.exists)) {
-        document.getElementById('search-inp').value = walletAddr;
-        searchUser();
-        if (contracts.slot) loadLearnSlots();
-      }
       return;
     }
 
