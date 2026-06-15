@@ -891,6 +891,7 @@ footer .brand-mark{background:var(--blue);}
       <button class="dtab" data-tab="pools" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
       <button class="dtab" data-tab="network" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
       <button class="dtab" data-tab="treasury" id="tab-treasury-btn" onclick="goTab('treasury')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
+      <button class="dtab" data-tab="dashboard" id="tab-dashboard-btn" onclick="goTab('dashboard')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Dashboard</button>
       <button class="dtab" data-tab="contracts" id="tab-contracts-btn" onclick="goTab('contracts')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Contratos</button>
       <button class="dtab" data-tab="admin" id="tab-admin-btn" onclick="goTab('admin')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">⚙ Admin</button>
     </div>
@@ -981,6 +982,7 @@ footer .brand-mark{background:var(--blue);}
       <div class="si-icon">💼</div><span class="si-label">Tesorería</span>
     </div>
     <div class="sidebar-item" id="sb-admin" onclick="closeSidebar();goTab('admin');" style="display:none;"><div class="si-icon">⚙</div><span class="si-label">Admin</span><span class="si-badge">Owner</span></div>
+    <div class="sidebar-item" id="sb-dashboard" onclick="closeSidebar();goTab('dashboard');" style="display:none;"><div class="si-icon">📊</div><span class="si-label">Dashboard</span></div>
     <div class="sidebar-item" id="sb-contracts" onclick="closeSidebar();goTab('contracts');" style="display:none;">
       <div class="si-icon">📄</div><span class="si-label">Contratos</span><span class="si-badge">Owner</span>
     </div>
@@ -2245,6 +2247,123 @@ footer .brand-mark{background:var(--blue);}
 
       </div>
 
+
+      <!-- ── ADMIN DASHBOARD ── -->
+      <div class="tpane" id="tab-dashboard">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--gray-900);">📊 Dashboard Administrativo</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:2px;" id="dash-update-time">—</div>
+          </div>
+          <button class="btn-outline" onclick="loadDashboard()" style="padding:8px 18px;font-size:13px;">↻ Actualizar datos</button>
+        </div>
+
+        <!-- STATUS ROW -->
+        <div class="g4" style="margin-bottom:16px;">
+          <div class="kpi" style="border-left:3px solid var(--green);">
+            <div class="kpi-label">Estado del protocolo</div>
+            <div class="kpi-value" id="dash-status" style="font-size:16px;">—</div>
+            <div class="kpi-sub" id="dash-month">Mes —</div>
+          </div>
+          <div class="kpi" style="border-left:3px solid var(--blue);">
+            <div class="kpi-label">Total usuarios</div>
+            <div class="kpi-value blue" id="dash-users">—</div>
+            <div class="kpi-sub">Registrados en Core</div>
+          </div>
+          <div class="kpi" style="border-left:3px solid var(--blue);">
+            <div class="kpi-label">Total slots creados</div>
+            <div class="kpi-value blue" id="dash-slots">—</div>
+            <div class="kpi-sub">nextPositionId − 1</div>
+          </div>
+          <div class="kpi" style="border-left:3px solid var(--amber);">
+            <div class="kpi-label">Tasa ROI hoy</div>
+            <div class="kpi-value amber" id="dash-rate">—</div>
+            <div class="kpi-sub" id="dash-coverage">Cobertura —</div>
+          </div>
+        </div>
+
+        <!-- CAPITAL SECTION -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Capital en el protocolo</span><span class="sec-line"></span></div>
+        <div class="g3" style="margin-bottom:16px;">
+          <div class="kpi">
+            <div class="kpi-label">Principal activo (ROI)</div>
+            <div class="kpi-value blue" id="dash-principal">—</div>
+            <div class="kpi-sub">USDT en slots activos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Reserva de recompensas</div>
+            <div class="kpi-value green" id="dash-reward-liq">—</div>
+            <div class="kpi-sub">Disponible para ROI</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Reserva acumulada</div>
+            <div class="kpi-value" id="dash-reward-accounted">—</div>
+            <div class="kpi-sub">Total en RewardTreasury</div>
+          </div>
+        </div>
+
+        <!-- FEES SECTION -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Fees recaudados — distribución enterprise</span><span class="sec-line"></span></div>
+        <div class="panel" style="margin-bottom:16px;">
+          <div class="panel-body">
+            <div class="g2">
+              <div>
+                <div class="mem-row"><span class="mem-label">Total fees de activación recaudados</span><span class="mem-val amber" id="dash-fees-total">—</span></div>
+                <div class="mem-row"><span class="mem-label">Pool Fundadores (30%)</span><span class="mem-val" id="dash-fees-founder">—</span></div>
+                <div class="mem-row"><span class="mem-label">Pool Operaciones (15%)</span><span class="mem-val" id="dash-fees-ops">—</span></div>
+                <div class="mem-row"><span class="mem-label">Partners Comerciales (5%)</span><span class="mem-val" id="dash-fees-cp">—</span></div>
+                <div class="mem-row"><span class="mem-label">Revenue Masters</span><span class="mem-val" id="dash-fees-master">—</span></div>
+                <div class="mem-row"><span class="mem-label">Reserva Corporativa</span><span class="mem-val" id="dash-fees-corp">—</span></div>
+                <div class="mem-row"><span class="mem-label">Fees de Activación (pendiente Masters)</span><span class="mem-val" id="dash-fees-activ">—</span></div>
+              </div>
+              <div>
+                <div class="mem-row"><span class="mem-label">Operaciones retiradas total</span><span class="mem-val" id="dash-ops-withdrawn">—</span></div>
+                <div class="mem-row"><span class="mem-label">Corporativo retirado total</span><span class="mem-val" id="dash-corp-withdrawn">—</span></div>
+                <div class="mem-row"><span class="mem-label">Fundadores reclamado total</span><span class="mem-val" id="dash-founder-claimed">—</span></div>
+                <div class="mem-row"><span class="mem-label">Masters reclamado total</span><span class="mem-val" id="dash-master-claimed">—</span></div>
+                <div class="mem-row"><span class="mem-label">Partners reclamado total</span><span class="mem-val" id="dash-cp-claimed">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARTICIPANTS SECTION -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Participantes del ecosistema</span><span class="sec-line"></span></div>
+        <div class="g4" style="margin-bottom:16px;">
+          <div class="kpi">
+            <div class="kpi-label">Partners Comerciales</div>
+            <div class="kpi-value blue" id="dash-cp-count">—</div>
+            <div class="kpi-sub">Activos en Enterprise</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Fundadores</div>
+            <div class="kpi-value amber" id="dash-founder-count">—</div>
+            <div class="kpi-sub">Wallets configuradas</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Top Five Pool (mes actual)</div>
+            <div class="kpi-value green" id="dash-pool-topfive">—</div>
+            <div class="kpi-sub">Pendiente distribuir</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Rank Pools (mes actual)</div>
+            <div class="kpi-value" id="dash-pool-ranks">—</div>
+            <div class="kpi-sub">Total R1–R7</div>
+          </div>
+        </div>
+
+        <!-- DISTRIBUTION CHART (visual) -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Distribución visual de fees</span><span class="sec-line"></span></div>
+        <div class="panel">
+          <div class="panel-body" id="dash-dist-chart">
+            <div style="color:var(--gray-400);font-size:13px;">Carga los datos para ver la distribución.</div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- ── CONTRACTS ── -->
       <div class="tpane" id="tab-contracts">
         <div class="alert alert-info" style="margin-bottom:16px;"><span>ℹ</span><span>Contratos del ecosistema ATLASH LearnEarn en BSC.</span></div>
@@ -2506,6 +2625,11 @@ const ENTERPRISE_ABI = [
   "function totalMasterAllocated() view returns (uint256)",
   "function totalMasterClaimed() view returns (uint256)",
   "function totalFeesCollected() view returns (uint256)",
+  // Protocol stats
+  "function commercialPartnerCount() view returns (uint256)",
+  "function totalOperationsWithdrawn() view returns (uint256)",
+  "function totalCorporateFeesWithdrawn() view returns (uint256)",
+  "function corporateFeeReserveBalance() view returns (uint256)",
   // User write
   "function claimFounderRevenue() external",
   "function claimCommercialPartnerRevenue() external",
@@ -2712,6 +2836,7 @@ function goTab(name) {
   });
   document.querySelectorAll('.tpane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + name));
 
+  if (name === 'dashboard') loadDashboard();
   if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
   if (name === 'admin')     loadAdminTab();
   if (name === 'ranks')     loadRanksTab(currentUser);
@@ -4275,6 +4400,7 @@ async function checkRegistrationGate() {
         const el = document.getElementById(id); if(el) el.style.display = 'flex';
       });
       toast('👑 Acceso owner/root activado', 'info');
+      setTimeout(() => goTab('dashboard'), 300);
       const info = await contracts.core.userInfo(walletAddr).catch(() => null);
       if (info && (info[0] || info.exists)) {
         document.getElementById('search-inp').value = walletAddr;
@@ -4418,7 +4544,7 @@ function updateSidebarState() {
 function updateSidebarActive(name) {
   // Use tab names array for sidebar — sb-{name} IDs
   ['overview','learn','slots','founders','commercial','earnings',
-   'ranks','pools','network','treasury','contracts','admin'].forEach(n => {
+   'ranks','pools','network','treasury','dashboard','contracts','admin'].forEach(n => {
     const el = document.getElementById('sb-' + n);
     if (el) el.classList.toggle('on', n === name);
   });
@@ -6037,18 +6163,34 @@ async function claimFounderRevenue() {
 // ═══════════════════════════════════════════════════════════
 
 function hideAllSpecialTabs() {
-  const ids = ['tab-founders-btn','tab-treasury-btn','tab-contracts-btn','tab-admin-btn'];
+  const ids = ['tab-founders-btn','tab-treasury-btn','tab-contracts-btn','tab-admin-btn','tab-dashboard-btn'];
   ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
-  const sbIds = ['sb-founders','sb-treasury','sb-contracts','sb-admin'];
+  const sbIds = ['sb-founders','sb-treasury','sb-contracts','sb-admin','sb-dashboard'];
   sbIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
 }
 
 function showAdminTabs() {
-  // Treasury + Contracts + Admin — only for owner/guardian
   ['tab-treasury-btn','tab-contracts-btn','tab-admin-btn'].forEach(id => {
     const el=document.getElementById(id); if(el) el.style.display='';
   });
   ['sb-treasury','sb-contracts','sb-admin'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.style.display='flex';
+  });
+  // For admin: hide all regular user tabs — they only need dashboard, contracts, admin
+  const regularTabs = ['overview','learn','slots','founders','commercial','earnings','ranks','pools','network'];
+  regularTabs.forEach(name => {
+    const btn = document.querySelector('[data-tab="' + name + '"]');
+    if(btn) btn.style.display = 'none';
+    const sb = document.getElementById('sb-'+name);
+    if(sb) sb.style.display = 'none';
+  });
+}
+
+function showDashboardTabs() {
+  ['tab-dashboard-btn'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.style.display='';
+  });
+  ['sb-dashboard'].forEach(id => {
     const el=document.getElementById(id); if(el) el.style.display='flex';
   });
 }
@@ -6370,6 +6512,154 @@ function downloadBurnCSV() {
 // Keep old combined function as alias (backwards compat)
 async function runSnapshotCalculation() { await runTopFiveSnapshot(); }
 function downloadSnapshot() { downloadTopFiveCSV(); }
+
+
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ═══════════════════════════════════════════════════════════
+
+async function loadDashboard() {
+  const t = document.getElementById('dash-update-time');
+  if(t) t.textContent = 'Actualizando…';
+
+  try {
+    // ── Core stats ──
+    const [paused, totalUsers, monthId, owner, guardian] = await Promise.all([
+      contracts.core.paused().catch(()=>false),
+      contracts.core.totalUsers().catch(()=>0n),
+      contracts.core.currentMonthIndex().catch(()=>0n),
+      contracts.core.owner().catch(()=>'—'),
+      contracts.core.guardian().catch(()=>'—'),
+    ]);
+
+    const stEl = document.getElementById('dash-status');
+    if(stEl) {
+      stEl.textContent  = paused ? '⏸ PAUSADO' : '▶ ACTIVO';
+      stEl.style.color  = paused ? 'var(--red)' : 'var(--green)';
+    }
+    setText('dash-users', Number(totalUsers).toLocaleString());
+    setText('dash-month', 'Mes actual: ' + Number(monthId));
+
+    // ── Slot stats ──
+    const [nextPosId, totalPrincipal, rateBP, coverageBP] = await Promise.all([
+      contracts.slot.nextPositionId().catch(()=>1n),
+      contracts.slot.totalActivePrincipal().catch(()=>0n),
+      contracts.slot.previewDynamicRateBP().catch(()=>0n),
+      contracts.slot.coverageBP().catch(()=>0n),
+    ]);
+
+    setText('dash-slots',     (Number(nextPosId)-1).toLocaleString());
+    setText('dash-principal', fmt18s(totalPrincipal)+' USDT');
+    setText('dash-rate',      (Number(rateBP)/100).toFixed(2)+'% / día');
+    setText('dash-coverage',  'Cobertura: '+(Number(coverageBP)/100).toFixed(1)+'%');
+
+    // ── Reward treasury ──
+    const [rewardLiq, rewardAccounted] = await Promise.all([
+      contracts.reward ? contracts.reward.availableRewardsLiquidity().catch(()=>0n) : 0n,
+      contracts.reward ? contracts.reward.accountedReserve?.().catch(()=>0n) : 0n,
+    ]);
+    setText('dash-reward-liq',       fmt18s(rewardLiq)+' USDT');
+    setText('dash-reward-accounted', fmt18s(rewardAccounted)+' USDT');
+
+    // ── Enterprise stats ──
+    const [
+      feesTotal, founderBal, opsBal, cpBal, masterBal, activBal, corpBal,
+      opsWithdrawn, corpWithdrawn, founderClaimed, masterClaimed, cpClaimed,
+      cpCount
+    ] = await Promise.all([
+      contracts.enterprise.totalFeesCollected().catch(()=>0n),
+      contracts.enterprise.founderPoolBalance().catch(()=>0n),
+      contracts.enterprise.operationsBalance().catch(()=>0n),
+      contracts.enterprise.commercialPartnerPoolBalance().catch(()=>0n),
+      contracts.enterprise.masterRevenueBalance().catch(()=>0n),
+      contracts.enterprise.activationFeeBalance().catch(()=>0n),
+      contracts.enterprise.corporateFeeReserveBalance().catch(()=>0n),
+      contracts.enterprise.totalOperationsWithdrawn().catch(()=>0n),
+      contracts.enterprise.totalCorporateFeesWithdrawn().catch(()=>0n),
+      contracts.enterprise.totalFounderClaimed().catch(()=>0n),
+      contracts.enterprise.totalMasterClaimed().catch(()=>0n),
+      contracts.enterprise.totalCommercialPartnerClaimed().catch(()=>0n),
+      contracts.enterprise.commercialPartnerCount().catch(()=>0n),
+    ]);
+
+    setText('dash-fees-total',     fmt18s(feesTotal)+' USDT');
+    setText('dash-fees-founder',   fmt18s(founderBal)+' USDT');
+    setText('dash-fees-ops',       fmt18s(opsBal)+' USDT');
+    setText('dash-fees-cp',        fmt18s(cpBal)+' USDT');
+    setText('dash-fees-master',    fmt18s(masterBal)+' USDT');
+    setText('dash-fees-corp',      fmt18s(corpBal)+' USDT');
+    setText('dash-fees-activ',     fmt18s(activBal)+' USDT');
+    setText('dash-ops-withdrawn',  fmt18s(opsWithdrawn)+' USDT');
+    setText('dash-corp-withdrawn', fmt18s(corpWithdrawn)+' USDT');
+    setText('dash-founder-claimed',fmt18s(founderClaimed)+' USDT');
+    setText('dash-master-claimed', fmt18s(masterClaimed)+' USDT');
+    setText('dash-cp-claimed',     fmt18s(cpClaimed)+' USDT');
+    setText('dash-cp-count',       Number(cpCount).toString());
+
+    // ── Founders count (non-zero addresses) ──
+    const fAddrs = await Promise.all([0,1,2,3].map(i =>
+      contracts.enterprise.founders(i).catch(()=>'')
+    ));
+    const fCount = fAddrs.filter(a => a && a !== ethers.ZeroAddress && a !== '').length;
+    setText('dash-founder-count', fCount+' / 4');
+
+    // ── Pool stats ──
+    const [topFivePool, topFiveFin] = await Promise.all([
+      contracts.pool.leadershipPoolByMonth(monthId).catch(()=>0n),
+      contracts.pool.leadershipFinalized(monthId).catch(()=>false),
+    ]);
+    setText('dash-pool-topfive', fmt18s(topFivePool)+' USDT');
+
+    let totalRankPool = 0n;
+    for(let r=1;r<=7;r++) {
+      const p = await contracts.rank.rankPoolByMonth(monthId, r).catch(()=>0n);
+      totalRankPool += p;
+    }
+    setText('dash-pool-ranks', fmt18s(totalRankPool)+' USDT');
+
+    // ── Distribution bar chart ──
+    const chartEl = document.getElementById('dash-dist-chart');
+    if (chartEl && feesTotal > 0n) {
+      const total = Number(ethers.formatUnits(feesTotal, 18));
+      const bars = [
+        {label:'Fundadores 30%',   val:founderBal,  color:'var(--amber)'},
+        {label:'Operaciones 15%',  val:opsBal,      color:'var(--blue)'},
+        {label:'Partners 5%',      val:cpBal,       color:'var(--blue-dark,#1d4ed8)'},
+        {label:'Masters',          val:masterBal,   color:'#7c3aed'},
+        {label:'Activación',       val:activBal,    color:'#0891b2'},
+        {label:'Corp. Reserve',    val:corpBal,     color:'var(--gray-400)'},
+      ];
+      chartEl.innerHTML = bars.map(b => {
+        const v   = Number(ethers.formatUnits(b.val, 18));
+        const pct = total > 0 ? Math.round(v*100/total) : 0;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:140px;font-size:11px;color:var(--gray-600);text-align:right;flex-shrink:0;">${b.label}</div>
+          <div style="flex:1;background:var(--gray-100);border-radius:4px;height:20px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${b.color};border-radius:4px;transition:width .5s;"></div>
+          </div>
+          <div style="width:130px;font-size:11px;font-family:var(--mono);color:var(--gray-700);">
+            ${fmt18s(b.val)} (${pct}%)
+          </div>
+        </div>`;
+      }).join('') +
+      `<div style="border-top:1px solid var(--gray-200);padding-top:8px;margin-top:4px;display:flex;justify-content:space-between;font-size:11px;">
+        <span style="color:var(--gray-500);">Total fees recaudados</span>
+        <span style="font-weight:700;font-family:var(--mono);">${fmt18s(feesTotal)} USDT</span>
+       </div>`;
+    } else if (chartEl) {
+      chartEl.innerHTML = '<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px;">Sin fees recaudados aún en este contrato.</div>';
+    }
+
+    // ── Update timestamp ──
+    if(t) t.textContent = 'Actualizado: ' + new Date().toLocaleTimeString();
+
+  } catch(e) {
+    console.error('[loadDashboard]', e);
+    if(t) t.textContent = 'Error: ' + e.message.slice(0,60);
+    toast('Error cargando dashboard: '+e.message.slice(0,50), 'error');
+  }
+}
 
 
 </script>
