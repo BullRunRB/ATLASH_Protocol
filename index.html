@@ -2094,6 +2094,50 @@ footer .brand-mark{background:var(--blue);}
 
         <!-- ── VOLUME BURN ── -->
         <div id="adm-pane-burn" style="display:none;">
+
+          <!-- ═══ SNAPSHOT CALCULATOR ═══ -->
+          <div class="panel" style="margin-bottom:16px;border:2px solid var(--blue);border-radius:14px;">
+            <div class="panel-head" style="background:var(--blue-bg);border-radius:12px 12px 0 0;">
+              <div class="panel-title" style="color:var(--blue);">🧮 Calculadora de Snapshots — Top Five &amp; Burn Global</div>
+              <button class="btn-outline" onclick="runSnapshotCalculation()" id="btn-run-snapshot" style="padding:6px 16px;font-size:12px;">
+                ▶ Calcular ahora
+              </button>
+            </div>
+            <div class="panel-body">
+              <div class="g2" style="margin-bottom:12px;">
+                <div class="adm-field"><label class="adm-label">monthId a calcular</label>
+                  <input class="addr-inp" id="snap-month" placeholder="ej. 3"/></div>
+                <div class="adm-field"><label class="adm-label">Vol. mínimo Top Five (USDT)</label>
+                  <input class="addr-inp" id="snap-min-vol" placeholder="10000" value="10000" style="max-width:120px;"/></div>
+              </div>
+              <!-- Progress -->
+              <div id="snap-progress" style="display:none;margin-bottom:10px;">
+                <div style="font-size:12px;font-family:var(--mono);color:var(--blue);margin-bottom:4px;" id="snap-progress-label">Leyendo usuarios…</div>
+                <div style="height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+                  <div id="snap-progress-bar" style="height:100%;width:0%;background:var(--blue);border-radius:3px;transition:width .3s;"></div>
+                </div>
+              </div>
+              <!-- Results -->
+              <div id="snap-results" style="display:none;">
+                <!-- Top Five results -->
+                <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">🏆 Top Five Calificados</div>
+                <div id="snap-topfive-result" style="margin-bottom:16px;"></div>
+                <!-- Burn results -->
+                <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">🔥 Lista para Burn Global</div>
+                <div id="snap-burn-result" style="margin-bottom:16px;"></div>
+                <!-- Hashes -->
+                <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">🔐 Hashes de Snapshot</div>
+                <div id="snap-hashes" style="font-family:var(--mono);font-size:11px;color:var(--gray-600);background:var(--gray-50);border-radius:8px;padding:12px;margin-bottom:12px;"></div>
+                <!-- Action buttons -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="btn-primary" onclick="downloadSnapshot()" style="font-size:12px;padding:8px 16px;">⬇ Descargar CSV</button>
+                  <button class="btn-ghost"   onclick="applyTopFiveFromSnapshot()" style="font-size:12px;padding:8px 16px;" id="btn-apply-topfive">Usar en cierre Top Five →</button>
+                  <button class="btn-ghost"   onclick="applyBurnFromSnapshot()" style="font-size:12px;padding:8px 16px;" id="btn-apply-burn">Usar en quema batch →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="g2">
             <div class="panel">
               <div class="panel-head"><div class="panel-title">🔥 Configuración de quema mensual</div><button class="btn-outline" onclick="loadAdminBurnStatus()" style="padding:5px 12px;font-size:11px;">↻ Cargar</button></div>
@@ -6068,6 +6112,269 @@ async function applyTabVisibility() {
   // Otherwise: regular user tabs stay visible, plus any extra tabs earned above
   // (Nothing to hide — all regular tabs are visible by default)
   console.log('[tabs] full access — all regular tabs visible');
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// SNAPSHOT CALCULATOR — Top Five + Burn Global
+// ═══════════════════════════════════════════════════════════
+
+// Stores last snapshot data for downstream use
+let _lastSnapshot = null;
+
+async function runSnapshotCalculation() {
+  const monthId  = document.getElementById('snap-month')?.value?.trim();
+  const minVolUI = parseFloat(document.getElementById('snap-min-vol')?.value?.trim() || '10000');
+  if (!monthId) { toast('Ingresa el monthId', 'error'); return; }
+  if (!contracts.core || !contracts.pool || !contracts.rank) {
+    toast('Contratos no inicializados', 'error'); return;
+  }
+
+  const btn       = document.getElementById('btn-run-snapshot');
+  const progressW = document.getElementById('snap-progress');
+  const progressL = document.getElementById('snap-progress-label');
+  const progressB = document.getElementById('snap-progress-bar');
+  const results   = document.getElementById('snap-results');
+
+  if(btn) btn.disabled = true;
+  if(progressW) progressW.style.display = 'block';
+  if(results)   results.style.display   = 'none';
+  _lastSnapshot = null;
+
+  try {
+    // ── Step 1: Get total users ──
+    const total = Number(await contracts.core.totalUsers());
+    if(progressL) progressL.textContent = 'Leyendo ' + total + ' usuarios…';
+
+    const minVolWei = BigInt(Math.floor(minVolUI * 1e18));
+    const mId       = BigInt(monthId);
+
+    // ── Step 2: Read all users in batches ──
+    const BATCH = 50;
+    const allUsers = [];    // {addr, monthlyVol, qualifiedVol}
+
+    for (let i = 0; i < total; i += BATCH) {
+      const end     = Math.min(i + BATCH, total);
+      const indices = Array.from({length: end-i}, (_,k) => i+k);
+
+      // Fetch addresses
+      const addrs = await Promise.all(
+        indices.map(idx => contracts.core.userAt(idx).catch(()=>null))
+      );
+
+      // Fetch monthly pool volume + qualified rank volume in parallel
+      const [poolVols, rankVols] = await Promise.all([
+        Promise.all(addrs.map(a => a
+          ? contracts.pool.monthlyVolume(a, mId).catch(()=>0n)
+          : Promise.resolve(0n)
+        )),
+        Promise.all(addrs.map(a => a
+          ? contracts.rank.qualifiedNetworkVolume(a).catch(()=>0n)
+          : Promise.resolve(0n)
+        )),
+      ]);
+
+      for (let j = 0; j < addrs.length; j++) {
+        if (!addrs[j]) continue;
+        allUsers.push({
+          addr:        addrs[j],
+          monthlyVol:  poolVols[j],
+          qualifiedVol: rankVols[j],
+        });
+      }
+
+      const pct = Math.round(end * 100 / total);
+      if(progressB) progressB.style.width = pct + '%';
+      if(progressL) progressL.textContent = 'Procesados ' + end + '/' + total + ' usuarios…';
+    }
+
+    if(progressL) progressL.textContent = 'Calculando resultados…';
+
+    // ── Step 3: Top Five — sort by monthlyVol, filter >= minVol ──
+    const qualified = allUsers
+      .filter(u => u.monthlyVol >= minVolWei)
+      .sort((a,b) => (b.monthlyVol > a.monthlyVol ? 1 : b.monthlyVol < a.monthlyVol ? -1 : 0));
+
+    const topFive = qualified.slice(0, 5);
+
+    // Pad to 5 with zero address if needed
+    while (topFive.length < 5) {
+      topFive.push({addr: ethers.ZeroAddress, monthlyVol: 0n, qualifiedVol: 0n});
+    }
+
+    // ── Step 4: Burn list — all users with qualifiedVol > 0 ──
+    const burnList = allUsers
+      .filter(u => u.qualifiedVol > 0n)
+      .sort((a,b) => (b.qualifiedVol > a.qualifiedVol ? 1 : b.qualifiedVol < a.qualifiedVol ? -1 : 0));
+
+    // ── Step 5: Generate hashes ──
+    // Top Five hash: keccak256 of monthId + the 5 addresses
+    const topFiveData   = monthId + topFive.map(u=>u.addr).join('');
+    const topFiveHash   = ethers.keccak256(ethers.toUtf8Bytes('atlash-topfive-' + topFiveData));
+
+    // Burn hash: same deterministic hash used by getBurnSnapshotHash
+    const burnHash      = getBurnSnapshotHash(monthId);
+
+    // Full snapshot hash (for audit): includes all data
+    const fullData      = monthId + allUsers.map(u=>u.addr+':'+u.monthlyVol.toString()).join(',');
+    const auditHash     = ethers.keccak256(ethers.toUtf8Bytes(fullData));
+
+    // ── Store snapshot ──
+    _lastSnapshot = {
+      monthId, minVolUI, total,
+      topFive, qualified, burnList, allUsers,
+      topFiveHash, burnHash, auditHash,
+    };
+
+    // ── Step 6: Render results ──
+    renderSnapshotResults(_lastSnapshot);
+    if(progressW) progressW.style.display = 'none';
+    if(results)   results.style.display   = 'block';
+
+  } catch(e) {
+    console.error('[snapshot]', e);
+    toast('Error: ' + (e.message||String(e)).slice(0,80), 'error');
+    if(progressW) progressW.style.display = 'none';
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+function renderSnapshotResults(snap) {
+  // ── Top Five ──
+  const tf = document.getElementById('snap-topfive-result');
+  if (tf) {
+    if (snap.qualified.length === 0) {
+      tf.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>Ningún usuario alcanzó el mínimo de ' + snap.minVolUI.toLocaleString() + ' USDT de volumen mensual en el mes ' + snap.monthId + '.</span></div>';
+    } else {
+      tf.innerHTML = '<table class="tbl"><thead><tr><th>Pos.</th><th>Wallet</th><th>Vol. mensual</th><th>Calificado</th></tr></thead><tbody>' +
+        snap.topFive.map((u,i) => {
+          const isZero = u.addr === ethers.ZeroAddress;
+          return '<tr style="' + (isZero?'opacity:.4;':'') + '">' +
+            '<td style="font-weight:800;color:var(--amber);">' + (['🥇','🥈','🥉','4️⃣','5️⃣'][i]) + '</td>' +
+            '<td style="font-family:var(--mono);font-size:11px;">' + (isZero ? 'Sin candidato' : u.addr.slice(0,10)+'…'+u.addr.slice(-6)) + '</td>' +
+            '<td style="color:var(--blue);font-weight:700;">' + (isZero?'—':fmt18s(u.monthlyVol)+' USDT') + '</td>' +
+            '<td>' + (isZero?'—':'<span class="badge badge-green">✓</span>') + '</td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>' +
+        '<div style="font-size:11px;color:var(--gray-400);margin-top:6px;">' +
+          snap.qualified.length + ' usuarios calificados encontrados (≥' + snap.minVolUI.toLocaleString() + ' USDT)</div>';
+    }
+  }
+
+  // ── Burn list summary ──
+  const bl = document.getElementById('snap-burn-result');
+  if (bl) {
+    bl.innerHTML = '<div class="g2" style="margin-bottom:8px;">' +
+      '<div class="mem-row"><span class="mem-label">Total usuarios con volumen calificado</span><span class="mem-val blue">' + snap.burnList.length + ' wallets</span></div>' +
+      '<div class="mem-row"><span class="mem-label">Usuarios totales escaneados</span><span class="mem-val">' + snap.total + '</span></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--gray-400);">El CSV incluye la lista completa ordenada por volumen descendente.</div>';
+  }
+
+  // ── Hashes ──
+  const hEl = document.getElementById('snap-hashes');
+  if (hEl) {
+    hEl.innerHTML =
+      '<div style="margin-bottom:4px;"><strong>Top Five Hash</strong> (usar en finalizeTopFiveMonth):<br>' +
+      '<span style="color:var(--blue);">' + snap.topFiveHash + '</span></div>' +
+      '<div style="margin-bottom:4px;"><strong>Burn Hash</strong> (usar en burnQualifiedVolumeBatch):<br>' +
+      '<span style="color:var(--amber);">' + snap.burnHash + '</span></div>' +
+      '<div><strong>Audit Hash</strong> (snapshot completo, para archivo):<br>' +
+      '<span style="color:var(--gray-500);">' + snap.auditHash + '</span></div>';
+  }
+}
+
+function downloadSnapshot() {
+  if (!_lastSnapshot) { toast('Ejecuta el cálculo primero', 'error'); return; }
+  const snap = _lastSnapshot;
+
+  // Build CSV with all users
+  const rows = [
+    ['Wallet','Vol.Mensual.Equipo.USDT','Vol.Calificado.USDT','Top5','Burn'],
+    ...snap.allUsers.map(u => {
+      const inTop5 = snap.topFive.findIndex(t=>t.addr.toLowerCase()===u.addr.toLowerCase()) >= 0 && u.addr !== ethers.ZeroAddress;
+      const inBurn = u.qualifiedVol > 0n;
+      return [
+        u.addr,
+        (Number(u.monthlyVol) / 1e18).toFixed(6),
+        (Number(u.qualifiedVol) / 1e18).toFixed(6),
+        inTop5 ? 'SI' : '',
+        inBurn ? 'SI' : '',
+      ];
+    })
+  ];
+
+  // Add summary at bottom
+  rows.push([]);
+  rows.push(['=== RESUMEN MES ' + snap.monthId + ' ===']);
+  rows.push(['Top Five Hash', snap.topFiveHash]);
+  rows.push(['Burn Hash',     snap.burnHash]);
+  rows.push(['Audit Hash',    snap.auditHash]);
+  rows.push(['Vol. Minimo Top Five', snap.minVolUI + ' USDT']);
+  rows.push(['Total usuarios', snap.total]);
+  rows.push(['Calificados Top Five', snap.qualified.length]);
+  rows.push(['Usuarios con vol. calificado', snap.burnList.length]);
+  rows.push([]);
+  rows.push(['=== TOP FIVE ===']);
+  snap.topFive.forEach((u,i) => {
+    if(u.addr !== ethers.ZeroAddress)
+      rows.push(['#'+(i+1), u.addr, (Number(u.monthlyVol)/1e18).toFixed(2)+' USDT']);
+  });
+
+  const csv   = rows.map(r=>r.join(',')).join('\n');
+  const blob  = new Blob([csv], {type:'text/csv'});
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href      = url;
+  a.download  = 'atlash-snapshot-mes-' + snap.monthId + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ CSV descargado', 'success');
+}
+
+// Auto-fill Top Five finalization form from snapshot
+function applyTopFiveFromSnapshot() {
+  if (!_lastSnapshot) { toast('Ejecuta el cálculo primero', 'error'); return; }
+  const snap = _lastSnapshot;
+
+  // Switch to pools admin tab
+  switchAdminTab('pool');
+
+  // Fill the finalize top five form
+  const mEl = document.getElementById('adm-tf-month');
+  if(mEl) mEl.value = snap.monthId;
+
+  snap.topFive.forEach((u,i) => {
+    const el = document.getElementById('adm-tf-'+(i+1));
+    if(el) el.value = u.addr !== ethers.ZeroAddress ? u.addr : '';
+  });
+
+  toast('Top Five aplicado en el formulario de cierre', 'success');
+}
+
+// Auto-fill burn batch from snapshot
+function applyBurnFromSnapshot() {
+  if (!_lastSnapshot) { toast('Ejecuta el cálculo primero', 'error'); return; }
+  const snap = _lastSnapshot;
+
+  // Switch to burn tab (already there)
+  const mEl = document.getElementById('adm-burnb-month');
+  const uEl = document.getElementById('adm-burnb-users');
+
+  if(mEl) mEl.value = snap.monthId;
+  if(uEl) uEl.value = snap.burnList.map(u=>u.addr).join('\n');
+
+  // Update count
+  const cnt = document.getElementById('adm-burnb-count');
+  if(cnt) cnt.textContent = snap.burnList.length + ' wallets válidas';
+
+  // Update hash preview
+  updateBurnHashPreview();
+
+  toast(snap.burnList.length + ' wallets cargadas para burn', 'success');
 }
 
 
