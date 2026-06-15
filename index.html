@@ -4133,6 +4133,8 @@ async function checkRegistrationGate() {
       toast('👑 Acceso root activado', 'info');
     } else {
       toast('🏛 Fundador — acceso habilitado', 'success');
+      // Apply tab visibility FIRST — determines what this founder can see
+      applyTabVisibility();
     }
     // Load own data if registered in core (optional — don't block)
     contracts.core.userInfo(walletAddr).then(info => {
