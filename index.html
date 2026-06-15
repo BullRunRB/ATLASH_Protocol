@@ -2026,7 +2026,21 @@ footer .brand-mark{background:var(--blue);}
                   <input class="addr-inp" id="adm-cs-upline" placeholder="0x…"/></div>
                 <div class="adm-field"><label class="adm-label">Nivel de slot (1–14)</label>
                   <div style="display:flex;gap:6px;flex-wrap:wrap;" id="adm-cs-chips">
-                    ${[1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(l=>`<button class="chip" id="adm-cs-chip-${l}" onclick="selectAdmSlot(${l})">${l}</button>`).join('')}
+                    <button class="chip" id="adm-cs-chip-1" onclick="selectAdmSlot(1)">1</button>
+                    <button class="chip" id="adm-cs-chip-2" onclick="selectAdmSlot(2)">2</button>
+                    <button class="chip" id="adm-cs-chip-3" onclick="selectAdmSlot(3)">3</button>
+                    <button class="chip" id="adm-cs-chip-4" onclick="selectAdmSlot(4)">4</button>
+                    <button class="chip" id="adm-cs-chip-5" onclick="selectAdmSlot(5)">5</button>
+                    <button class="chip" id="adm-cs-chip-6" onclick="selectAdmSlot(6)">6</button>
+                    <button class="chip" id="adm-cs-chip-7" onclick="selectAdmSlot(7)">7</button>
+                    <button class="chip" id="adm-cs-chip-8" onclick="selectAdmSlot(8)">8</button>
+                    <button class="chip" id="adm-cs-chip-9" onclick="selectAdmSlot(9)">9</button>
+                    <button class="chip" id="adm-cs-chip-10" onclick="selectAdmSlot(10)">10</button>
+                    <button class="chip" id="adm-cs-chip-11" onclick="selectAdmSlot(11)">11</button>
+                    <button class="chip" id="adm-cs-chip-12" onclick="selectAdmSlot(12)">12</button>
+                    <button class="chip" id="adm-cs-chip-13" onclick="selectAdmSlot(13)">13</button>
+                    <button class="chip" id="adm-cs-chip-14" onclick="selectAdmSlot(14)">14</button>
+
                   </div></div>
                 <div class="adm-field"><label class="adm-label">Rol</label>
                   <select class="addr-inp" id="adm-cs-role" style="max-width:200px;">
