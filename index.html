@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- ATLASH DApp v16.7.2 build 20260615-0117 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
@@ -883,13 +884,13 @@ footer .brand-mark{background:var(--blue);}
       <button class="dtab on" onclick="goTab('overview')" style="border:none;padding:14px 16px;border-bottom:2px solid var(--blue);color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Overview</button>
       <button class="dtab" data-tab="learn" onclick="goTab('learn')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Aprender</button>
       <button class="dtab" data-tab="slots" onclick="goTab('slots')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Slots</button>
-      <button class="dtab" data-tab="founders" onclick="goTab('founders')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Fundadores</button>
+      <button class="dtab" data-tab="founders" id="tab-founders-btn" onclick="goTab('founders')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Fundadores</button>
       <button class="dtab" data-tab="commercial" onclick="goTab('commercial')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Comercial</button>
       <button class="dtab" data-tab="earnings" onclick="goTab('earnings')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Ganancias</button>
       <button class="dtab" data-tab="ranks" onclick="goTab('ranks')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Rangos</button>
       <button class="dtab" data-tab="pools" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
       <button class="dtab" data-tab="network" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
-      <button class="dtab" data-tab="treasury" onclick="goTab('treasury')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
+      <button class="dtab" data-tab="treasury" id="tab-treasury-btn" onclick="goTab('treasury')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
       <button class="dtab" data-tab="contracts" id="tab-contracts-btn" onclick="goTab('contracts')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Contratos</button>
       <button class="dtab" data-tab="admin" id="tab-admin-btn" onclick="goTab('admin')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">⚙ Admin</button>
     </div>
@@ -964,7 +965,7 @@ footer .brand-mark{background:var(--blue);}
     <div class="sidebar-item" id="sb-slots" onclick="closeSidebar();goTab('slots');">
       <div class="si-icon">🎰</div><span class="si-label">Slots</span>
     </div>
-    <div class="sidebar-item" id="sb-founders" onclick="closeSidebar();goTab('founders');"><div class="si-icon">🏛</div><span class="si-label">Fundadores</span></div>
+    <div class="sidebar-item" id="sb-founders" onclick="closeSidebar();goTab('founders');" style="display:none;"><div class="si-icon">🏛</div><span class="si-label">Fundadores</span></div>
     <div class="sidebar-item" id="sb-commercial" onclick="closeSidebar();goTab('commercial');"><div class="si-icon">🤝</div><span class="si-label">Comercial</span></div>
     <div class="sidebar-item" id="sb-earnings" onclick="closeSidebar();goTab('earnings');"><div class="si-icon">💰</div><span class="si-label">Ganancias</span></div>
     <div class="sidebar-item" id="sb-ranks" onclick="closeSidebar();goTab('ranks');">
@@ -976,7 +977,7 @@ footer .brand-mark{background:var(--blue);}
     <div class="sidebar-item" id="sb-network" onclick="closeSidebar();goTab('network');">
       <div class="si-icon">🌐</div><span class="si-label">Red</span>
     </div>
-    <div class="sidebar-item" id="sb-treasury" onclick="closeSidebar();goTab('treasury');">
+    <div class="sidebar-item" id="sb-treasury" onclick="closeSidebar();goTab('treasury');" style="display:none;">
       <div class="si-icon">💼</div><span class="si-label">Tesorería</span>
     </div>
     <div class="sidebar-item" id="sb-admin" onclick="closeSidebar();goTab('admin');" style="display:none;"><div class="si-icon">⚙</div><span class="si-label">Admin</span><span class="si-badge">Owner</span></div>
@@ -1678,13 +1679,46 @@ footer .brand-mark{background:var(--blue);}
 
       <!-- ── POOLS ── -->
       <div class="tpane" id="tab-pools">
-        <div class="g2">
-          <div class="kpi"><div class="kpi-label">Pool liderazgo — mes actual</div><div class="kpi-value blue" id="po-leadership">—</div><div class="kpi-sub" id="po-month">—</div></div>
-          <div class="kpi"><div class="kpi-label">Mi claimable</div><div class="kpi-value green" id="po-claimable">—</div><div class="kpi-sub"><button class="btn-ghost" onclick="claimLeadership()" style="padding:4px 12px;font-size:11px;margin-top:4px;" id="btn-claim-lead">Reclamar</button></div></div>
+
+        <!-- Pool KPIs -->
+        <div class="g3">
+          <div class="kpi">
+            <div class="kpi-label">Pool Top Five — mes actual</div>
+            <div class="kpi-value blue" id="po-total">—</div>
+            <div class="kpi-sub" id="po-month">Mes —</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Estado</div>
+            <div class="kpi-value" id="po-status">—</div>
+            <div class="kpi-sub">Finalizado / Activo</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Mi claimable</div>
+            <div class="kpi-value green" id="po-claimable">—</div>
+            <div class="kpi-sub">
+              <button class="btn-ghost" onclick="claimTopFiveNow()" style="padding:4px 12px;font-size:11px;margin-top:4px;" id="btn-claim-lead">Reclamar</button>
+            </div>
+          </div>
         </div>
+
+        <!-- Top Five leaderboard -->
+        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Top Five del mes — líderes calificados</span><span class="sec-line"></span></div>
         <div class="panel">
-          <div class="panel-head"><div class="panel-title">📅 Pools de liderazgo por mes</div><button class="btn-outline" onclick="loadPoolsData()" style="padding:5px 12px;font-size:11px;">↻ Actualizar</button></div>
-          <div class="panel-body" id="po-table-wrap"><div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin datos</div><div class="empty-desc">Busca un usuario para ver sus pools</div></div></div>
+          <div class="panel-head">
+            <div class="panel-title">🏆 Clasificación Top Five</div>
+            <button class="btn-outline" onclick="loadPoolsData()" style="padding:5px 12px;font-size:11px;">↻ Actualizar</button>
+          </div>
+          <div class="panel-body" id="po-topfive-table">
+            <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Cargando…</div></div>
+          </div>
+        </div>
+
+        <!-- History — last 3 months -->
+        <div class="sec" style="margin-top:16px;"><span class="sec-bar"></span><span class="sec-label">Historial — últimos meses</span><span class="sec-line"></span></div>
+        <div class="panel">
+          <div class="panel-body" id="po-history-table">
+            <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Cargando…</div></div>
+          </div>
         </div>
       </div>
 
@@ -3212,75 +3246,143 @@ async function loadRanksTab(addr){
 // claimRankBonus removed — not in V9 ABI
 
 // ── POOLS ──
-async function loadPoolsData(){
-  if(!contracts.pool||!contracts.core) return;
-  try{
-    const monthId=await contracts.core.currentMonthIndex().catch(()=>0n);
-    const monthNum=Number(monthId);
-    const [bal,fin]=await Promise.all([contracts.pool.leadershipPoolByMonth(monthId).catch(()=>0n),contracts.pool.leadershipFinalized(monthId).catch(()=>false)]);
-    document.getElementById('po-leadership').textContent=fmt18s(bal)+' USDT';
-    document.getElementById('po-month').textContent='Mes '+monthNum+(fin?' (finalizado)':'');
-    const badge=document.getElementById('ov-pool-badge');
-    if(badge) badge.innerHTML=`<span class="badge ${fin?'badge-gray':'badge-blue'}">Mes ${monthNum}</span>`;
+async function loadPoolsData() {
+  if (!contracts.pool || !contracts.core) return;
 
-    if(currentUser){
-      const clm=await contracts.pool.pendingTopFive(currentUser,monthId).catch(()=>0n);
-      document.getElementById('po-claimable').textContent=fmt18s(clm)+' USDT';
+  try {
+    const monthId = await contracts.core.currentMonthIndex().catch(()=>0n);
+    const month   = Number(monthId);
+    document.getElementById('po-month').textContent = 'Mes ' + month;
+
+    const [poolBal, finalized] = await Promise.all([
+      contracts.pool.leadershipPoolByMonth(monthId).catch(()=>0n),
+      contracts.pool.leadershipFinalized(monthId).catch(()=>false),
+    ]);
+
+    document.getElementById('po-total').textContent  = fmt18s(poolBal) + ' USDT';
+    const stEl = document.getElementById('po-status');
+    if(stEl) {
+      stEl.textContent  = finalized ? '✅ Finalizado' : '⏳ Activo';
+      stEl.style.color  = finalized ? 'var(--green)' : 'var(--blue)';
     }
 
-    const rows=await Promise.all([0,1,2].map(async off=>{
-      const mId=BigInt(Math.max(0,monthNum-off));
-      const [b,f,c]=await Promise.all([contracts.pool.leadershipPoolByMonth(mId).catch(()=>0n),contracts.pool.leadershipFinalized(mId).catch(()=>false),currentUser?contracts.pool.pendingTopFive(currentUser,mId).catch(()=>0n):Promise.resolve(0n)]);
-      return {mId:Number(mId),b,f,c};
-    }));
-
-    const el=document.getElementById('po-table-wrap');
-    if(el){
-      el.innerHTML=`<table class="tbl"><thead><tr><th>Mes</th><th>Pool total</th><th>Estado</th><th>Mi claimable</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr>
-        <td>${r.mId}</td><td style="color:var(--blue);">${fmt18s(r.b)} USDT</td>
-        <td><span class="badge ${r.f?'badge-gray':'badge-blue'}">${r.f?'Finalizado':'Activo'}</span></td>
-        <td style="color:var(--green);">${fmt18s(r.c)} USDT</td>
-        <td>${r.c>0n&&currentUser&&walletAddr&&walletAddr.toLowerCase()===currentUser.toLowerCase()?`<button class="btn-ghost" onclick="claimLeadershipMonth(${r.mId})" style="padding:4px 12px;font-size:11px;">Reclamar</button>`:''}</td>
-      </tr>`).join('')}</tbody></table>`;
-      const ov=document.getElementById('ov-pool-body');
-      if(ov) ov.innerHTML=el.innerHTML;
+    // My claimable
+    let myClaimable = 0n;
+    if (currentUser && contracts.pool) {
+      myClaimable = await contracts.pool.pendingTopFive(currentUser, monthId).catch(()=>0n);
     }
-  }catch(e){console.warn('pools:',e.message);}
+    document.getElementById('po-claimable').textContent = fmt18s(myClaimable) + ' USDT';
+    const claimBtn = document.getElementById('btn-claim-lead');
+    if(claimBtn) {
+      claimBtn.disabled = myClaimable === 0n || !walletAddr || walletAddr.toLowerCase() !== (currentUser||'').toLowerCase();
+      claimBtn.style.opacity = myClaimable > 0n ? '1' : '0.5';
+    }
+
+    // ── Top Five leaderboard ──
+    // We read the 5 top candidates by checking who has pending claims
+    // The contract stores this — we load from PROTOCOL_FOUNDERS + any known users
+    // For now: show the finalization status and pool size prominently
+    const tblEl = document.getElementById('po-topfive-table');
+    if (tblEl) {
+      if (!finalized) {
+        tblEl.innerHTML = `
+          <div class="alert alert-info" style="margin-bottom:16px;">
+            <span>ℹ</span>
+            <span>El pool del mes <strong>${month}</strong> está activo. 
+            El Top Five se determina al finalizar el mes por el owner 
+            usando <code>finalizeTopFiveMonth()</code>.</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:4px;">
+            ${[1,2,3,4,5].map(pos => `
+              <div style="text-align:center;padding:16px 8px;border:1.5px dashed var(--gray-200);border-radius:12px;">
+                <div style="font-size:24px;margin-bottom:6px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][pos-1]}</div>
+                <div style="font-size:11px;color:var(--gray-400);font-weight:700;">Posición ${pos}</div>
+                <div style="font-size:10px;color:var(--gray-300);margin-top:4px;">Pendiente</div>
+              </div>`).join('')}
+          </div>
+          <div style="margin-top:16px;text-align:center;">
+            <div style="font-size:28px;font-weight:800;color:var(--blue);">${fmt18s(poolBal)} USDT</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">Total a repartir entre los 5 líderes</div>
+          </div>`;
+      } else {
+        // Pool is finalized — try to show who claimed
+        tblEl.innerHTML = `
+          <div class="alert" style="background:var(--green-bg);border:1px solid #a7f3d0;margin-bottom:16px;">
+            <span>✅</span>
+            <span>Pool del mes <strong>${month}</strong> finalizado. 
+            <strong>${fmt18s(poolBal)} USDT</strong> distribuidos entre los 5 líderes.</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+            ${[1,2,3,4,5].map(pos => {
+              const share = poolBal / 5n; // approximate equal split display
+              return `<div style="text-align:center;padding:16px 8px;border:1.5px solid var(--gray-200);border-radius:12px;background:var(--gray-50);">
+                <div style="font-size:24px;margin-bottom:6px;">${['🥇','🥈','🥉','4️⃣','5️⃣'][pos-1]}</div>
+                <div style="font-size:11px;color:var(--gray-700);font-weight:700;">Posición ${pos}</div>
+                <div style="font-size:11px;color:var(--blue);font-family:var(--mono);margin-top:4px;">~${fmt18s(share)} USDT</div>
+              </div>`;
+            }).join('')}
+          </div>`;
+      }
+    }
+
+    // ── History — last 3 months ──
+    const histEl = document.getElementById('po-history-table');
+    if (histEl) {
+      const histRows = await Promise.all(
+        [0,1,2].map(async off => {
+          const mId = BigInt(Math.max(0, month - off));
+          const [bal, fin, clm] = await Promise.all([
+            contracts.pool.leadershipPoolByMonth(mId).catch(()=>0n),
+            contracts.pool.leadershipFinalized(mId).catch(()=>false),
+            currentUser ? contracts.pool.pendingTopFive(currentUser, mId).catch(()=>0n) : Promise.resolve(0n),
+          ]);
+          return { mId: Number(mId), bal, fin, clm };
+        })
+      );
+      histEl.innerHTML = `<table class="tbl">
+        <thead><tr><th>Mes</th><th>Pool total</th><th>Estado</th><th>Mi pendiente</th><th></th></tr></thead>
+        <tbody>${histRows.map(r=>`<tr>
+          <td style="font-weight:700;">Mes ${r.mId}</td>
+          <td style="color:var(--blue);font-weight:700;">${fmt18s(r.bal)} USDT</td>
+          <td><span class="badge ${r.fin?'badge-green':'badge-blue'}">${r.fin?'✅ Finalizado':'⏳ Activo'}</span></td>
+          <td style="color:${r.clm>0n?'var(--green)':'var(--gray-400)'};font-weight:${r.clm>0n?700:400};">
+            ${fmt18s(r.clm)} USDT
+          </td>
+          <td>${walletAddr&&r.clm>0n&&walletAddr.toLowerCase()===(currentUser||'').toLowerCase()
+            ?`<button class="btn-ghost" onclick="claimTopFiveNow(${r.mId})" style="padding:4px 12px;font-size:11px;">Cobrar</button>`
+            :''}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+  } catch(e) {
+    console.error('[loadPoolsData]', e);
+    toast('Error cargando pools: ' + e.message.slice(0,60), 'error');
+  }
 }
 
-async function claimLeadership(){
-  if(!contracts.core) return;
-  const m=await contracts.core.currentMonthIndex().catch(()=>0n);
-  await claimLeadershipMonth(Number(m));
-}
-async function claimLeadershipMonth(monthId){
-  if(!signer){toast('Conecta tu wallet','error');return;}
-  try{
-    toast('Reclamando Top Five mes '+monthId+'…','info');
+async function claimTopFiveNow(monthId) {
+  if (!signer) { toast('Conecta tu wallet', 'error'); return; }
+  try {
+    if (!monthId) {
+      const mid = await contracts.core.currentMonthIndex();
+      monthId = Number(mid);
+    }
+    toast('Reclamando Top Five mes ' + monthId + '…', 'info');
     await (await contracts.pool.connect(signer).claimTopFive(monthId)).wait();
-    toast('✅ Top Five reclamado','success');
+    toast('✅ Top Five mes ' + monthId + ' reclamado', 'success');
     loadPoolsData();
-  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');}
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
 }
 
-// ── NETWORK ──
-async function loadDirectsList(addr,count){
-  const el=document.getElementById('nt-directs-list');
-  if(!el) return;
-  if(count===0){el.innerHTML='<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Sin referidos directos</div></div>';return;}
-  el.innerHTML='<div style="color:var(--gray-400);font-size:13px;padding:8px;">Cargando '+count+' directos…</div>';
-  const limit=Math.min(count,30);
-  const results=await Promise.all(Array.from({length:limit},(_,i)=>contracts.core.directAt(addr,i).catch(()=>null)));
-  const valid=results.filter(Boolean);
-  const exp=activeNet?activeNet.explorer:'https://bscscan.com';
-  el.innerHTML=`<div style="margin-bottom:8px;font-size:11px;color:var(--gray-400);">${count} referido(s) directos${count>30?' — mostrando 30':''}</div>
-    <table class="tbl"><thead><tr><th>#</th><th>Dirección</th><th></th></tr></thead><tbody>
-    ${valid.map((a,i)=>`<tr>
-      <td style="color:var(--gray-400);">${i+1}</td>
-      <td style="color:var(--blue);">${a} <button class="copy-btn" onclick="copyText('${a}')">📋</button> <a href="${exp}/address/${a}" target="_blank" style="color:var(--blue);font-size:11px;">↗</a></td>
-      <td><button class="btn-outline" onclick="document.getElementById('search-inp').value='${a}';searchUser();" style="padding:3px 10px;font-size:11px;">Ver</button></td>
-    </tr>`).join('')}</tbody></table>`;
+async function claimLeadership() {
+  await claimTopFiveNow();
 }
+async function claimLeadershipMonth(monthId) {
+  await claimTopFiveNow(monthId);
+}
+
+
 
 // ── TREASURY ──
 async function loadTreasury(){
@@ -3809,11 +3911,10 @@ async function checkOwnerAccess() {
     const isRootWallet = COMPANY_ROOT && COMPANY_ROOT.toLowerCase() === walletAddr.toLowerCase();
     const hasAccess = isOwner || isRootUser || isRootWallet;
     btn.style.display = hasAccess ? '' : 'none';
-    const adminBtn = document.getElementById('tab-admin-btn');
-    if (adminBtn) adminBtn.style.display = hasAccess ? '' : 'none';
-    const sbAdmin = document.getElementById('sb-admin');
-    if (sbAdmin) sbAdmin.style.display = hasAccess ? 'flex' : 'none';
-    if (hasAccess) toast('👑 Acceso owner/root activado', 'info');
+    if (hasAccess) {
+      applyTabVisibility();
+      toast('👑 Acceso owner/root activado', 'info');
+    }
   } catch { btn.style.display = 'none'; }
 }
 
@@ -4099,6 +4200,7 @@ async function checkRegistrationGate() {
       document.getElementById('search-inp').value = walletAddr;
       searchUser();
       checkOwnerAccess();
+      applyTabVisibility();
       if (contracts.slot) loadLearnSlots();
     } else {
       showDappGate('notreg');
@@ -5476,26 +5578,30 @@ async function admRemoveMaster() {
 // ═══════════════════════════════════════════════════════════
 
 async function loadFoundersTab() {
-  const noAccess = document.getElementById('fnd-no-access');
   const content  = document.getElementById('fnd-content');
+  const noAccess = document.getElementById('fnd-no-access');
   const claimWrap= document.getElementById('fnd-claim-wrap');
-
-  if(noAccess) noAccess.style.display = 'none';
-  if(content)  content.style.display  = 'none';
+  if(content)   content.style.display  = 'none';
+  if(noAccess)  noAccess.style.display = 'none';
   if(claimWrap) claimWrap.style.display= 'none';
 
   if (!contracts.enterprise) {
-    if(noAccess) noAccess.style.display = 'block'; return;
+    if(noAccess) noAccess.style.display = 'block';
+    noAccess.querySelector('.empty-desc').textContent = 'EnterpriseTreasury no inicializado.';
+    return;
   }
 
   try {
-    // Load all 4 founder slots + pool data in parallel
-    const [f0,f1,f2,f3, s0,s1,s2,s3,
-           poolBal, totalAlloc, totalClaimed, totalFees] = await Promise.all([
-      contracts.enterprise.founders(0).catch(()=>ethers.ZeroAddress),
-      contracts.enterprise.founders(1).catch(()=>ethers.ZeroAddress),
-      contracts.enterprise.founders(2).catch(()=>ethers.ZeroAddress),
-      contracts.enterprise.founders(3).catch(()=>ethers.ZeroAddress),
+    // ── Load all data in one batch ──
+    const [
+      f0,f1,f2,f3,
+      bp0,bp1,bp2,bp3,
+      poolBal, totalAlloc, totalClaimed, totalFees
+    ] = await Promise.all([
+      contracts.enterprise.founders(0).catch(()=>''),
+      contracts.enterprise.founders(1).catch(()=>''),
+      contracts.enterprise.founders(2).catch(()=>''),
+      contracts.enterprise.founders(3).catch(()=>''),
       contracts.enterprise.founderSharesBP(0).catch(()=>0),
       contracts.enterprise.founderSharesBP(1).catch(()=>0),
       contracts.enterprise.founderSharesBP(2).catch(()=>0),
@@ -5506,79 +5612,69 @@ async function loadFoundersTab() {
       contracts.enterprise.totalFeesCollected().catch(()=>0n),
     ]);
 
-    const founders = [
-      { addr: f0, shareBP: Number(s0) },
-      { addr: f1, shareBP: Number(s1) },
-      { addr: f2, shareBP: Number(s2) },
-      { addr: f3, shareBP: Number(s3) },
+    console.log('[founders] addrs from contract:', [f0,f1,f2,f3]);
+    console.log('[founders] walletAddr:', walletAddr);
+
+    const ZERO = '0x0000000000000000000000000000000000000000';
+    const slots = [
+      {addr:f0, bp:Number(bp0)},
+      {addr:f1, bp:Number(bp1)},
+      {addr:f2, bp:Number(bp2)},
+      {addr:f3, bp:Number(bp3)},
     ];
-    const ZERO = ethers.ZeroAddress.toLowerCase();
-    const configured = founders.filter(f => f.addr.toLowerCase() !== ZERO);
 
-    // Check if current wallet is a founder
-    const myFounder = walletAddr
-      ? founders.find(f => f.addr.toLowerCase() === walletAddr.toLowerCase())
-      : null;
+    // Find if connected wallet is a founder (case-insensitive)
+    // Also check against hardcoded list as fallback
+    const wallet = (walletAddr||'').toLowerCase();
+    let mySlot = slots.find(s => s.addr && s.addr.toLowerCase() === wallet);
 
-    // Load pending for connected wallet
-    let myPending = 0n;
-    if (myFounder) {
-      myPending = await contracts.enterprise.pendingFounderRevenue(walletAddr).catch(()=>0n);
+    // If contract didn't return the address but wallet is in hardcoded list,
+    // find its share by position
+    if (!mySlot && PROTOCOL_FOUNDERS.includes(wallet)) {
+      const idx = PROTOCOL_FOUNDERS.indexOf(wallet);
+      if (idx >= 0) mySlot = { addr: walletAddr, bp: slots[idx]?.bp || 0 };
     }
 
-    // Load pending for all founders (to show in table)
-    const pendingPerFounder = await Promise.all(
-      founders.map(f =>
-        f.addr.toLowerCase()!==ZERO
-          ? contracts.enterprise.pendingFounderRevenue(f.addr).catch(()=>0n)
-          : Promise.resolve(0n)
-      )
-    );
+    console.log('[founders] mySlot:', mySlot);
 
-    // Debug — log what we got from the contract
-    console.log('[loadFoundersTab] founders from contract:', founders.map(f=>f.addr));
-    console.log('[loadFoundersTab] walletAddr:', walletAddr);
-    console.log('[loadFoundersTab] myFounder:', myFounder);
+    // Load pending for this wallet
+    const myPending = walletAddr
+      ? await contracts.enterprise.pendingFounderRevenue(walletAddr).catch(()=>0n)
+      : 0n;
 
-    // Always show content — let user see the table even if not a founder
-    if (content) content.style.display = 'block';
-    if (noAccess) noAccess.style.display = 'none';
+    console.log('[founders] myPending:', myPending.toString(), 'poolBal:', poolBal.toString());
 
-    // ── KPIs — show for everyone, highlight own row ──
+    // ── Always show content ──
+    if(content)  content.style.display  = 'block';
+    if(noAccess) noAccess.style.display = 'none';
+
+    // ── KPIs ──
+    const founderPct = mySlot ? (mySlot.bp/100).toFixed(2)+'%' : '—';
+    setText('fnd-my-share',     founderPct);
+    setText('fnd-pending',      fmt18s(myPending)+' USDT');
     setText('fnd-pool-bal',     fmt18s(poolBal)+' USDT');
     setText('fnd-total-claimed',fmt18s(totalClaimed)+' USDT');
 
-    if (myFounder) {
-      // Connected wallet IS a founder
-      setText('fnd-my-share', (myFounder.shareBP/100).toFixed(2)+'%');
-      setText('fnd-pending',  fmt18s(myPending)+' USDT');
-
-      if (claimWrap) claimWrap.style.display = 'block';
+    // ── Claim block — always show for founders ──
+    const isOwnWallet = walletAddr && (mySlot || PROTOCOL_FOUNDERS.includes(wallet));
+    if (claimWrap && isOwnWallet) {
+      claimWrap.style.display = 'block';
       const det = document.getElementById('fnd-claim-detail');
       if(det) det.textContent =
-        'Participación: '+(myFounder.shareBP/100).toFixed(2)+'% · '+
-        'Disponible: '+fmt18s(myPending)+' USDT';
+        (mySlot ? 'Participación: '+founderPct+' · ' : '') +
+        'Pendiente: '+fmt18s(myPending)+' USDT · ' +
+        'Pool total: '+fmt18s(poolBal)+' USDT';
       const btn = document.getElementById('btn-claim-founder');
       if(btn) {
-        btn.disabled = myPending === 0n;
-        btn.style.opacity = myPending > 0n ? '1' : '0.5';
+        btn.disabled      = myPending === 0n;
+        btn.style.opacity = myPending > 0n ? '1' : '0.6';
         btn.textContent   = myPending > 0n
-          ? '💰 Cobrar ' + fmt18s(myPending) + ' USDT'
-          : '💰 Sin pendiente ahora';
+          ? '💰 Cobrar '+fmt18s(myPending)+' USDT'
+          : '✓ Sin pendiente por ahora';
       }
-    } else if (walletAddr) {
-      // Wallet connected but not a founder — show info only
-      setText('fnd-my-share', '—');
-      setText('fnd-pending',  '—');
-      // Small note instead of blocking screen
-      const note = document.createElement('div');
-      note.className = 'alert alert-info';
-      note.style.marginBottom = '12px';
-      note.innerHTML = '<span>ℹ</span><span>Tu wallet no está en la lista de fundadores. Puedes ver los datos del pool.</span>';
-      if (content) content.insertBefore(note, content.firstChild);
     }
 
-    // ── Stats ──
+    // ── Stats block ──
     setText('fnd-s-pool',    fmt18s(poolBal)+' USDT');
     setText('fnd-s-alloc',   fmt18s(totalAlloc)+' USDT');
     setText('fnd-s-claimed', fmt18s(totalClaimed)+' USDT');
@@ -5586,70 +5682,75 @@ async function loadFoundersTab() {
 
     // ── Founders table ──
     const tbl = document.getElementById('fnd-founders-table');
-    if (tbl) {
-      if (configured.length === 0) {
-        tbl.innerHTML = `<div class="alert alert-warn"><span>⚠</span>
-          <span>Fundadores no configurados. El owner debe llamar <code>setInitialFounders()</code>.</span></div>`;
-      } else {
-        const isOwn = addr => walletAddr && addr.toLowerCase()===walletAddr.toLowerCase();
-        tbl.innerHTML = `<table class="tbl">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Wallet</th>
-              <th>Participación</th>
-              <th>Pendiente cobrar</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${founders.map((f, i) => {
-              const isZero = f.addr.toLowerCase()===ZERO;
-              if (isZero) return `<tr style="opacity:.4;">
-                <td>${i+1}</td>
-                <td colspan="4" style="font-style:italic;color:var(--gray-400);">Sin configurar</td>
-              </tr>`;
-              const mine   = isOwn(f.addr);
-              const pend   = pendingPerFounder[i];
-              return `<tr style="${mine?'background:var(--blue-bg);':''}">
-                <td style="font-weight:700;color:var(--amber);">${i+1}</td>
-                <td>
-                  <div style="font-family:var(--mono);font-size:12px;font-weight:${mine?700:400};">
-                    ${mine?'<span style="color:var(--blue);">★ Tú · </span>':''}${f.addr.slice(0,10)}…${f.addr.slice(-6)}
-                  </div>
-                  <div style="font-size:10px;margin-top:2px;">
-                    <a href="${(addrs.explorer||DEPLOY_TESTNET.explorer||'https://testnet.bscscan.com')+'/address/'+f.addr}"
-                       target="_blank" style="color:var(--blue);font-family:var(--mono);">
-                      Ver en explorer ↗
-                    </a>
-                  </div>
-                </td>
-                <td style="font-weight:700;font-size:15px;">${(f.shareBP/100).toFixed(2)}%</td>
-                <td style="color:${pend>0n?'var(--green)':'var(--gray-400)'};font-weight:${pend>0n?700:400};">
-                  ${fmt18s(pend)} USDT
-                  ${pend>0n?'<div style="font-size:10px;color:var(--green);">● Disponible</div>':''}
-                </td>
-                <td>
-                  <span class="badge ${pend>0n?'badge-green':'badge-gray'}">
-                    ${pend>0n?'Cobrable':'Al día'}
-                  </span>
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:10px;padding:0 4px;">
-          El pool de fundadores recibe el <strong>30%</strong> de todos los fees de activación del protocolo.
-          Cada fee se distribuye automáticamente según el porcentaje de participación al momento de la activación.
+    if (!tbl) return;
+
+    // Load pending per slot
+    const pendings = await Promise.all(
+      slots.map(s => s.addr && s.addr !== ZERO
+        ? contracts.enterprise.pendingFounderRevenue(s.addr).catch(()=>0n)
+        : Promise.resolve(0n)
+      )
+    );
+
+    // Check if contract has founders configured at all
+    const hasConfig = slots.some(s => s.addr && s.addr !== ZERO && s.addr !== '');
+
+    if (!hasConfig) {
+      tbl.innerHTML = `
+        <div class="alert alert-warn"><span>⚠</span>
+          <span>El owner aún no ha llamado <code>setInitialFounders()</code> en este deploy.</span>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--gray-500);">
+          Fundadores configurados localmente:
+          ${PROTOCOL_FOUNDERS.map((a,i)=>`<div style="font-family:var(--mono);margin-top:4px;">${i+1}. ${a}</div>`).join('')}
         </div>`;
-      }
+      return;
     }
+
+    tbl.innerHTML = `
+      <table class="tbl">
+        <thead>
+          <tr><th>#</th><th>Wallet</th><th>Participación</th><th>Pendiente</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${slots.map((s,i) => {
+            const isEmpty = !s.addr || s.addr === ZERO || s.addr === '';
+            const isMe    = s.addr && s.addr.toLowerCase() === wallet;
+            const pend    = pendings[i] || 0n;
+            if (isEmpty) return `<tr style="opacity:.35;">
+              <td>${i+1}</td>
+              <td colspan="4" style="color:var(--gray-400);font-style:italic;">Sin configurar</td>
+            </tr>`;
+            return `<tr style="${isMe?'background:var(--blue-bg);font-weight:600;':''}">
+              <td style="color:var(--amber);font-weight:800;">${i+1}</td>
+              <td>
+                <div style="font-family:var(--mono);font-size:12px;">
+                  ${isMe?'<span style="color:var(--blue);">★ Tú · </span>':''}
+                  ${s.addr.slice(0,10)}…${s.addr.slice(-6)}
+                </div>
+              </td>
+              <td style="font-weight:700;">${(s.bp/100).toFixed(2)}%</td>
+              <td style="color:${pend>0n?'var(--green)':'var(--gray-400)'};font-weight:${pend>0n?700:400};">
+                ${fmt18s(pend)} USDT
+              </td>
+              <td>
+                <span class="badge ${pend>0n?'badge-green':'badge-gray'}">
+                  ${pend>0n?'● Cobrable':'Al día'}
+                </span>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:10px;padding:0 4px;">
+        El pool de fundadores recibe el <strong>30%</strong> de todos los fees de activación del protocolo.
+      </div>`;
 
   } catch(e) {
     console.error('[loadFoundersTab]', e);
-    if(noAccess) noAccess.style.display = 'block';
-    const t = noAccess?.querySelector('.empty-title');
-    if(t) t.textContent = 'Error al cargar';
+    if(content) content.style.display = 'block';
+    const tbl = document.getElementById('fnd-founders-table');
+    if(tbl) tbl.innerHTML = `<div class="alert alert-warn"><span>⚠</span><span>Error: ${e.message}</span></div>`;
   }
 }
 
@@ -5659,14 +5760,110 @@ async function claimFounderRevenue() {
   if(btn) { btn.disabled=true; btn.textContent='Procesando…'; }
   try {
     toast('Reclamando revenue de fundador…', 'info');
-    const tx = await contracts.enterprise.connect(signer).claimFounderRevenue();
-    await tx.wait();
-    toast('✅ Revenue de fundador reclamado', 'success');
+    await (await contracts.enterprise.connect(signer).claimFounderRevenue()).wait();
+    toast('✅ Revenue reclamado', 'success');
     loadFoundersTab();
     updateOverviewRoleBadge(walletAddr);
   } catch(e) {
     toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error');
     if(btn) { btn.disabled=false; btn.textContent='💰 Cobrar Revenue'; }
+  }
+}
+
+
+
+
+// ═══════════════════════════════════════════════════════════
+// TAB VISIBILITY — based on wallet role
+// ═══════════════════════════════════════════════════════════
+
+function hideAllSpecialTabs() {
+  const ids = ['tab-founders-btn','tab-treasury-btn','tab-contracts-btn','tab-admin-btn'];
+  ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+  const sbIds = ['sb-founders','sb-treasury','sb-contracts','sb-admin'];
+  sbIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+}
+
+function showAdminTabs() {
+  // Treasury + Contracts + Admin — only for owner/guardian
+  ['tab-treasury-btn','tab-contracts-btn','tab-admin-btn'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.style.display='';
+  });
+  ['sb-treasury','sb-contracts','sb-admin'].forEach(id => {
+    const el=document.getElementById(id); if(el) el.style.display='flex';
+  });
+}
+
+function showFounderTab() {
+  const el  = document.getElementById('tab-founders-btn');
+  const sb  = document.getElementById('sb-founders');
+  if(el) el.style.display = '';
+  if(sb) sb.style.display = 'flex';
+}
+
+async function applyTabVisibility() {
+  // Always start clean
+  hideAllSpecialTabs();
+
+  if (!walletAddr) return;
+  const wallet = walletAddr.toLowerCase();
+
+  // ── Owner / Guardian / Root → full admin ──
+  const isRootHard = COMPANY_ROOT.toLowerCase() === wallet;
+  if (isRootHard) { showAdminTabs(); showFounderTab(); return; }
+
+  try {
+    const [onChainOwner, onChainGuardian] = await Promise.all([
+      contracts.core.owner().catch(()=>''),
+      contracts.core.guardian().catch(()=>''),
+    ]);
+    const isOwner    = onChainOwner    && onChainOwner.toLowerCase()    === wallet;
+    const isGuardian = onChainGuardian && onChainGuardian.toLowerCase() === wallet;
+
+    if (isOwner || isGuardian) {
+      showAdminTabs();
+      // Owners who are also founders see the founder tab too
+      if (PROTOCOL_FOUNDERS.includes(wallet)) showFounderTab();
+      return;
+    }
+  } catch(e) { console.warn('[applyTabVisibility] admin check failed:', e.message); }
+
+  // ── Founder only? ──
+  const isFounder = PROTOCOL_FOUNDERS.includes(wallet);
+
+  // Check if also a regular user (registered in Core) or has commercial role
+  let isRegisteredUser = false;
+  let isMasterEnt = false, isCPEnt = false;
+  try {
+    const [info, mst, cp] = await Promise.all([
+      contracts.core.userInfo(walletAddr).catch(()=>null),
+      contracts.enterprise ? contracts.enterprise.isMaster(walletAddr).catch(()=>false) : false,
+      contracts.enterprise ? contracts.enterprise.isCommercialPartner(walletAddr).catch(()=>false) : false,
+    ]);
+    isRegisteredUser = info && !!(info[0] || info.exists);
+    isMasterEnt = mst;
+    isCPEnt     = cp;
+  } catch(e) {}
+
+  const hasOtherRole = isRegisteredUser || isMasterEnt || isCPEnt;
+
+  if (isFounder) {
+    showFounderTab();
+    // If ONLY a founder (not registered user / master / CP), don't show other dapp tabs
+    // The gate already decided to show them the dashboard, but we hide irrelevant tabs
+    if (!hasOtherRole) {
+      // Hide non-founder tabs from nav — leave only Fundadores visible
+      const allTabs = ['learn','slots','commercial','earnings','ranks','pools','network'];
+      allTabs.forEach(name => {
+        const btn = document.querySelector('[data-tab="' + name + '"]');
+        if(btn) btn.style.display = 'none';
+        const sb = document.getElementById('sb-'+name);
+        if(sb) sb.style.display = 'none';
+      });
+      // Navigate to founders tab
+      goTab('founders');
+    }
+    // If has other role → all regular tabs stay visible + founders tab
   }
 }
 
