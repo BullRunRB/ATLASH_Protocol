@@ -2840,12 +2840,12 @@ function goTab(name) {
   if (name === 'dashboard') loadDashboard();
   if (name === 'contracts') { updateContractsTab(); loadCoreStatus(); }
   if (name === 'admin')     loadAdminTab();
-  if (name === 'ranks')     loadRanksTab(currentUser);
+  if (name === 'ranks')     loadRanksTab(currentUser || walletAddr);
   if (name === 'founders')   loadFoundersTab();
-  if (name === 'commercial') loadCommercialTab(currentUser);
+  if (name === 'commercial') loadCommercialTab(currentUser || walletAddr);
   if (name === 'earnings')  loadEarningsTab();
   if (name === 'pools')     loadPoolsData();
-  if (name === 'network')   loadNetworkTab(currentUser);
+  if (name === 'network')   loadNetworkTab(currentUser || walletAddr);
   if (name === 'treasury')  loadTreasury();
   if (name === 'slots' && contracts.slot) loadGlobalStats();
   if (name === 'learn')     initLearnTab();
@@ -4365,6 +4365,7 @@ async function checkRegistrationGate() {
       toast('👑 Wallet raíz — acceso total', 'info');
     } else {
       toast('🏛 Fundador — acceso habilitado', 'success');
+      currentUser = walletAddr;
       contracts.core.userInfo(walletAddr).then(info => {
         if (info && (info[0] || info.exists)) {
           document.getElementById('search-inp').value = walletAddr;
@@ -4425,6 +4426,7 @@ async function checkRegistrationGate() {
 
     if (registered) {
       showDappGate('content');
+      currentUser = walletAddr;
       document.getElementById('search-inp').value = walletAddr;
       searchUser();
       checkOwnerAccess();
