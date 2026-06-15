@@ -2150,20 +2150,27 @@ footer .brand-mark{background:var(--blue);}
               <div class="g2" style="margin-bottom:12px;">
                 <div class="adm-field"><label class="adm-label">monthId</label>
                   <input class="addr-inp" id="adm-scan-month" placeholder="ej. 3"/></div>
-                <div class="adm-field"><label class="adm-label">Rango (1–7)</label>
-                  <input class="addr-inp" id="adm-scan-rank" placeholder="ej. 1" style="max-width:80px;"/></div>
+                <div class="adm-field"><label class="adm-label">Rango específico (1–7) — dejar vacío para todos</label>
+                  <input class="addr-inp" id="adm-scan-rank" placeholder="vacío = R1→R7" style="max-width:130px;"/></div>
               </div>
               <div id="adm-scan-status" style="margin-bottom:12px;font-family:var(--mono);font-size:12px;color:var(--gray-600);padding:10px;background:var(--gray-50);border-radius:8px;"></div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
                 <button class="btn-ghost" onclick="admStartScan()">1. Iniciar scan</button>
                 <button class="btn-ghost" onclick="admRunScanBatch()">2. Procesar batch (50)</button>
                 <button class="btn-primary" onclick="admFinalizeScanned()">3. Finalizar</button>
               </div>
-              <div style="margin-top:8px;">
-                <button class="btn-outline" style="font-size:11px;padding:6px 14px;" onclick="admRunFullScan()">⚡ Auto-scan completo (todos los batches)</button>
-                <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Ejecuta batches automáticamente hasta completar el scan. Puede tardar varios segundos.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn-outline" style="font-size:11px;padding:6px 14px;" onclick="admRunFullScan()">
+                  ⚡ Auto-scan (rango específico)
+                </button>
+                <button class="btn-primary" style="font-size:11px;padding:6px 14px;" onclick="admRunFullScanAllRanks()">
+                  🚀 Cerrar mes completo (R1→R7)
+                </button>
               </div>
-              <div id="adm-scan-log" style="margin-top:10px;font-size:11px;font-family:var(--mono);color:var(--gray-500);max-height:120px;overflow-y:auto;"></div>
+              <div style="font-size:11px;color:var(--gray-400);margin-top:6px;">
+                <strong>Cerrar mes completo</strong> procesa los 7 rangos en secuencia automáticamente.
+              </div>
+              <div id="adm-scan-log" style="margin-top:10px;font-size:11px;font-family:var(--mono);color:var(--gray-500);max-height:180px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:8px;padding:8px;"></div>
             </div>
           </div>
         </div>
@@ -5261,44 +5268,101 @@ async function admFinalizeScanned() {
   }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
 }
 
-async function admRunFullScan() {
-  const monthId= document.getElementById('adm-scan-month')?.value?.trim();
-  const rank   = parseInt(document.getElementById('adm-scan-rank')?.value||'0');
-  if(!monthId||!rank){toast('monthId y rango requeridos','error');return;}
-  if(!signer){toast('Conecta wallet owner','error');return;}
-  const logEl  = document.getElementById('adm-scan-log');
-  const addLog = msg => { if(logEl){logEl.innerHTML+='<div>'+msg+'</div>'; logEl.scrollTop=logEl.scrollHeight;} };
-  try{
-    // 1. Check if scan started
-    const started = await contracts.rank.rankPoolScanStarted(monthId,rank).catch(()=>false);
-    if(!started){
-      addLog('Iniciando scan…');
-      const snap = ethers.keccak256(ethers.toUtf8Bytes('scan-'+monthId+'-rank-'+rank+'-'+Date.now()));
-      await(await contracts.rank.connect(signer).startRankPoolScan(monthId,rank,snap)).wait();
-      addLog('✅ Scan iniciado');
-    }
-    // 2. Loop batches until cursor == totalUsers
-    let iterations = 0;
-    while(iterations < 100){
-      const [cursor, total] = await Promise.all([
-        contracts.rank.rankPoolScanCursor(monthId,rank),
-        contracts.core.totalUsers(),
-      ]);
-      if(cursor >= total){ addLog('Scan completo — '+Number(total)+' usuarios procesados'); break; }
-      addLog('Procesando '+(Number(cursor))+'/'+Number(total)+'…');
-      await(await contracts.rank.connect(signer).scanRankPoolCandidatesBatch(monthId,rank,50)).wait();
-      iterations++;
-    }
-    // 3. Finalize
-    addLog('Finalizando…');
-    await(await contracts.rank.connect(signer).finalizeScannedRankPoolMonth(monthId,rank)).wait();
-    toast('✅ Rank '+rank+' mes '+monthId+' completado','success');
-    addLog('✅ FINALIZADO');
-    loadAdminScanStatus();
-  }catch(e){
-    toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');
-    addLog('Error: '+(e?.reason||e?.message||''));
+// Core scan logic for a single rank
+async function _scanOneRank(monthId, rank, addLog) {
+  const started = await contracts.rank.rankPoolScanStarted(monthId, rank).catch(()=>false);
+  const finalized = await contracts.rank.rankPoolFinalized(monthId, rank).catch(()=>false);
+
+  if (finalized) {
+    addLog('R'+rank+': ya está finalizado — omitiendo');
+    return true;
   }
+
+  if (!started) {
+    addLog('R'+rank+': iniciando scan…');
+    const snap = ethers.keccak256(ethers.toUtf8Bytes('scan-'+monthId+'-rank-'+rank+'-'+Date.now()));
+    await (await contracts.rank.connect(signer).startRankPoolScan(monthId, rank, snap)).wait();
+    addLog('R'+rank+': ✅ scan iniciado');
+  }
+
+  // Loop until cursor reaches totalUsers
+  const total = await contracts.core.totalUsers();
+  let iters = 0;
+  while (iters < 200) {
+    const cursor = await contracts.rank.rankPoolScanCursor(monthId, rank);
+    if (cursor >= total) {
+      addLog('R'+rank+': scan completo ('+Number(total)+' usuarios)');
+      break;
+    }
+    addLog('R'+rank+': procesando '+Number(cursor)+'/'+Number(total)+'…');
+    await (await contracts.rank.connect(signer).scanRankPoolCandidatesBatch(monthId, rank, 50)).wait();
+    iters++;
+  }
+
+  // Finalize
+  addLog('R'+rank+': finalizando…');
+  await (await contracts.rank.connect(signer).finalizeScannedRankPoolMonth(monthId, rank)).wait();
+  addLog('R'+rank+': ✅ FINALIZADO');
+  return true;
+}
+
+async function admRunFullScan() {
+  const monthId = document.getElementById('adm-scan-month')?.value?.trim();
+  const rankVal = document.getElementById('adm-scan-rank')?.value?.trim();
+  const rank    = parseInt(rankVal || '0');
+  if (!monthId) { toast('monthId requerido', 'error'); return; }
+  if (!rank || rank < 1 || rank > 7) { toast('Ingresa un rango válido (1–7)', 'error'); return; }
+  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  const logEl = document.getElementById('adm-scan-log');
+  if (logEl) logEl.innerHTML = '';
+  const addLog = msg => { if(logEl){logEl.innerHTML+='<div>'+msg+'</div>';logEl.scrollTop=logEl.scrollHeight;} };
+  try {
+    await _scanOneRank(monthId, rank, addLog);
+    toast('✅ Rank '+rank+' mes '+monthId+' completado', 'success');
+    loadAdminScanStatus();
+  } catch(e) {
+    toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error');
+    addLog('❌ Error: '+(e?.reason||e?.message||''));
+  }
+}
+
+async function admRunFullScanAllRanks() {
+  const monthId = document.getElementById('adm-scan-month')?.value?.trim();
+  if (!monthId) { toast('monthId requerido', 'error'); return; }
+  if (!signer)  { toast('Conecta wallet owner', 'error'); return; }
+  const logEl = document.getElementById('adm-scan-log');
+  if (logEl) logEl.innerHTML = '';
+  const addLog = msg => { if(logEl){logEl.innerHTML+='<div>'+msg+'</div>';logEl.scrollTop=logEl.scrollHeight;} };
+
+  addLog('🚀 Iniciando cierre de mes '+monthId+' — procesando R1 → R7…');
+  addLog('');
+
+  let completed = 0, skipped = 0, failed = 0;
+  for (let rank = 1; rank <= 7; rank++) {
+    try {
+      addLog('━━━ Rank '+rank+' ━━━');
+      await _scanOneRank(monthId, rank, addLog);
+      completed++;
+    } catch(e) {
+      const msg = e?.reason || e?.message || String(e);
+      addLog('❌ R'+rank+' Error: '+msg.slice(0,80));
+      failed++;
+      // Continue with next rank even if one fails
+    }
+    addLog('');
+  }
+
+  addLog('══════════════════════');
+  addLog('Mes '+monthId+' cerrado:');
+  addLog('  ✅ Completados: '+completed+'/7');
+  if (failed > 0) addLog('  ❌ Con error: '+failed);
+  toast(
+    completed===7
+      ? '✅ Mes '+monthId+' cerrado — todos los rangos finalizados'
+      : '⚠ Mes '+monthId+': '+completed+'/7 rangos completados',
+    completed===7 ? 'success' : 'info'
+  );
+  loadAdminScanStatus();
 }
 
 // switchAdminTab extension handled inline in original function
