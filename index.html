@@ -2346,7 +2346,9 @@ const ENTERPRISE_ABI = [
   "function activationFeeBalance() view returns (uint256)",
   "function corporateFeeReserveBalance() view returns (uint256)",
   "function masterRevenueBalance() view returns (uint256)",
-  // Founders
+  // Founders — fixed array[4] public → getter needs index
+  "function founders(uint256) view returns (address)",
+  "function founderSharesBP(uint256) view returns (uint16)",
   "function pendingFounderRevenue(address) view returns (uint256)",
   "function totalFounderAllocated() view returns (uint256)",
   "function totalFounderClaimed() view returns (uint256)",
