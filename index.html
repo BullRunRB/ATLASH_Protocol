@@ -1959,6 +1959,17 @@ footer .brand-mark{background:var(--blue);}
                   <div class="adm-row"><input class="addr-inp" id="adm-ent-withdraw-addr" placeholder="0x…"/><input class="addr-inp" id="adm-ent-withdraw-amt" placeholder="USDT" style="max-width:100px;"/><button class="btn-ghost" onclick="admWithdrawOps()">Retirar</button></div></div>
                 <div class="adm-field"><label class="adm-label">Retirar Reserva Corporativa → dirección</label>
                   <div class="adm-row"><input class="addr-inp" id="adm-corp-withdraw-addr" placeholder="0x…"/><input class="addr-inp" id="adm-corp-withdraw-amt" placeholder="USDT" style="max-width:100px;"/><button class="btn-ghost" onclick="admWithdrawCorp()">Retirar</button></div></div>
+              <div class="sep"></div>
+              <div class="adm-field"><label class="adm-label">🔐 Recuperar USDT excedente (V16.8.2)</label>
+                <div class="alert alert-info" style="margin-bottom:8px;"><span>ℹ</span><span>Recupera USDT enviado por error al contrato Enterprise por encima del balance contabilizado.</span></div>
+                <div id="adm-excess-bal" style="font-size:11px;font-family:var(--mono);color:var(--gray-500);margin-bottom:6px;"></div>
+                <div class="adm-row">
+                  <input class="addr-inp" id="adm-excess-addr" placeholder="0x… destino"/>
+                  <input class="addr-inp" id="adm-excess-amt" placeholder="USDT" style="max-width:100px;"/>
+                  <button class="btn-outline" onclick="admRecoverExcess()">Recuperar excedente</button>
+                  <button class="btn-ghost" onclick="admLoadExcess()" style="padding:6px 10px;font-size:11px;">↻ Verificar</button>
+                </div>
+              </div>
               </div>
             </div>
             <div class="panel">
@@ -2448,12 +2459,12 @@ const DEPLOY_MAINNET = {
 
 const DEPLOY_TESTNET = {
   usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x7406f25AF83Da110fe4b048f574FA2963a6b30cf',
-  pool:       '0x7E5d8B9f0e3A4198d028C121bb4f2f0C3F20139b',
-  rank:       '0x8B0E6f6a6778B35C5Dd893795ED647a271Ed3D56',
-  treasury:   '0x87D443FAD5a4C3d9bE193960e359c54c57a40201',
-  slot:       '0xB09687A566E430643C6B7eDCfF2ec2BDb7dcfdD2',
-  rewards:    '0xf524aC6B614DCC9b4A3DC22cA82De46691B942C1',
+  core:       '0xE4BE79954485721Ce7079a0A4A038d3F0a62f446',
+  pool:       '0x6831Eb60233978026194fe8d55252D33FF1d212D',
+  rank:       '0x140cfe45c2DaCe7f9E0870c28ABeAa930C457023',
+  treasury:   '0xBB781750C6852a73b633b1A6Ec5D9652686Da3F3',
+  slot:       '0x8A6261E93eA618BB5867d056b2503D99B490605a',
+  rewards:    '0xE765A94f5D0f9Ca47Cd434ea5d453D5933D0677C',
 };
 
 // Root user (company root wallet)
@@ -2464,7 +2475,7 @@ const PROTOCOL_FOUNDERS = [
   '0x08637844286742617ffDF9c89C9466eA475C6a34',
   '0x975c75f0577c31b7E9F6EC2fB89FBa48BbEd8eD6',
   '0x6dF15Fb8e6601eA09acB2439119926486dDdce2A',
-  '0x5a50504FA1Bb4bE8A0399Cd861777984d26ae2bf',
+  '0x010d4BcaB727D1b001E39c4eE1c8B7F15a40D131',
 ].map(a => a.toLowerCase());
 
 // ── ABIs ──
@@ -2511,6 +2522,8 @@ const SLOT_ABI = [
   // View
   "function nextPositionId() view returns (uint256)",
   "function totalActivePrincipal() view returns (uint256)",
+  "function totalRemainingLiability() view returns (uint256)",
+  "function remainingLiabilityBP() view returns (uint256)",
   "function previewDynamicRateBP() view returns (uint16)",
   "function coverageBP() view returns (uint256)",
   "function minDailyRateBP() view returns (uint16)",
@@ -2631,6 +2644,10 @@ const ENTERPRISE_ABI = [
   "function totalOperationsWithdrawn() view returns (uint256)",
   "function totalCorporateFeesWithdrawn() view returns (uint256)",
   "function corporateFeeReserveBalance() view returns (uint256)",
+  // Recovery (V16.8.2)
+  "function accountedUSDTBalance() view returns (uint256)",
+  "function excessUSDTBalance() view returns (uint256)",
+  "function recoverExcessUSDT(address, uint256) external",
   // User write
   "function claimFounderRevenue() external",
   "function claimCommercialPartnerRevenue() external",
@@ -2644,7 +2661,6 @@ const ENTERPRISE_ABI = [
   "function setMasterStatus(address, uint8, string) external",
   "function withdrawOperation(address, uint256) external",
   "function withdrawCorporateFeeReserve(address, uint256) external",
-  "function withdrawFee(address, uint256) external"
 ];
 const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)"];
 
@@ -4899,7 +4915,9 @@ async function loadAdminSlotStatus() {
   el.innerHTML = '<div style="color:var(--gray-400);font-size:13px;">Cargando…</div>';
   try {
     const dayId = Math.floor(Date.now() / 86400000);
-    const [paused, buyP, syncP, minR, maxR, rate, dayRate, principal, coverage] = await Promise.all([
+    // V16.8.2: coverage = liquidity / totalRemainingLiability (not totalActivePrincipal)
+    const [paused, buyP, syncP, minR, maxR, rate, dayRate,
+           principal, liability, coverage, liabilityBPval] = await Promise.all([
       contracts.slot.paused().catch(()=>false),
       contracts.slot.buyPaused().catch(()=>false),
       contracts.slot.syncPaused().catch(()=>false),
@@ -4908,12 +4926,15 @@ async function loadAdminSlotStatus() {
       contracts.slot.previewDynamicRateBP().catch(()=>0),
       contracts.slot.dayRateBP(dayId).catch(()=>0),
       contracts.slot.totalActivePrincipal().catch(()=>0n),
+      contracts.slot.totalRemainingLiability().catch(()=>0n),
       contracts.slot.coverageBP().catch(()=>0n),
+      contracts.slot.remainingLiabilityBP().catch(()=>0n),
     ]);
 
     const todayEl = document.getElementById('adm-today-rate');
-    if (todayEl) todayEl.textContent = `Day ${dayId} — Tasa snapshot: ${Number(dayRate)/100}% (${Number(dayRate)} BP) | Dinámica: ${Number(rate)/100}% | Cobertura: ${Number(coverage)/100}%`;
+    if(todayEl) todayEl.textContent = `Day ${dayId} — Snapshot: ${Number(dayRate)/100}% | Dinámica: ${Number(rate)/100}% | Cobertura (liability): ${(Number(liabilityBPval)/100).toFixed(2)}%`;
 
+    const covColor = Number(liabilityBPval)>=5000?'var(--green)':Number(liabilityBPval)>=2500?'var(--blue)':'var(--red)';
     el.innerHTML = `
       <div class="g2" style="margin:0;gap:6px;">
         <div class="mem-row"><span class="mem-label">Global</span><span class="mem-val" style="color:${paused?'var(--red)':'var(--green)'};">${paused?'⏸ PAUSADO':'▶ ACTIVO'}</span></div>
@@ -4923,7 +4944,8 @@ async function loadAdminSlotStatus() {
         <div class="mem-row"><span class="mem-label">Dinámica</span><span class="mem-val">${(Number(rate)/100).toFixed(2)}%</span></div>
         <div class="mem-row"><span class="mem-label">Rango BP</span><span class="mem-val">${minR}–${maxR} BP</span></div>
         <div class="mem-row"><span class="mem-label">Principal activo</span><span class="mem-val">${fmt18s(principal)} USDT</span></div>
-        <div class="mem-row"><span class="mem-label">Cobertura</span><span class="mem-val">${(Number(coverage)/100).toFixed(2)}%</span></div>
+        <div class="mem-row"><span class="mem-label">Liability pendiente (ROI cap)</span><span class="mem-val" style="color:var(--amber);">${fmt18s(liability)} USDT</span></div>
+        <div class="mem-row"><span class="mem-label">Cobertura (liquidity/liability)</span><span class="mem-val" style="color:${covColor};">${(Number(liabilityBPval)/100).toFixed(2)}%</span></div>
       </div>`;
   } catch(e) { el.innerHTML = '<div class="alert alert-warn"><span>⚠</span><span>'+e.message+'</span></div>'; }
 }
@@ -6612,11 +6634,15 @@ async function loadDashboard() {
     ]);
 
     setText('dash-slots',     (Number(nextPosId)-1).toLocaleString());
-    setText('dash-principal', fmt18s(totalPrincipal)+' USDT');
+    // V16.8.2: coverage uses remainingLiability not totalActivePrincipal
+    const totalLiability = await contracts.slot.totalRemainingLiability().catch(()=>0n);
+    setText('dash-principal', fmt18s(totalPrincipal)+' USDT (activo) / '+fmt18s(totalLiability)+' USDT (liability)');
     setText('dash-rate',      (Number(rateBP)/100).toFixed(2)+'% / día');
-    const covPct = Number(coverageBP)/100;
+    // V16.8.2: coverageBP = liquidity / remainingLiability (not principal)
+    const liabilityBP  = await contracts.slot.remainingLiabilityBP().catch(()=>0n);
+    const covPct = Number(liabilityBP)/100;
     const roiFromCov = covPct >= 50 ? 1.3 : (0.5 + (covPct/50)*0.8);
-    setText('dash-coverage', 'Cobertura: '+covPct.toFixed(1)+'% → ROI ~'+roiFromCov.toFixed(2)+'%');
+    setText('dash-coverage', 'Cobertura liability: '+covPct.toFixed(1)+'% → ROI ~'+roiFromCov.toFixed(2)+'%');
     // Also update dash-rate with actual today snapshot if available
     const todayDayId = Math.floor(Date.now()/86400000);
     const todayRate = await contracts.slot.dayRateBP(todayDayId).catch(()=>0n);
@@ -6731,6 +6757,39 @@ async function loadDashboard() {
     if(t) t.textContent = 'Error: ' + e.message.slice(0,60);
     toast('Error cargando dashboard: '+e.message.slice(0,50), 'error');
   }
+}
+
+
+
+// ── V16.8.2 Recovery functions ──
+async function admLoadExcess() {
+  const el = document.getElementById('adm-excess-bal');
+  if (!el || !contracts.enterprise) return;
+  try {
+    const [accounted, excess] = await Promise.all([
+      contracts.enterprise.accountedUSDTBalance().catch(()=>0n),
+      contracts.enterprise.excessUSDTBalance().catch(()=>0n),
+    ]);
+    el.textContent = 'Contabilizado: '+fmt18s(accounted)+' USDT · Excedente recuperable: '+fmt18s(excess)+' USDT';
+    el.style.color = excess > 0n ? 'var(--amber)' : 'var(--gray-400)';
+  } catch(e) { el.textContent = 'Error: '+e.message; }
+}
+
+async function admRecoverExcess() {
+  const addr = document.getElementById('adm-excess-addr')?.value?.trim();
+  const amt  = document.getElementById('adm-excess-amt')?.value?.trim();
+  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
+  if(!amt){toast('Monto requerido','error');return;}
+  if(!signer){toast('Conecta wallet owner','error');return;}
+  try{
+    const excess = await contracts.enterprise.excessUSDTBalance().catch(()=>0n);
+    if(excess === 0n){toast('Sin excedente para recuperar','info');return;}
+    toast('Recuperando excedente…','info');
+    await(await contracts.enterprise.connect(signer).recoverExcessUSDT(addr, ethers.parseUnits(amt,18))).wait();
+    toast('✅ Excedente recuperado','success');
+    admLoadExcess();
+    loadAdminEnterprise();
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
 }
 
 
