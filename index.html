@@ -1987,8 +1987,8 @@ footer .brand-mark{background:var(--blue);}
                 <div class="adm-row"><input class="addr-inp" id="adm-cp-addr" placeholder="0x…"/><input class="addr-inp" id="adm-cp-reason" placeholder="Razón" style="max-width:180px;"/><button class="btn-ghost" onclick="admSetPartnerRole()">Asignar</button></div></div>
               <div class="adm-field"><label class="adm-label">Asignar rol Master</label>
                 <div style="display:flex;flex-direction:column;gap:6px;">
-                  <input class="addr-inp" id="adm-master-role-addr" placeholder="0x… master"/>
-                  <input class="addr-inp" id="adm-master-cp-addr" placeholder="0x… commercial partner"/>
+                  <input class="addr-inp" id="adm-master-role-addr" placeholder="0x… master (requerido)"/>
+                  <input class="addr-inp" id="adm-master-cp-addr" placeholder="0x… commercial partner (opcional — dejar vacío si no aplica)"/>
                   <input class="addr-inp" id="adm-master-reason" placeholder="Razón"/>
                   <button class="btn-ghost" onclick="admSetMasterRole()">Asignar rol Master</button>
                 </div>
@@ -5162,15 +5162,21 @@ async function admSetPartnerRole() {
 
 async function admSetMasterRole() {
   const addr   = document.getElementById('adm-master-role-addr')?.value?.trim();
-  const cp     = document.getElementById('adm-master-cp-addr')?.value?.trim();
+  const cpRaw  = document.getElementById('adm-master-cp-addr')?.value?.trim();
   const reason = document.getElementById('adm-master-reason')?.value?.trim() || 'Admin assign';
-  if (!addr||!cp||!/^0x[0-9a-fA-F]{40}$/.test(addr)||!/^0x[0-9a-fA-F]{40}$/.test(cp)) {
-    toast('Direcciones inválidas', 'error'); return;
+
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) {
+    toast('Wallet de Master inválida', 'error'); return;
+  }
+  // CP is optional — contract accepts address(0)
+  const cp = (cpRaw && /^0x[0-9a-fA-F]{40}$/.test(cpRaw)) ? cpRaw : ethers.ZeroAddress;
+  if (cpRaw && !/^0x[0-9a-fA-F]{40}$/.test(cpRaw)) {
+    toast('Dirección de Commercial Partner inválida', 'error'); return;
   }
   if (!signer) { toast('Conecta wallet owner', 'error'); return; }
   try {
     await (await contracts.core.connect(signer).setMasterRole(addr, cp, reason)).wait();
-    toast('✅ Rol Master asignado', 'success');
+    toast('✅ Rol Master asignado' + (cp === ethers.ZeroAddress ? ' (sin CP asignado)' : ' con CP '+cp.slice(0,10)+'…'), 'success');
   } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
 }
 
