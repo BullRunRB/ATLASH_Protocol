@@ -2111,30 +2111,39 @@ footer .brand-mark{background:var(--blue);}
             <div class="panel">
               <div class="panel-head"><div class="panel-title">🔥 Quema manual por usuario</div></div>
               <div class="panel-body">
+                <div class="alert alert-info" style="margin-bottom:10px;"><span>ℹ</span>
+                  <span>El hash se genera automáticamente del monthId para consistencia. Todos los batches del mismo mes deben usar el mismo hash.</span>
+                </div>
                 <div class="adm-field"><label class="adm-label">monthId</label>
-                  <input class="addr-inp" id="adm-burn-month" placeholder="monthId"/></div>
+                  <input class="addr-inp" id="adm-burn-month" placeholder="ej. 3"/></div>
                 <div class="adm-field"><label class="adm-label">Wallet usuario</label>
                   <input class="addr-inp" id="adm-burn-user" placeholder="0x…"/></div>
-                <div class="adm-field"><label class="adm-label">burnBP (ej. 2000 = 20%)</label>
-                  <input class="addr-inp" id="adm-burn-bp-user" placeholder="2000"/></div>
-                <div class="adm-field"><label class="adm-label">snapshotHash (bytes32)</label>
-                  <input class="addr-inp" id="adm-burn-hash" placeholder="0x…"/></div>
+                <div class="adm-field"><label class="adm-label">burnBP — dejar vacío para usar el configurado en contrato</label>
+                  <div class="adm-row">
+                    <input class="addr-inp" id="adm-burn-bp-user" placeholder="vacío = usar monthlyVolumeBurnBP" style="max-width:220px;"/>
+                    <span id="adm-burn-bp-current" style="font-size:11px;color:var(--gray-400);font-family:var(--mono);"></span>
+                  </div>
+                </div>
                 <div class="adm-field"><label class="adm-label">Razón</label>
-                  <input class="addr-inp" id="adm-burn-reason" placeholder="Ajuste manual"/></div>
-                <button class="btn-primary" onclick="admBurnForUser()" style="margin-top:8px;">Quemar volumen</button>
+                  <input class="addr-inp" id="adm-burn-reason" placeholder="Cierre mensual"/></div>
+                <div id="adm-burn-hash-preview" style="font-size:10px;color:var(--gray-400);font-family:var(--mono);margin-bottom:8px;"></div>
+                <button class="btn-primary" onclick="admBurnForUser()" style="margin-top:4px;">Quemar volumen</button>
               </div>
             </div>
           </div>
           <div class="panel" style="margin-top:12px;">
-            <div class="panel-head"><div class="panel-title">🔥 Quema por lotes (batch)</div></div>
+            <div class="panel-head"><div class="panel-title">🔥 Quema por lotes (batch — máx 200 wallets)</div></div>
             <div class="panel-body">
-              <div class="alert alert-info"><span>ℹ</span><span>Ejecutar al inicio de cada mes, DESPUÉS de cerrar rank pools del mes anterior. Pegar lista de wallets separadas por coma o nueva línea.</span></div>
-              <div class="adm-field"><label class="adm-label">monthId</label>
-                <input class="addr-inp" id="adm-burnb-month" placeholder="monthId del mes anterior"/></div>
-              <div class="adm-field"><label class="adm-label">snapshotHash</label>
-                <input class="addr-inp" id="adm-burnb-hash" placeholder="0x… (mismo para todos los batches)"/></div>
-              <div class="adm-field"><label class="adm-label">Wallets (separadas por coma/línea)</label>
-                <textarea class="addr-inp" id="adm-burnb-users" style="height:80px;resize:vertical;" placeholder="0x..., 0x..., 0x..."></textarea></div>
+              <div class="alert alert-info"><span>ℹ</span>
+                <span>Ejecutar <strong>después</strong> del cierre de rank pools del mes anterior. El hash se genera automáticamente del monthId — debe ser el mismo en todos los batches del mismo mes.</span>
+              </div>
+              <div class="adm-field"><label class="adm-label">monthId del mes a quemar</label>
+                <input class="addr-inp" id="adm-burnb-month" placeholder="ej. 3" oninput="updateBurnHashPreview()"/></div>
+              <div id="adm-burnb-hash-preview" style="font-size:10px;color:var(--gray-400);font-family:var(--mono);margin-bottom:8px;"></div>
+              <div class="adm-field"><label class="adm-label">Wallets a quemar (separadas por coma o nueva línea)</label>
+                <textarea class="addr-inp" id="adm-burnb-users" style="height:80px;resize:vertical;" placeholder="0x..., 0x..., 0x..." oninput="const u=this.value.split(/[\s,]+/).filter(a=>/^0x[0-9a-fA-F]{40}$/.test(a.trim()));document.getElementById('adm-burnb-count').textContent=u.length+' wallets válidas'"></textarea>
+                <div id="adm-burnb-count" style="font-size:11px;color:var(--gray-400);margin-top:4px;"></div>
+              </div>
               <button class="btn-primary" onclick="admBurnBatch()">Ejecutar quema batch</button>
               <div id="adm-burn-result" style="margin-top:8px;font-size:12px;color:var(--gray-500);font-family:var(--mono);"></div>
             </div>
@@ -5144,15 +5153,35 @@ async function admSetAccountStatus() {
 }
 
 // ── VOLUME BURN ──
+// Generate deterministic snapshot hash from monthId
+// Must be SAME for all batches of the same month
+function getBurnSnapshotHash(monthId) {
+  return ethers.keccak256(ethers.toUtf8Bytes('atlash-burn-month-' + monthId));
+}
+
+function updateBurnHashPreview() {
+  const month = document.getElementById('adm-burnb-month')?.value?.trim();
+  const prev  = document.getElementById('adm-burnb-hash-preview');
+  if (prev) prev.textContent = month
+    ? 'Hash: ' + getBurnSnapshotHash(month)
+    : '';
+}
+
 async function loadAdminBurnStatus() {
-  const el = document.getElementById('adm-burn-current');
-  if(!contracts.rank||!el) return;
-  try{
-    const bp = await contracts.rank.monthlyVolumeBurnBP().catch(()=>2000);
-    el.textContent = bp+' BP = '+(Number(bp)/100)+'%';
+  const el  = document.getElementById('adm-burn-current');
+  const bpPrev = document.getElementById('adm-burn-bp-current');
+  if (!contracts.rank) return;
+  try {
+    const bp = await contracts.rank.monthlyVolumeBurnBP().catch(()=>0);
+    if(el) el.textContent = Number(bp)+' BP = '+(Number(bp)/100)+'%';
+    if(bpPrev) bpPrev.textContent = 'Actual en contrato: '+Number(bp)+' BP ('+(Number(bp)/100)+'%)';
     const inp = document.getElementById('adm-burn-bp');
-    if(inp&&!inp.value) inp.value = bp;
-  }catch(e){}
+    if(inp && !inp.value) inp.value = Number(bp);
+    // Update hash preview if monthId is filled
+    const month = document.getElementById('adm-burn-month')?.value?.trim();
+    const prev  = document.getElementById('adm-burn-hash-preview');
+    if(prev && month) prev.textContent = 'Hash auto: '+getBurnSnapshotHash(month);
+  } catch(e) { console.warn('[loadAdminBurnStatus]', e); }
 }
 
 async function admSetBurnBP() {
@@ -5167,40 +5196,65 @@ async function admSetBurnBP() {
 }
 
 async function admBurnForUser() {
-  const monthId= document.getElementById('adm-burn-month')?.value?.trim();
-  const user   = document.getElementById('adm-burn-user')?.value?.trim();
-  const bp     = parseInt(document.getElementById('adm-burn-bp-user')?.value||'0');
-  const hash   = document.getElementById('adm-burn-hash')?.value?.trim();
-  const reason = document.getElementById('adm-burn-reason')?.value?.trim()||'Manual burn';
-  if(!monthId||!user||!bp||!hash){toast('Todos los campos son requeridos','error');return;}
-  if(!/^0x[0-9a-fA-F]{64}$/.test(hash)){toast('snapshotHash debe ser bytes32 (0x…64 chars)','error');return;}
+  const monthId = document.getElementById('adm-burn-month')?.value?.trim();
+  const user    = document.getElementById('adm-burn-user')?.value?.trim();
+  const bpInput = document.getElementById('adm-burn-bp-user')?.value?.trim();
+  const reason  = document.getElementById('adm-burn-reason')?.value?.trim()||'Cierre mensual';
+
+  if(!monthId){toast('monthId requerido','error');return;}
+  if(!user||!/^0x[0-9a-fA-F]{40}$/.test(user)){toast('Wallet inválida','error');return;}
   if(!signer){toast('Conecta wallet owner','error');return;}
+
+  // Use contract's monthlyVolumeBurnBP if not specified
+  let bp = parseInt(bpInput||'0');
+  if(!bp) bp = Number(await contracts.rank.monthlyVolumeBurnBP().catch(()=>2000));
+  if(!bp||bp<1||bp>5000){toast('burnBP inválido','error');return;}
+
+  // Auto-generate consistent hash
+  const hash = getBurnSnapshotHash(monthId);
+
+  // Show hash preview
+  const prev = document.getElementById('adm-burn-hash-preview');
+  if(prev) prev.textContent = 'Hash: '+hash+' · BP: '+bp+' ('+(bp/100)+'%)';
+
   try{
-    toast('Quemando volumen de '+user.slice(0,8)+'…','info');
-    await(await contracts.rank.connect(signer).burnQualifiedVolumeForUser(monthId,user,bp,hash,reason)).wait();
+    toast('Quemando '+( bp/100)+'% del volumen de '+user.slice(0,10)+'…','info');
+    await(await contracts.rank.connect(signer).burnQualifiedVolumeForUser(
+      monthId, user, bp, hash, reason
+    )).wait();
     toast('✅ Volumen quemado','success');
-  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
+  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,80),'error');}
 }
 
 async function admBurnBatch() {
-  const monthId= document.getElementById('adm-burnb-month')?.value?.trim();
-  const hash   = document.getElementById('adm-burnb-hash')?.value?.trim();
-  const rawList= document.getElementById('adm-burnb-users')?.value?.trim();
-  const logEl  = document.getElementById('adm-burn-result');
-  if(!monthId||!hash||!rawList){toast('Todos los campos requeridos','error');return;}
-  if(!/^0x[0-9a-fA-F]{64}$/.test(hash)){toast('snapshotHash inválido','error');return;}
+  const monthId = document.getElementById('adm-burnb-month')?.value?.trim();
+  const rawList = document.getElementById('adm-burnb-users')?.value?.trim();
+  const logEl   = document.getElementById('adm-burn-result');
+
+  if(!monthId||!rawList){toast('monthId y wallets requeridos','error');return;}
   if(!signer){toast('Conecta wallet owner','error');return;}
+
   const users = rawList.split(/[\s,]+/).map(a=>a.trim()).filter(a=>/^0x[0-9a-fA-F]{40}$/.test(a));
-  if(!users.length){toast('Sin wallets válidas','error');return;}
-  if(logEl) logEl.textContent = 'Enviando '+users.length+' usuarios…';
+  if(!users.length){toast('Sin wallets válidas en la lista','error');return;}
+  if(users.length>200){toast('Máximo 200 wallets por batch','error');return;}
+
+  // Auto-generate SAME hash for this monthId
+  const hash = getBurnSnapshotHash(monthId);
+
+  if(logEl) logEl.textContent = 'Quemando '+users.length+' usuarios · hash: '+hash.slice(0,18)+'…';
   try{
-    const tx = await contracts.rank.connect(signer).burnQualifiedVolumeBatch(monthId,users,hash);
+    toast('Ejecutando quema de '+users.length+' usuarios…','info');
+    const tx = await contracts.rank.connect(signer).burnQualifiedVolumeBatch(monthId, users, hash);
     await tx.wait();
     toast('✅ Batch quemado: '+users.length+' usuarios','success');
-    if(logEl) logEl.textContent = '✅ Done: '+users.length+' usuarios · tx: '+tx.hash.slice(0,18)+'…';
+    if(logEl) logEl.textContent = '✅ '+users.length+' usuarios · tx: '+tx.hash.slice(0,20)+'…';
+    // Update count
+    const cnt = document.getElementById('adm-burnb-count');
+    if(cnt) cnt.textContent = '';
   }catch(e){
-    toast('Error: '+(e?.reason||e?.message||'').slice(0,60),'error');
-    if(logEl) logEl.textContent = 'Error: '+(e?.reason||e?.message||'');
+    const msg = e?.reason||e?.message||String(e);
+    toast('Error: '+msg.slice(0,60),'error');
+    if(logEl) logEl.textContent = '❌ Error: '+msg;
   }
 }
 
