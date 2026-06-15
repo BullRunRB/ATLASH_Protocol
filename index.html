@@ -1751,7 +1751,7 @@ footer .brand-mark{background:var(--blue);}
       <!-- ── TREASURY ── -->
       <div class="tpane" id="tab-treasury">
         <div class="g3">
-          <div class="kpi"><div class="kpi-label">Liquidez Reward Reserve</div><div class="kpi-value green" id="tr-reward-liq">—</div><div class="kpi-sub">Disponible para ROI</div></div>
+          <div class="kpi"><div class="kpi-label">Liquidez Reward Reserve</div><div class="kpi-value green" id="tr-reward-liq">—</div><div class="kpi-sub">25% de cada compra · cubre ROI</div></div>
           <div class="kpi"><div class="kpi-label">Pool Operación</div><div class="kpi-value amber" id="tr-enterprise">—</div><div class="kpi-sub">Enterprise V10</div></div>
           <div class="kpi"><div class="kpi-label">Pool Fees</div><div class="kpi-value blue" id="tr-operation">—</div><div class="kpi-sub">Enterprise V10</div></div>
         </div>
@@ -1995,21 +1995,14 @@ footer .brand-mark{background:var(--blue);}
               </div>
               <div class="adm-field"><label class="adm-label">Limpiar rol especial</label>
                 <div class="adm-row"><input class="addr-inp" id="adm-clear-role-addr" placeholder="0x…"/><input class="addr-inp" id="adm-clear-role-reason" placeholder="Razón" style="max-width:180px;"/><button class="btn-outline" onclick="admClearRole()">Limpiar rol</button></div></div>
-              <div class="adm-field"><label class="adm-label">Master Code (habilitar como código de referido Master)</label>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  <input class="addr-inp" id="adm-mcode-addr" placeholder="0x…"/>
-                  <div class="adm-row">
-                    <button class="btn-ghost" onclick="admSetMasterCode(true)">✅ Activar Master Code</button>
-                    <button class="btn-outline" onclick="admSetMasterCode(false)">❌ Desactivar</button>
-                    <button class="btn-ghost" onclick="admQueryMasterCode()">🔍 Consultar</button>
-                  </div>
-                  <div id="adm-mcode-result" style="font-size:12px;font-family:var(--mono);color:var(--gray-500);"></div>
+              <div class="adm-field"><label class="adm-label">Asignar rol Commercial Partner + Master (CP_MASTER)</label>
+                <div class="alert alert-info" style="margin-bottom:8px;"><span>ℹ</span>
+                  <span>Este rol unifica CP y Master en uno solo — puede recibir revenue de ambos pools y tiene lineage comercial propio.</span>
                 </div>
-              </div>
-              <div class="adm-field"><label class="adm-label">Master Code para Commercial Partner</label>
-                <div class="adm-row"><input class="addr-inp" id="adm-cp-mcode-addr" placeholder="0x… CP address"/>
-                  <button class="btn-ghost" onclick="admSetCPMasterCode(true)">✅ Activar</button>
-                  <button class="btn-outline" onclick="admSetCPMasterCode(false)">❌ Desactivar</button>
+                <div class="adm-row">
+                  <input class="addr-inp" id="adm-cpm-addr" placeholder="0x…"/>
+                  <input class="addr-inp" id="adm-cpm-reason" placeholder="Razón" style="max-width:180px;"/>
+                  <button class="btn-ghost" onclick="admSetCPMasterRole()">Asignar CP_MASTER</button>
                 </div>
               </div>
               <div class="adm-field"><label class="adm-label">Setear lineage comercial manual</label>
@@ -2037,10 +2030,11 @@ footer .brand-mark{background:var(--blue);}
                 <div class="adm-field"><label class="adm-label">Upline / Patrocinador</label>
                   <input class="addr-inp" id="adm-reg-upline" placeholder="0x…"/></div>
                 <div class="adm-field"><label class="adm-label">Rol (0=NORMAL, 1=MASTER, 2=COMMERCIAL_PARTNER)</label>
-                  <select class="addr-inp" id="adm-reg-role" style="max-width:200px;">
+                  <select class="addr-inp" id="adm-reg-role" style="max-width:220px;">
                     <option value="0">0 — NORMAL</option>
                     <option value="1">1 — MASTER</option>
                     <option value="2">2 — COMMERCIAL_PARTNER</option>
+                    <option value="3">3 — COMMERCIAL_PARTNER_MASTER</option>
                   </select></div>
                 <div class="adm-field"><label class="adm-label">Commercial Partner (si aplica)</label>
                   <input class="addr-inp" id="adm-reg-cp" placeholder="0x… o dejar vacío"/></div>
@@ -2088,10 +2082,11 @@ footer .brand-mark{background:var(--blue);}
                   <div id="adm-cs-selected-label" style="font-size:11px;color:var(--blue);font-family:var(--mono);margin-top:6px;font-weight:700;"></div>
                 </div>
                 <div class="adm-field"><label class="adm-label">Rol</label>
-                  <select class="addr-inp" id="adm-cs-role" style="max-width:200px;">
+                  <select class="addr-inp" id="adm-cs-role" style="max-width:220px;">
                     <option value="0">0 — NORMAL</option>
                     <option value="1">1 — MASTER</option>
                     <option value="2">2 — COMMERCIAL_PARTNER</option>
+                    <option value="3">3 — COMMERCIAL_PARTNER_MASTER</option>
                   </select></div>
                 <div class="adm-field"><label class="adm-label">Commercial Partner</label>
                   <input class="addr-inp" id="adm-cs-cp" placeholder="0x… o vacío"/></div>
@@ -2445,12 +2440,12 @@ const DEPLOY_MAINNET = {
 
 const DEPLOY_TESTNET = {
   usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x7406f25AF83Da110fe4b048f574FA2963a6b30cf',
-  pool:       '0x7E5d8B9f0e3A4198d028C121bb4f2f0C3F20139b',
-  rank:       '0x8B0E6f6a6778B35C5Dd893795ED647a271Ed3D56',
-  treasury:   '0x87D443FAD5a4C3d9bE193960e359c54c57a40201',
-  slot:       '0xB09687A566E430643C6B7eDCfF2ec2BDb7dcfdD2',
-  rewards:    '0xf524aC6B614DCC9b4A3DC22cA82De46691B942C1',
+  core:       '0x5e04E85f99fB296D2d3990FC7069E52c32f9FAD8',
+  pool:       '0x0D9369d388346EA6CF59447F236bf9Da02d9DFBf',
+  rank:       '0x20323Ef3D59180a405e4dc7740269A3fDe7E0d18',
+  treasury:   '0xB7B54A47510144C099156b3368A31f2F8631dF62',
+  slot:       '0xa204bd369d9dC21030C752E5BDcc57Bf871633f8',
+  rewards:    '0xfD600A25120B2e4a86F46d74c29F8ADF656D549d',
 };
 
 // Root user (company root wallet)
@@ -2458,9 +2453,9 @@ const COMPANY_ROOT = '0x48173E34Cd6A58DA4F489a01144480Fb03070673';
 
 // Hardcoded founders — bypass gate without needing contract call
 const PROTOCOL_FOUNDERS = [
-  '0x08637844286742617ffDF9c89C9466eA475C6a34',
-  '0x975c75f0577c31b7E9F6EC2fB89FBa48BbEd8eD6',
-  '0x6dF15Fb8e6601eA09acB2439119926486dDdce2A',
+  '0xE6593407A0436a0249BC6AeA66CC3d21bb475f75',
+  '0xfcCD4AAF54bCdB44FF8A753BB0B441C77aa9B43C',
+  '0x7670d8F9D61946E6A7cfB55d475909767E1eBe5C',
   '0x5a50504FA1Bb4bE8A0399Cd861777984d26ae2bf',
 ].map(a => a.toLowerCase());
 
@@ -2472,7 +2467,6 @@ const CORE_ABI = [
   "function userCommercialInfo(address) view returns (uint8 role, address commercialPartner, address master, string reason)",
   "function commercialContextOf(address) view returns (address commercialPartner, address master)",
   "function isRoot(address) view returns (bool)",
-  "function masterCodeOf(address) view returns (bool)",
   "function accountStatusOf(address) view returns (uint8)",
   "function totalUsers() view returns (uint256)",
   "function userAt(uint256) view returns (address)",
@@ -2499,9 +2493,8 @@ const CORE_ABI = [
   "function setUserAccountStatus(address, uint8, string) external",
   "function adminRegisterUser(address, address, uint8, address, string) external",
   "function setCommercialPartnerRole(address, string) external",
+  "function setCommercialPartnerAndMasterRole(address, string) external",
   "function setMasterRole(address, address, string) external",
-  "function setMasterCode(address, bool, string) external",
-  "function setCommercialPartnerMasterCode(address, bool, string) external",
   "function clearSpecialRole(address, string) external",
   "function setCommercialLineage(address, address, address, string) external"
 ];
@@ -4361,7 +4354,7 @@ async function checkRegistrationGate() {
         showDashboardTabs();
         goTab('dashboard');
       }, 50);
-      toast('👑 Acceso root activado', 'info');
+      toast('👑 Wallet raíz — acceso total', 'info');
     } else {
       toast('🏛 Fundador — acceso habilitado', 'success');
       contracts.core.userInfo(walletAddr).then(info => {
@@ -5139,18 +5132,20 @@ async function admQueryRole() {
   if (!el) return;
   el.textContent = 'Consultando…';
   try {
-    const ROLES = ['NONE','COMMERCIAL_PARTNER','MASTER','ROOT','NORMAL'];
+    const ROLES = ['NORMAL','MASTER','COMMERCIAL_PARTNER','COMMERCIAL_PARTNER_MASTER','ROOT'];
     const [info, ctx] = await Promise.all([
       contracts.core.userCommercialInfo(addr).catch(()=>null),
       contracts.core.commercialContextOf(addr).catch(()=>null),
     ]);
     if (!info) { el.textContent = 'Sin datos'; return; }
+    const roleNum = Number(info[0]);
+    const ROLE_LABELS = ['NORMAL','MASTER','COMMERCIAL_PARTNER','CP+MASTER','ROOT (wallet raíz)'];
     el.innerHTML = `
-      <div>Rol: <strong>${ROLES[Number(info[0])]||info[0]}</strong></div>
-      <div>Commercial Partner: ${info[1]||'—'}</div>
-      <div>Master: ${info[2]||'—'}</div>
+      <div>Rol: <strong style="color:${roleNum===3?'#7c3aed':roleNum>0?'var(--blue)':'var(--gray-500)'};">${ROLE_LABELS[roleNum]||roleNum}</strong></div>
+      <div>Commercial Partner: <span style="font-family:var(--mono);font-size:11px;">${info[1]||'—'}</span></div>
+      <div>Master: <span style="font-family:var(--mono);font-size:11px;">${info[2]||'—'}</span></div>
       <div>Razón: ${info[3]||'—'}</div>
-      ${ctx?`<div>Contexto CP: ${ctx[0]} / Master: ${ctx[1]}</div>`:''}`;
+      ${ctx?`<div>Contexto CP: <span style="font-family:var(--mono);font-size:10px;">${ctx[0]}</span> / Master: <span style="font-family:var(--mono);font-size:10px;">${ctx[1]}</span></div>`:''}`;
   } catch(e) { el.textContent = 'Error: ' + e.message; }
 }
 
@@ -5602,7 +5597,7 @@ async function admRunFullScanAllRanks() {
 // ═══════════════════════════════════════════════════════════
 
 const COMM_STATUS = ['NONE','ACTIVE','FROZEN','SUSPENDED','TERMINATED'];
-const USER_ROLES  = ['NORMAL','MASTER','COMMERCIAL_PARTNER','ROOT'];
+const USER_ROLES  = ['NORMAL','MASTER','COMMERCIAL_PARTNER','COMMERCIAL_PARTNER_MASTER']; // ROOT(4) es interno, no asignable
 
 // ── Show role badge in Overview ──
 async function updateOverviewRoleBadge(addr) {
@@ -5619,9 +5614,10 @@ async function updateOverviewRoleBadge(addr) {
     ]);
 
     const role = info ? Number(info[0]) : 0;
-    const isCP     = (role===2) || isCPEnt;
-    const isMaster = (role===1) || isMasterEnt;
-    const isRoot   = role===3;
+    // V16.8: role 3 = COMMERCIAL_PARTNER_MASTER (both), role 4 = ROOT
+    const isCP     = (role===2 || role===3) || isCPEnt;
+    const isMaster = (role===1 || role===3) || isMasterEnt;
+    const isRoot   = role===4; // ROOT = wallet raíz de empresa
 
     if (!isCP && !isMaster && !isRoot) { strip.style.display='none'; return; }
 
@@ -5713,7 +5709,7 @@ async function loadCommercialTab(addr) {
     if (hdr) {
       hdr.style.display = 'block';
       const badges = [];
-      if (isRoot)           badges.push('<span style="background:var(--amber);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">👑 ROOT</span>');
+      if (isRoot)           badges.push('<span style="background:var(--amber);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">👑 Wallet Raíz</span>');
       if (isCP)             badges.push('<span style="background:var(--blue);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">🤝 Partner Comercial</span>');
       if (isMaster)         badges.push('<span style="background:#b45309;color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">⭐ Master</span>');
       if (masterCodeActive) badges.push('<span style="background:var(--green);color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;white-space:nowrap;">🔑 Master Code</span>');
@@ -5893,42 +5889,24 @@ async function claimMasterRevenueUser() {
 // V16.7.2 — New admin functions
 // ═══════════════════════════════════════════════════════════
 
-// Master Code management
-async function admQueryMasterCode() {
-  const addr = document.getElementById('adm-mcode-addr')?.value?.trim();
-  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
-  const el = document.getElementById('adm-mcode-result');
-  try{
-    const hasMC = await contracts.core.masterCodeOf(addr).catch(()=>false);
-    const role  = await contracts.core.userCommercialInfo(addr).catch(()=>null);
-    const ROLES = ['NORMAL','MASTER','COMMERCIAL_PARTNER','ROOT'];
-    if(el) el.textContent = 'Master Code: ' + (hasMC?'✅ ACTIVO':'❌ Inactivo') +
-      (role?' · Rol: '+ROLES[Number(role[0])]:'');
-  }catch(e){ if(el) el.textContent='Error: '+e.message; }
-}
-
-async function admSetMasterCode(enabled) {
-  const addr   = document.getElementById('adm-mcode-addr')?.value?.trim();
-  const reason = 'Admin '+(enabled?'enable':'disable')+' master code';
+// V16.8: COMMERCIAL_PARTNER_MASTER role (replaces masterCode flags)
+async function admSetCPMasterRole() {
+  const addr   = document.getElementById('adm-cpm-addr')?.value?.trim();
+  const reason = document.getElementById('adm-cpm-reason')?.value?.trim() || 'Admin assign CP_MASTER';
   if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
   if(!signer){toast('Conecta wallet owner','error');return;}
   try{
-    await(await contracts.core.connect(signer).setMasterCode(addr,enabled,reason)).wait();
-    toast('✅ Master Code '+(enabled?'activado':'desactivado')+' para '+addr.slice(0,10),'success');
-    admQueryMasterCode();
+    toast('Asignando rol COMMERCIAL_PARTNER_MASTER…','info');
+    await(await contracts.core.connect(signer).setCommercialPartnerAndMasterRole(addr,reason)).wait();
+    toast('✅ Rol CP_MASTER asignado a '+addr.slice(0,10)+'…','success');
+    admQueryRole();
   }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
 }
 
-async function admSetCPMasterCode(enabled) {
-  const addr   = document.getElementById('adm-cp-mcode-addr')?.value?.trim();
-  const reason = 'Admin '+(enabled?'enable':'disable')+' CP master code';
-  if(!addr||!/^0x[0-9a-fA-F]{40}$/.test(addr)){toast('Dirección inválida','error');return;}
-  if(!signer){toast('Conecta wallet owner','error');return;}
-  try{
-    await(await contracts.core.connect(signer).setCommercialPartnerMasterCode(addr,enabled,reason)).wait();
-    toast('✅ CP Master Code '+(enabled?'activado':'desactivado'),'success');
-  }catch(e){toast('Error: '+(e?.reason||e?.message||'').slice(0,70),'error');}
-}
+// Stubs for removed V16.7 functions — show info toast
+async function admQueryMasterCode() { toast('masterCodeOf eliminado en V16.8 — usa userCommercialInfo','info'); }
+async function admSetMasterCode()    { toast('setMasterCode eliminado en V16.8 — usa setCommercialPartnerAndMasterRole','info'); }
+async function admSetCPMasterCode()  { toast('setCommercialPartnerMasterCode eliminado en V16.8 — usa setCommercialPartnerAndMasterRole','info'); }
 
 // Remove master
 async function admRemoveMaster() {
@@ -6543,7 +6521,17 @@ async function loadDashboard() {
     setText('dash-slots',     (Number(nextPosId)-1).toLocaleString());
     setText('dash-principal', fmt18s(totalPrincipal)+' USDT');
     setText('dash-rate',      (Number(rateBP)/100).toFixed(2)+'% / día');
-    setText('dash-coverage',  'Cobertura: '+(Number(coverageBP)/100).toFixed(1)+'%');
+    const covPct = Number(coverageBP)/100;
+    const roiFromCov = covPct >= 50 ? 1.3 : (0.5 + (covPct/50)*0.8);
+    setText('dash-coverage', 'Cobertura: '+covPct.toFixed(1)+'% → ROI ~'+roiFromCov.toFixed(2)+'%');
+    // Also update dash-rate with actual today snapshot if available
+    const todayDayId = Math.floor(Date.now()/86400000);
+    const todayRate = await contracts.slot.dayRateBP(todayDayId).catch(()=>0n);
+    if (Number(todayRate) > 0) {
+      setText('dash-rate', (Number(todayRate)/100).toFixed(2)+'% / día (snapshot)');
+    } else {
+      setText('dash-rate', (Number(rateBP)/100).toFixed(2)+'% / día (dinámico)');
+    }
 
     // ── Reward treasury ──
     const [rewardLiq, rewardAccounted] = await Promise.all([
