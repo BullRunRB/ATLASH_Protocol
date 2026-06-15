@@ -1986,11 +1986,19 @@ footer .brand-mark{background:var(--blue);}
               <div class="adm-field"><label class="adm-label">Asignar rol Partner Comercial</label>
                 <div class="adm-row"><input class="addr-inp" id="adm-cp-addr" placeholder="0x…"/><input class="addr-inp" id="adm-cp-reason" placeholder="Razón" style="max-width:180px;"/><button class="btn-ghost" onclick="admSetPartnerRole()">Asignar</button></div></div>
               <div class="adm-field"><label class="adm-label">Asignar rol Master</label>
+                <div class="alert alert-info" style="margin-bottom:8px;"><span>ℹ</span>
+                  <span>Requiere 2 contratos: <strong>Core</strong> (rol) + <strong>Enterprise</strong> (revenue). Usa el botón completo para hacerlo en una sola acción.</span>
+                </div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   <input class="addr-inp" id="adm-master-role-addr" placeholder="0x… master (requerido)"/>
-                  <input class="addr-inp" id="adm-master-cp-addr" placeholder="0x… commercial partner (opcional — dejar vacío si no aplica)"/>
+                  <input class="addr-inp" id="adm-master-cp-addr" placeholder="0x… commercial partner (opcional)"/>
                   <input class="addr-inp" id="adm-master-reason" placeholder="Razón"/>
-                  <button class="btn-ghost" onclick="admSetMasterRole()">Asignar rol Master</button>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn-primary" onclick="admSetMasterRoleFull()" style="flex:1;">✅ Asignar Master (Core + Enterprise)</button>
+                    <button class="btn-ghost" onclick="admSetMasterRole()" style="font-size:11px;padding:6px 12px;">Solo Core</button>
+                    <button class="btn-ghost" onclick="admRegisterMasterEnterprise()" style="font-size:11px;padding:6px 12px;">Solo Enterprise</button>
+                  </div>
+                  <div id="adm-master-log" style="font-size:11px;font-family:var(--mono);color:var(--gray-500);"></div>
                 </div>
               </div>
               <div class="adm-field"><label class="adm-label">Limpiar rol especial</label>
@@ -4371,14 +4379,17 @@ async function checkRegistrationGate() {
 
   // ── TIER 2: On-chain checks — owner, isRoot, Master, CP ──
   try {
-    const [onChainOwner, isRootUser, isMasterEnt, isCPEnt] = await Promise.all([
+    const [onChainOwner, isRootUser, coreInfo] = await Promise.all([
       contracts.core.owner().catch(() => ''),
       contracts.core.isRoot(walletAddr).catch(() => false),
-      contracts.enterprise ? contracts.enterprise.isMaster(walletAddr).catch(() => false) : false,
-      contracts.enterprise ? contracts.enterprise.isCommercialPartner(walletAddr).catch(() => false) : false,
+      contracts.core.userCommercialInfo(walletAddr).catch(() => null),
     ]);
 
-    const isOwner = onChainOwner && onChainOwner.toLowerCase() === wallet;
+    const isOwner   = onChainOwner && onChainOwner.toLowerCase() === wallet;
+    const coreRole  = coreInfo ? Number(coreInfo[0]) : 0;
+    // Use Core role as primary — Enterprise mappings require separate setup
+    const isMasterEnt = coreRole === 1 || coreRole === 3;
+    const isCPEnt     = coreRole === 2 || coreRole === 3;
 
     if (isOwner || isRootUser) {
       showDappGate('content');
@@ -5164,20 +5175,78 @@ async function admSetMasterRole() {
   const addr   = document.getElementById('adm-master-role-addr')?.value?.trim();
   const cpRaw  = document.getElementById('adm-master-cp-addr')?.value?.trim();
   const reason = document.getElementById('adm-master-reason')?.value?.trim() || 'Admin assign';
-
-  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) {
-    toast('Wallet de Master inválida', 'error'); return;
-  }
-  // CP is optional — contract accepts address(0)
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Wallet inválida','error'); return; }
   const cp = (cpRaw && /^0x[0-9a-fA-F]{40}$/.test(cpRaw)) ? cpRaw : ethers.ZeroAddress;
-  if (cpRaw && !/^0x[0-9a-fA-F]{40}$/.test(cpRaw)) {
-    toast('Dirección de Commercial Partner inválida', 'error'); return;
-  }
-  if (!signer) { toast('Conecta wallet owner', 'error'); return; }
+  if (cpRaw && !/^0x[0-9a-fA-F]{40}$/.test(cpRaw)) { toast('CP inválido','error'); return; }
+  if (!signer) { toast('Conecta wallet owner','error'); return; }
   try {
     await (await contracts.core.connect(signer).setMasterRole(addr, cp, reason)).wait();
-    toast('✅ Rol Master asignado' + (cp === ethers.ZeroAddress ? ' (sin CP asignado)' : ' con CP '+cp.slice(0,10)+'…'), 'success');
-  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,70), 'error'); }
+    toast('✅ Core: rol Master asignado', 'success');
+  } catch(e) { toast('Core error: '+(e?.reason||e?.message||'').slice(0,70),'error'); }
+}
+
+async function admRegisterMasterEnterprise() {
+  const addr = document.getElementById('adm-master-role-addr')?.value?.trim();
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Wallet inválida','error'); return; }
+  if (!signer) { toast('Conecta wallet owner','error'); return; }
+  try {
+    await (await contracts.enterprise.connect(signer).registerMaster(addr)).wait();
+    toast('✅ Enterprise: Master registrado', 'success');
+  } catch(e) { toast('Enterprise error: '+(e?.reason||e?.message||'').slice(0,70),'error'); }
+}
+
+// Full: Core + Enterprise in sequence
+async function admSetMasterRoleFull() {
+  const addr   = document.getElementById('adm-master-role-addr')?.value?.trim();
+  const cpRaw  = document.getElementById('adm-master-cp-addr')?.value?.trim();
+  const reason = document.getElementById('adm-master-reason')?.value?.trim() || 'Admin assign';
+  const logEl  = document.getElementById('adm-master-log');
+  const addLog = msg => { if(logEl) logEl.innerHTML += '<div>'+msg+'</div>'; };
+
+  if (!addr || !/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Wallet inválida','error'); return; }
+  const cp = (cpRaw && /^0x[0-9a-fA-F]{40}$/.test(cpRaw)) ? cpRaw : ethers.ZeroAddress;
+  if (cpRaw && !/^0x[0-9a-fA-F]{40}$/.test(cpRaw)) { toast('CP inválido','error'); return; }
+  if (!signer) { toast('Conecta wallet owner','error'); return; }
+
+  if(logEl) logEl.innerHTML = '';
+  let coreOk = false, entOk = false;
+
+  // Step 1: Core
+  try {
+    addLog('1/2 Asignando rol en Core…');
+    await (await contracts.core.connect(signer).setMasterRole(addr, cp, reason)).wait();
+    addLog('✅ Core: rol Master asignado');
+    coreOk = true;
+  } catch(e) {
+    const msg = e?.reason || e?.message || '';
+    // If already has the role, not an error
+    if (msg.includes('BadRole') || msg.includes('already')) {
+      addLog('ℹ Core: ya tenía el rol Master');
+      coreOk = true;
+    } else {
+      addLog('❌ Core error: ' + msg.slice(0,60));
+      toast('Error en Core: '+msg.slice(0,60),'error');
+      return;
+    }
+  }
+
+  // Step 2: Enterprise
+  try {
+    addLog('2/2 Registrando en Enterprise…');
+    await (await contracts.enterprise.connect(signer).registerMaster(addr)).wait();
+    addLog('✅ Enterprise: Master registrado');
+    entOk = true;
+  } catch(e) {
+    const msg = e?.reason || e?.message || '';
+    addLog('❌ Enterprise error: ' + msg.slice(0,60));
+    toast('Error en Enterprise: '+msg.slice(0,60),'error');
+  }
+
+  if (coreOk && entOk) {
+    toast('✅ Master configurado completamente en Core + Enterprise', 'success');
+    addLog('');
+    addLog('✅ Listo — '+addr.slice(0,10)+'… es Master en ambos contratos');
+  }
 }
 
 async function admClearRole() {
@@ -5612,15 +5681,14 @@ async function updateOverviewRoleBadge(addr) {
 
   try {
     // Check all roles independently
-    const [info, isMasterEnt, isCPEnt, masterCode] = await Promise.all([
+    const [info, isMasterEnt, isCPEnt] = await Promise.all([
       contracts.core.userCommercialInfo(addr).catch(()=>null),
-      contracts.enterprise.isMaster(addr).catch(()=>false),
-      contracts.enterprise.isCommercialPartner(addr).catch(()=>false),
-      contracts.core.masterCodeOf(addr).catch(()=>false),
+      contracts.enterprise ? contracts.enterprise.isMaster(addr).catch(()=>false) : false,
+      contracts.enterprise ? contracts.enterprise.isCommercialPartner(addr).catch(()=>false) : false,
     ]);
 
     const role = info ? Number(info[0]) : 0;
-    // V16.8: role 3 = COMMERCIAL_PARTNER_MASTER (both), role 4 = ROOT
+    // V16.8: Core role is primary. role 3 = CP_MASTER, role 4 = ROOT
     const isCP     = (role===2 || role===3) || isCPEnt;
     const isMaster = (role===1 || role===3) || isMasterEnt;
     const isRoot   = role===4; // ROOT = wallet raíz de empresa
@@ -5688,24 +5756,28 @@ async function loadCommercialTab(addr) {
   }
 
   try {
-    // Detect ALL roles independently — a CP can also be a Master
-    const [info, isMasterEnt, isCPEnt, masterCodeActive] = await Promise.all([
+    // V16.8: Core userCommercialInfo is the PRIMARY source of roles
+    // Enterprise.isMaster/isCommercialPartner require a SEPARATE registerMaster() call
+    // and may not be set even if the user has the role in Core
+    const [info, isMasterEnt, isCPEnt] = await Promise.all([
       contracts.core.userCommercialInfo(addr).catch(()=>null),
-      contracts.enterprise.isMaster(addr).catch(()=>false),
-      contracts.enterprise.isCommercialPartner(addr).catch(()=>false),
-      contracts.core.masterCodeOf(addr).catch(()=>false),
+      contracts.enterprise ? contracts.enterprise.isMaster(addr).catch(()=>false) : Promise.resolve(false),
+      contracts.enterprise ? contracts.enterprise.isCommercialPartner(addr).catch(()=>false) : Promise.resolve(false),
     ]);
 
     if (!info) { if(noRole) noRole.style.display='block'; return; }
 
-    const coreRole = Number(info[0]); // 0=NORMAL 1=MASTER 2=CP 3=ROOT
+    const coreRole = Number(info[0]); // 0=NORMAL 1=MASTER 2=CP 3=CP_MASTER 4=ROOT
     const reason   = info[3];
     const isOwn    = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
 
-    // Independent role flags — CP can simultaneously be Master
-    const isCP     = (coreRole === 2) || isCPEnt;
-    const isMaster = (coreRole === 1) || isMasterEnt;
-    const isRoot   = (coreRole === 3);
+    // Core role is definitive. CP_MASTER(3) activates both sections.
+    // Enterprise flags are fallback for users registered via registerMaster()
+    const isCP     = coreRole === 2 || coreRole === 3 || isCPEnt;
+    const isMaster = coreRole === 1 || coreRole === 3 || isMasterEnt;
+    const isRoot   = coreRole === 4;
+
+    console.log('[commercial] coreRole:', coreRole, 'isCP:', isCP, 'isMaster:', isMaster);
 
     if (!isCP && !isMaster && !isRoot) {
       if(noRole) noRole.style.display='block'; return;
