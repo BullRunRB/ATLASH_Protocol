@@ -963,7 +963,7 @@ footer .brand-mark{background:var(--blue);}
       <button class="dtab" data-tab="commercial" onclick="goTab('commercial')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Comercial</button>
       <button class="dtab" data-tab="earnings" onclick="goTab('earnings')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Ganancias</button>
       <button class="dtab" data-tab="ranks" onclick="goTab('ranks')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Rangos</button>
-      <button class="dtab" data-tab="pools" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Pools</button>
+      <button class="dtab" data-tab="pools" onclick="goTab('pools')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Top Five</button>
       <button class="dtab" data-tab="network" onclick="goTab('network')" style="border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Red</button>
       <button class="dtab" data-tab="treasury" id="tab-treasury-btn" onclick="goTab('treasury')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Tesorería</button>
       <button class="dtab" data-tab="dashboard" id="tab-dashboard-btn" onclick="goTab('dashboard')" style="display:none;border:none;padding:14px 16px;border-bottom:2px solid transparent;color:var(--gray-500);cursor:pointer;font-family:var(--ff);font-size:13px;white-space:nowrap;background:none;">Dashboard</button>
@@ -1048,7 +1048,7 @@ footer .brand-mark{background:var(--blue);}
       <div class="si-icon">🏆</div><span class="si-label">Rangos</span>
     </div>
     <div class="sidebar-item" id="sb-pools" onclick="closeSidebar();goTab('pools');">
-      <div class="si-icon">🏊</div><span class="si-label">Pools</span>
+      <div class="si-icon">🏊</div><span class="si-label">Top Five</span>
     </div>
     <div class="sidebar-item" id="sb-network" onclick="closeSidebar();goTab('network');">
       <div class="si-icon">🌐</div><span class="si-label">Red</span>
@@ -1463,12 +1463,15 @@ footer .brand-mark{background:var(--blue);}
             <div class="panel-body" id="ov-status-body"><div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin usuario</div><div class="empty-desc">Busca una dirección BSC</div></div></div>
           </div>
           <div class="panel">
-            <div class="panel-head"><div class="panel-title">🏊 Pool de liderazgo</div><div id="ov-pool-badge"></div></div>
-            <div class="panel-body" id="ov-pool-body"><div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin datos</div><div class="empty-desc">Busca una dirección BSC</div></div></div>
+            <div class="panel-head"><div class="panel-title">💰 Resumen de ganancias</div><button class="btn-outline" onclick="goTab('earnings')" style="font-size:11px;padding:5px 12px;">Ver todo →</button></div>
+            <div class="panel-body" id="ov-earnings-body">
+              <div class="mem-row"><span class="mem-label">Pools de rangos (mes actual)</span><span class="mem-val blue" id="ov-earn-ranks">—</span></div>
+              <div class="mem-row"><span class="mem-label">Pool Top Five pendiente</span><span class="mem-val green" id="ov-earn-topfive">—</span></div>
+              <div class="mem-row"><span class="mem-label">Total reclamable</span><span class="mem-val amber" id="ov-earn-total" style="font-weight:800;">—</span></div>
+            </div>
           </div>
         </div>
-        <div class="sec"><span class="sec-bar"></span><span class="sec-label">Slots disponibles</span><span class="sec-line"></span></div>
-        <div class="chips" id="ov-slot-amounts"><div class="skel" style="width:80px;height:32px;border-radius:20px;"></div><div class="skel" style="width:90px;height:32px;border-radius:20px;"></div></div>
+
       </div>
 
 
@@ -1696,7 +1699,7 @@ footer .brand-mark{background:var(--blue);}
         <!-- Header KPIs -->
         <div class="g3">
           <div class="kpi"><div class="kpi-label">Pools de rangos pendientes</div><div class="kpi-value blue" id="earn-rank-total">—</div><div class="kpi-sub">Mes actual · R1–R7</div></div>
-          <div class="kpi"><div class="kpi-label">Top Five pendiente</div><div class="kpi-value green" id="earn-pool-total">—</div><div class="kpi-sub">Pool de liderazgo</div></div>
+          <div class="kpi"><div class="kpi-label">Top Five pendiente</div><div class="kpi-value green" id="earn-pool-total">—</div><div class="kpi-sub">Pool Top Five</div></div>
           <div class="kpi"><div class="kpi-label">Total reclamable</div><div class="kpi-value amber" id="earn-grand-total">—</div><div class="kpi-sub">Todos los pools</div></div>
         </div>
 
@@ -1728,7 +1731,7 @@ footer .brand-mark{background:var(--blue);}
         <div class="sec"><span class="sec-bar"></span><span class="sec-label">Pool Top Five (Liderazgo)</span><span class="sec-line"></span></div>
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">🥇 Pool de liderazgo mensual</div>
+            <div class="panel-title">🥇 Pool Top Five</div>
             <div id="earn-pool-month-badge"></div>
           </div>
           <div class="panel-body" id="earn-pool-table">
@@ -1845,7 +1848,7 @@ footer .brand-mark{background:var(--blue);}
           <button class="stab on" id="adm-core-btn"  onclick="switchAdminTab('core')">Core</button>
           <button class="stab" id="adm-slot-btn"  onclick="switchAdminTab('slot')">Slots / Rate</button>
           <button class="stab" id="adm-rank-btn"  onclick="switchAdminTab('rank')">Rangos</button>
-          <button class="stab" id="adm-pool-btn"  onclick="switchAdminTab('pool')">Pools</button>
+          <button class="stab" id="adm-pool-btn"  onclick="switchAdminTab('pool')">Top Five</button>
           <button class="stab" id="adm-ent-btn"   onclick="switchAdminTab('ent')">Enterprise</button>
           <button class="stab" id="adm-roles-btn" onclick="switchAdminTab('roles')">Roles</button>
           <button class="stab" id="adm-reg-btn"   onclick="switchAdminTab('reg')">Registro</button>
@@ -3386,6 +3389,7 @@ async function loadUserData(addr){
     renderStatusBody({registered,frozen,upline,directCnt,totalVol,joinTs});
     if(contracts.slot) loadUserSlots(addr);
     loadRanksTab(addr);
+    if(addr.toLowerCase() === walletAddr?.toLowerCase()) loadEarningsTab();
     loadPoolsData();
     loadNetworkTab(addr);
     loadEarningsTab();
@@ -3421,7 +3425,7 @@ function renderStatusBody(d){
   if(!el) return;
   el.innerHTML=`
     <div class="mem-row"><span class="mem-label">Estado</span><span class="mem-val" style="color:${d.registered?'var(--green)':'var(--red)'};">${d.registered?'✓ Registrado':'✗ No registrado'}</span></div>
-    <div class="mem-row"><span class="mem-label">Congelado</span><span class="mem-val" style="color:${d.frozen?'var(--red)':'var(--green)'};">${d.frozen?'Sí':'No'}</span></div>
+    ${d.frozen ? '<div class="mem-row"><span class="mem-label">⚠ Estado</span><span class="mem-val" style="color:var(--red);">❄ Cuenta congelada</span></div>' : ''}
     <div class="mem-row"><span class="mem-label">Upline</span><span class="mem-val">${!isZero(d.upline)?short(d.upline):'—'}</span></div>
     <div class="mem-row"><span class="mem-label">Directos</span><span class="mem-val">${d.directCnt}</span></div>
     <div class="mem-row"><span class="mem-label">Volumen total</span><span class="mem-val" style="color:var(--blue);">${fmt18s(d.totalVol)} USDT</span></div>`;
@@ -3584,7 +3588,7 @@ async function loadUserSlots(addr){
         <div class="slot-pos-head">
           <div class="slot-pos-title">
             <span class="badge ${isActive?'badge-blue':'badge-gray'}">${isActive?'Activo':'Completado'}</span>
-            Slot #${p.id} · ${amt.toLocaleString()} USDT
+            Slot nivel ${slotLevelFromAmount(p.slotAmount)} · ${amt.toLocaleString()} USDT
           </div>
           ${canSync&&isActive
             ? p.roiEnabled
@@ -3681,13 +3685,22 @@ async function loadRanksTab(addr){
     document.getElementById('rk-pool').textContent = fmt18s(totalRankPool)+' USDT';
 
     // V15: Load user rank, personal + qualified network volume
-    let userRank=0, personalVol=0n, qualVol=0n;
+    let userRank=0, personalVol=0n, qualVol=0n, userPositions=[];
     if(addr){
       [userRank, personalVol, qualVol] = await Promise.all([
         contracts.rank.userRank(addr).then(Number).catch(()=>0),
         contracts.rank.personalVolume(addr).catch(()=>0n),
         contracts.rank.qualifiedNetworkVolume(addr).catch(()=>0n),
       ]);
+      // Load user positions for slot level check
+      try {
+        const posIds = await contracts.slot.positionsOf(addr).catch(()=>[]);
+        userPositions = await Promise.all(posIds.map(async id => {
+          const raw = await contracts.slot.positions(Number(id)).catch(()=>null);
+          return raw ? parsePosition(Number(id), raw) : null;
+        }));
+        userPositions = userPositions.filter(Boolean);
+      } catch(e) { userPositions = []; }
       document.getElementById('rk-vol').textContent = fmt18s(personalVol)+' USDT';
       document.getElementById('rk-points').textContent = fmt18s(qualVol);
       document.getElementById('rk-rank').textContent = userRank > 0 ? 'Rank '+userRank : 'Sin rango';
@@ -3725,13 +3738,27 @@ async function loadRanksTab(addr){
       const pvPct = qvPct; // alias for template
       const npPct = qvPct; // alias for template
 
+      // Check if user has min slot for this rank
+      let slotCheckHtml = '';
+      if (cfg.minSlot > 0 && addr) {
+        const minSlotAmt = Number(ethers.formatUnits(slotAmountForLevel(cfg.minSlot), 18));
+        // Check against user's positions
+        const hasMinSlot = userPositions && userPositions.some(p =>
+          slotLevelFromAmount(p.slotAmount) >= cfg.minSlot && p.rewardActive && !p.completed
+        );
+        slotCheckHtml = hasMinSlot
+          ? `<span style="font-size:11px;color:var(--green);">✅ Tienes slot nivel ${cfg.minSlot}+ ($${minSlotAmt.toLocaleString()} USDT)</span>`
+          : `<span style="font-size:11px;color:var(--red);">❌ Necesitas slot nivel ${cfg.minSlot} ($${minSlotAmt.toLocaleString()} USDT mín)</span>`;
+      }
+
       html+=`<div class="rk-card ${achieved?'achieved':isNext?'next':''}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:12px;">
             <div style="width:38px;height:38px;border-radius:10px;background:${achieved?'var(--blue)':'var(--gray-200)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:${achieved?'var(--white)':'var(--gray-500)'};">${rank}</div>
             <div>
               <div style="font-weight:800;font-size:15px;color:${achieved?'var(--blue)':isNext?'var(--amber)':'var(--gray-700)'};">Rank ${rank}</div>
-              <div style="font-size:12px;color:var(--gray-400);font-family:var(--mono);">Vol. red requerido: ${fmt18s(cfg.qvRequired)} USDT · Slot mín: ${cfg.minSlot}</div>
+              <div style="font-size:12px;color:var(--gray-400);font-family:var(--mono);">Vol. red requerido: ${fmt18s(cfg.qvRequired)} USDT · Slot mín: nivel ${cfg.minSlot}</div>
+              <div style="margin-top:3px;">${slotCheckHtml}</div>
             </div>
           </div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
@@ -4343,7 +4370,7 @@ async function loadLearnSlots() {
 
       return `<div class="learn-slot-card ${learnState.videoUnlocked && !synced ? 'unlocked' : synced ? '' : 'locked'}">
         <div class="learn-slot-info">
-          <div class="learn-slot-name">Slot #${p.id} · ${amt.toLocaleString()} USDT</div>
+          <div class="learn-slot-name">Slot nivel ${slotLevelFromAmount(p.slotAmount)} · ${amt.toLocaleString()} USDT</div>
           <div class="learn-slot-sub">Streak: ${p.currentStreak}d · ${getBoostLabel(p.currentStreak)} · ${pct}% cap</div>
           <div class="prog" style="width:140px;margin-top:4px;"><div class="prog-fill" style="width:${pct}%;"></div></div>
         </div>
@@ -4884,6 +4911,13 @@ async function loadEarningsTab() {
     document.getElementById('earn-rank-total').textContent  = fmt18s(rankTotal)+' USDT';
     document.getElementById('earn-pool-total').textContent  = fmt18s(topFivePending)+' USDT';
     document.getElementById('earn-grand-total').textContent = fmt18s(grandTotal)+' USDT';
+    // Also update overview earnings summary
+    const ovRanks   = document.getElementById('ov-earn-ranks');
+    const ovTopFive = document.getElementById('ov-earn-topfive');
+    const ovTotal   = document.getElementById('ov-earn-total');
+    if(ovRanks)   ovRanks.textContent   = fmt18s(rankTotal)+' USDT';
+    if(ovTopFive) ovTopFive.textContent = fmt18s(topFivePending)+' USDT';
+    if(ovTotal)   ovTotal.textContent   = fmt18s(grandTotal)+' USDT';
 
     const claimAllBtn  = document.getElementById('btn-claim-all');
     const claimRanks   = document.getElementById('btn-claim-ranks');
@@ -7307,6 +7341,23 @@ async function gateBuySlot() {
     }
     btn.disabled = false; btn.textContent = `💰 Comprar Slot $${amt.toLocaleString()} USDT`;
   }
+}
+
+
+
+// Convert monthId to readable month name
+// monthId 6 = May (month index starts at protocol launch)
+// Safe assumption: monthId maps to calendar months starting Jan 2025
+// monthId 1 = Jan 2025 → monthId N = month N of 2025 sequence
+function monthIdToName(monthId) {
+  const n = Number(monthId);
+  // Protocol launched ~2025. monthId appears to be 1-based month offset
+  // Based on context: monthId 6 = May, monthId 7 = June
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  // monthId 6 → May (index 4), so offset = monthId - 2
+  const idx = ((n - 2) % 12 + 12) % 12;
+  return n + ' · ' + months[idx];
 }
 
 
