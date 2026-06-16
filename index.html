@@ -1431,7 +1431,7 @@ footer .brand-mark{background:var(--blue);}
 
       <!-- ── OVERVIEW ── -->
       <div class="tpane on" id="tab-overview">
-        <div id="user-card-wrap"></div>
+        <div id="user-card-wrap" style="margin-bottom:20px;"></div>
 
         <!-- Commercial role banner — Partner / Master / Root -->
         <div id="ov-role-strip" style="display:none;margin-bottom:14px;">
@@ -3420,10 +3420,11 @@ function renderUserCard(addr,d){
     </div>
   </div>
   ${walletAddr && addr.toLowerCase()===walletAddr.toLowerCase() && d.registered ? `
-  <div style="margin-top:12px;padding:12px 16px;background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:12px;">
+  <div style="margin-top:12px;margin-bottom:4px;padding:14px 16px;background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:12px;">
     <div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔗 Tu link de referido</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <input id="ov-reflink-input" readonly value="" onclick="this.select()"
+        style="flex:1;background:white;border:1px solid var(--blue);border-radius:8px;padding:8px 10px;font-size:11px;font-family:var(--mono);color:var(--gray-700);cursor:pointer;min-width:0;"/>
       <button onclick="copyRefLink()" class="btn-primary" style="white-space:nowrap;font-size:12px;padding:8px 14px;">📋 Copiar</button>
       <button onclick="shareRefLink()" class="btn-ghost" style="white-space:nowrap;font-size:12px;padding:8px 12px;">↗ Compartir</button>
     </div>
