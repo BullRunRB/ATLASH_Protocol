@@ -2732,7 +2732,14 @@ const ENTERPRISE_ABI = [
   "function withdrawOperation(address, uint256) external",
   "function withdrawCorporateFeeReserve(address, uint256) external",
 ];
-const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)"];
+const USDT_ABI = [
+  "function approve(address,uint256) returns (bool)",
+  "function allowance(address,address) view returns (uint256)",
+  "function balanceOf(address) view returns (uint256)",
+  "function transfer(address,uint256) returns (bool)",
+  "function decimals() view returns (uint8)"
+];
+const ERC20_ABI = USDT_ABI; // alias
 
 // ── STATE ──
 let activeNet = null, _netKey = 'testnet';
@@ -7247,7 +7254,10 @@ async function gateBuySlot() {
     btn.disabled = true; btn.textContent = 'Aprobando USDT…';
 
     // Check USDT balance
-    const balance = await contracts.usdt.balanceOf(walletAddr);
+    // Build USDT contract inline to ensure ABI is correct
+    const usdtContract = new ethers.Contract(addrs.usdt, USDT_ABI, provider);
+
+    const balance = await usdtContract.balanceOf(walletAddr);
     if (balance < total) {
       showErr(`Saldo insuficiente: tienes ${fmt18s(balance)} USDT, necesitas ${fmt18s(total)} USDT`);
       btn.disabled = false; btn.textContent = `💰 Comprar Slot $${amt.toLocaleString()} USDT`;
@@ -7255,9 +7265,9 @@ async function gateBuySlot() {
     }
 
     // Approve USDT
-    const allowance = await contracts.usdt.allowance(walletAddr, addrs.slot);
+    const allowance = await usdtContract.allowance(walletAddr, addrs.slot);
     if (allowance < total) {
-      const approveTx = await contracts.usdt.connect(signer).approve(addrs.slot, ethers.MaxUint256);
+      const approveTx = await usdtContract.connect(signer).approve(addrs.slot, ethers.MaxUint256);
       btn.textContent = 'Aprobando… (confirma en wallet)';
       await approveTx.wait();
     }
