@@ -3603,7 +3603,7 @@ async function loadUserSlots(addr){
       const paid = Number(ethers.formatUnits(p.paidOut, 18));
       const rawCap = p.capMax > 0n ? p.capMax : p.slotAmount * 2n;
       const cap  = Number(ethers.formatUnits(rawCap, 18));
-      const pct=cap>0?Math.min(100,Math.round(paid*100/trueCapMax)):0;
+      const pct=cap>0?Math.min(100,Math.round(paid*100/cap)):0;
       const streak=Number(p.currentStreak||0);
       const best=Number(p.bestStreak||0);
       const boost=streak>=90?'+20% (90d)':streak>=30?'+10% (30d)':streak>=7?'+3% (7d)':'Sin boost';
