@@ -921,10 +921,16 @@ footer .brand-mark{background:var(--blue);}
 .sep { height:1px;background:var(--gray-100);margin:16px 0; }
 </style>
 
-  <!-- process polyfill (for any browser-ported Node libs) -->
-  <script>if(typeof process==='undefined'){window.process={env:{},version:'',browser:true,nextTick:function(fn){setTimeout(fn,0);}};}</script>
-  <!-- QRCode for WalletConnect URI display -->
+  <!-- Polyfills for WalletConnect -->
+  <script>
+    if(typeof process==='undefined') window.process={env:{},version:'',browser:true,nextTick:function(fn){setTimeout(fn,0);}};
+    if(typeof global==='undefined')  window.global=window;
+    if(typeof Buffer==='undefined')  window.Buffer={from:function(d,e){return e==='base64'?atob(d):d;},isBuffer:function(){return false;}};
+  </script>
+  <!-- QRCode library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
+  <!-- WalletConnect Sign Client (dApp side) — browser bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.11.2/dist/index.umd.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -6855,81 +6861,216 @@ async function admRecoverExcess() {
 
 
 // ═══════════════════════════════════════════════════════════
-// WALLETCONNECT — Safe Multisig compatible
+// WALLETCONNECT v2 — dApp side (Sign Client)
+// Safe Multisig: generates wc: URI → paste in Safe → approve
 // ═══════════════════════════════════════════════════════════
 
 const WC_PROJECT_ID = 'b56e18d47c72ab683b10814fe9495694';
-let wcProvider = null;
+let signClient = null;
+let wcSession   = null;
 
 async function connectWithWalletConnect() {
   document.querySelectorAll('.wallet-modal-bg').forEach(m => m.remove());
 
-  // Show Safe connection guide modal
   const bg = document.createElement('div');
   bg.className = 'wallet-modal-bg';
   bg.innerHTML = `
-    <div class="wallet-modal" style="max-width:480px;">
-      <div class="wallet-modal-title">🔗 Conectar Safe Multisig</div>
-      <div class="wallet-modal-sub">Elige cómo conectar tu Safe wallet a ATLASH</div>
-
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-
-        <!-- Option 1: Safe App (recommended) -->
-        <div style="border:2px solid var(--blue);border-radius:14px;padding:16px;background:var(--blue-bg);">
-          <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:6px;">⭐ Opción recomendada — Safe App</div>
-          <div style="font-size:13px;color:var(--gray-600);margin-bottom:12px;line-height:1.6;">
-            Abre tu Safe en <strong>app.safe.global</strong>, ve a <strong>Apps → WalletConnect</strong> y pega la URL de esta DApp.
-          </div>
-          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--gray-700);word-break:break-all;margin-bottom:10px;" id="wc-dapp-url">${window.location.href}</div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="navigator.clipboard.writeText('${window.location.href}').then(()=>toast('URL copiada','success'))" class="btn-ghost" style="flex:1;font-size:12px;padding:8px;">📋 Copiar URL</button>
-            <a href="https://app.safe.global/apps?appUrl=${encodeURIComponent(window.location.href)}" target="_blank" class="btn-primary" style="flex:1;font-size:12px;padding:8px;text-align:center;text-decoration:none;">
-              Abrir en Safe →
-            </a>
-          </div>
-        </div>
-
-        <!-- Option 2: Injected (if Safe Browser Extension) -->
-        <div style="border:1px solid var(--gray-200);border-radius:14px;padding:16px;">
-          <div style="font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:6px;">Opción 2 — Safe Browser Extension</div>
-          <div style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">Si tienes la extensión Safe instalada, conéctate directamente.</div>
-          <button onclick="tryConnectSafeInjected()" class="btn-outline" style="width:100%;font-size:13px;">
-            Conectar con extensión Safe
-          </button>
-        </div>
-
-        <!-- Option 3: MetaMask with Safe snap -->
-        <div style="border:1px solid var(--gray-200);border-radius:14px;padding:16px;">
-          <div style="font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:6px;">Opción 3 — MetaMask + Safe Snap</div>
-          <div style="font-size:13px;color:var(--gray-500);margin-bottom-12px;">Usa MetaMask con el snap de Safe instalado.</div>
-          <button onclick="connectWith('metamask')" class="btn-outline" style="width:100%;font-size:13px;margin-top:8px;">
-            🦊 Conectar con MetaMask
-          </button>
-        </div>
-
+    <div class="wallet-modal" style="max-width:460px;">
+      <div class="wallet-modal-title">🔗 Conectar vía WalletConnect</div>
+      <div class="wallet-modal-sub">Para Safe Multisig y wallets móviles</div>
+      <div id="wc-status" style="text-align:center;padding:24px 0;color:var(--gray-500);font-size:14px;">
+        <div style="font-size:32px;margin-bottom:12px;">⏳</div>
+        Generando código de conexión…
       </div>
-
-      <button onclick="this.closest('.wallet-modal-bg').remove()" class="btn-outline" style="width:100%;">Cancelar</button>
+      <div id="wc-qr-wrap" style="display:none;text-align:center;">
+        <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">
+          📱 Escanea con tu wallet móvil, o copia el URI para Safe
+        </div>
+        <div id="wc-qr-canvas" style="display:inline-block;padding:12px;background:white;border-radius:12px;margin-bottom:12px;"></div>
+        <div style="margin-bottom:12px;">
+          <input id="wc-uri-input" readonly style="width:100%;box-sizing:border-box;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:8px 12px;font-size:11px;font-family:var(--mono);color:var(--gray-700);" />
+        </div>
+        <button onclick="copyWcUri()" class="btn-primary" style="width:100%;margin-bottom:8px;">
+          📋 Copiar URI para Safe
+        </button>
+        <div style="font-size:12px;color:var(--gray-400);line-height:1.6;background:var(--gray-50);border-radius:8px;padding:10px;text-align:left;">
+          <strong>Cómo usar en Safe:</strong><br/>
+          1. Ve a <strong>app.safe.global</strong><br/>
+          2. Menú → <strong>WalletConnect</strong><br/>
+          3. Pega el URI copiado → Conectar
+        </div>
+      </div>
+      <div id="wc-connected" style="display:none;text-align:center;padding:16px 0;">
+        <div style="font-size:32px;margin-bottom:8px;">✅</div>
+        <div style="font-size:15px;font-weight:700;color:var(--green);">Conectado</div>
+        <div id="wc-addr-display" style="font-size:12px;font-family:var(--mono);color:var(--gray-500);margin-top:4px;"></div>
+      </div>
+      <div id="wc-error" style="display:none;color:var(--red);font-size:13px;text-align:center;padding:12px 0;"></div>
+      <button onclick="cancelWc()" class="btn-outline" style="width:100%;margin-top:8px;" id="wc-cancel-btn">Cancelar</button>
     </div>`;
   document.body.appendChild(bg);
-  bg.addEventListener('click', e => { if(e.target===bg) bg.remove(); });
+  bg.addEventListener('click', e => { if(e.target===bg) cancelWc(); });
+  _wcBg = bg;
+
+  try {
+    await initWcSignClient();
+  } catch(e) {
+    showWcError('Error al inicializar: ' + e.message);
+  }
 }
 
-// Try Safe injected provider (Safe Browser Extension or Safe Web App iframe)
-async function tryConnectSafeInjected() {
-  document.querySelectorAll('.wallet-modal-bg').forEach(m => m.remove());
+let _wcBg = null;
 
-  // Safe injects its own provider
-  const safeProvider = window.ethereum?.isSafe
-    ? window.ethereum
-    : window.safe?.getProvider?.();
+function cancelWc() {
+  if(_wcBg) { _wcBg.remove(); _wcBg = null; }
+  if(signClient) {
+    try { signClient.disconnect?.(); } catch(e) {}
+  }
+}
 
-  if (!safeProvider && !window.ethereum) {
-    toast('No se detectó extensión Safe. Usa la opción Safe App recomendada.', 'info');
-    return;
+function showWcError(msg) {
+  const el = document.getElementById('wc-error');
+  const st = document.getElementById('wc-status');
+  if(el) { el.textContent = msg; el.style.display = 'block'; }
+  if(st) st.style.display = 'none';
+}
+
+function copyWcUri() {
+  const inp = document.getElementById('wc-uri-input');
+  if(!inp) return;
+  navigator.clipboard.writeText(inp.value)
+    .then(() => toast('URI copiado — pégalo en Safe WalletConnect', 'success'))
+    .catch(() => { inp.select(); document.execCommand('copy'); toast('URI copiado', 'success'); });
+}
+
+async function initWcSignClient() {
+  // Dinamically load Sign Client if not available
+  if (!window.SignClient && !window.WalletConnectSignClient) {
+    throw new Error('SDK de WalletConnect no cargado. Verifica la conexión.');
   }
 
-  // Fall back to MetaMask which might be connected to Safe
+  const SignClientClass = window.SignClient?.default || window.SignClient ||
+                          window.WalletConnectSignClient?.default || window.WalletConnectSignClient;
+
+  signClient = await SignClientClass.init({
+    projectId: WC_PROJECT_ID,
+    metadata: {
+      name:        'ATLASH LearnEarn',
+      description: 'ATLASH Protocol — Learn to Earn on BSC Mainnet',
+      url:         window.location.origin || 'https://bullrunrb.github.io',
+      icons:       ['https://atlash.tech/favicon.ico'],
+    },
+  });
+
+  const { uri, approval } = await signClient.connect({
+    requiredNamespaces: {
+      eip155: {
+        methods: [
+          'eth_sendTransaction',
+          'eth_signTransaction',
+          'eth_sign',
+          'personal_sign',
+          'eth_signTypedData',
+          'eth_signTypedData_v4',
+        ],
+        chains:  ['eip155:56'], // BSC Mainnet
+        events:  ['chainChanged', 'accountsChanged'],
+      },
+    },
+  });
+
+  if (!uri) throw new Error('No se generó URI de WalletConnect');
+
+  // Show QR and URI
+  document.getElementById('wc-status').style.display = 'none';
+  document.getElementById('wc-qr-wrap').style.display = 'block';
+  document.getElementById('wc-uri-input').value = uri;
+
+  // Generate QR code
+  const qrEl = document.getElementById('wc-qr-canvas');
+  if(qrEl && window.QRCode) {
+    qrEl.innerHTML = '';
+    new QRCode(qrEl, { text: uri, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  }
+
+  // Wait for wallet to approve
+  try {
+    wcSession = await approval();
+  } catch(e) {
+    if(e.message?.includes('rejected') || e.message?.includes('cancel')) {
+      cancelWc();
+      toast('Conexión cancelada', 'info');
+      return;
+    }
+    throw e;
+  }
+
+  // Extract address
+  const accounts = wcSession.namespaces?.eip155?.accounts || [];
+  if (!accounts.length) throw new Error('Sin cuentas en la sesión WalletConnect');
+
+  const rawAddr = accounts[0].split(':')[2]; // "eip155:56:0xABC..." → "0xABC..."
+  walletAddr = rawAddr.toLowerCase();
+
+  // Build ethers provider from WC session
+  const wcEthers = new ethers.BrowserProvider({
+    request: async ({ method, params }) => {
+      return signClient.request({
+        topic: wcSession.topic,
+        chainId: 'eip155:56',
+        request: { method, params: params || [] },
+      });
+    },
+    on: () => {},
+    removeListener: () => {},
+  });
+
+  signer   = await wcEthers.getSigner(rawAddr);
+  provider = wcEthers;
+
+  // Rebuild contracts
+  const d = DEPLOY_MAINNET;
+  contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       wcEthers);
+  contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       wcEthers);
+  contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       wcEthers);
+  contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       wcEthers);
+  contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, wcEthers);
+  contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     wcEthers);
+  contracts.usdt       = new ethers.Contract(d.usdt,     ERC20_ABI,      wcEthers);
+  addrs = d;
+
+  // Show connected state
+  document.getElementById('wc-qr-wrap').style.display = 'none';
+  document.getElementById('wc-connected').style.display = 'block';
+  const addrEl = document.getElementById('wc-addr-display');
+  if(addrEl) addrEl.textContent = rawAddr.slice(0,10)+'…'+rawAddr.slice(-6);
+  document.getElementById('wc-cancel-btn').textContent = 'Cerrar';
+
+  // Update wallet pill
+  const lbl  = document.getElementById('wallet-label');
+  const pill = document.getElementById('wallet-pill');
+  const dot  = document.getElementById('wallet-dot');
+  if(lbl)  lbl.textContent = rawAddr.slice(0,6)+'…'+rawAddr.slice(-4);
+  if(pill) { pill.disabled=false; pill.classList.add('connected'); }
+  if(dot)  dot.className = 'wallet-dot connected';
+
+  toast('✅ Safe conectado · '+rawAddr.slice(0,10)+'…', 'success');
+
+  // Close modal after short delay
+  setTimeout(() => { if(_wcBg) { _wcBg.remove(); _wcBg=null; } }, 1500);
+
+  // Handle session events
+  signClient.on('session_delete', () => {
+    wcSession = null;
+    disconnectWallet();
+    toast('Safe desconectado', 'info');
+  });
+
+  await checkRegistrationGate();
+}
+
+async function tryConnectSafeInjected() {
+  document.querySelectorAll('.wallet-modal-bg').forEach(m => m.remove());
   connectWith('metamask');
 }
 
