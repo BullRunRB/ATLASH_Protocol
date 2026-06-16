@@ -1347,16 +1347,67 @@ footer .brand-mark{background:var(--blue);}
       </div>
 
       <!-- ── NOT REGISTERED GATE ── -->
-      <div id="dapp-notreg" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;padding:40px 20px;text-align:center;">
-        <div style="max-width:480px;width:100%;">
-          <div style="font-size:48px;margin-bottom:16px;">📭</div>
-          <h2 style="font-size:24px;font-weight:800;letter-spacing:-.5px;color:var(--gray-900);margin-bottom:8px;">Wallet no registrada</h2>
-          <p style="font-size:14px;color:var(--gray-500);margin-bottom:6px;line-height:1.6;">La wallet conectada no tiene una cuenta en el protocolo ATLASH.</p>
-          <p style="font-family:var(--mono);font-size:12px;color:var(--blue);margin-bottom:28px;" id="gate-wallet-addr">—</p>
-          <button onclick="goToBuyFromGate()" class="btn-primary" style="width:100%;padding:14px;font-size:15px;border-radius:12px;margin-bottom:12px;">
-            💰 Comprar mi primer Slot
-          </button>
-          <button onclick="disconnectWallet()" class="btn-secondary" style="width:100%;padding:13px;font-size:14px;border-radius:12px;">
+      <div id="dapp-notreg" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;padding:32px 20px;">
+        <div style="max-width:520px;width:100%;">
+
+          <!-- Header -->
+          <div style="text-align:center;margin-bottom:28px;">
+            <div style="font-size:44px;margin-bottom:12px;">🚀</div>
+            <h2 style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--gray-900);margin-bottom:6px;">Activa tu cuenta en ATLASH</h2>
+            <p style="font-size:13px;color:var(--gray-500);line-height:1.6;margin-bottom:4px;">La wallet conectada no tiene cuenta en el protocolo.</p>
+            <p style="font-family:var(--mono);font-size:11px;color:var(--blue);" id="gate-wallet-addr">—</p>
+          </div>
+
+          <!-- Buy card -->
+          <div style="background:var(--white);border:1.5px solid var(--gray-200);border-radius:18px;padding:24px;box-shadow:var(--shadow-sm);">
+            <div style="font-size:15px;font-weight:800;color:var(--gray-900);margin-bottom:4px;">Compra tu primer Slot</div>
+            <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">Elige el monto y el wallet de quien te invitó</div>
+
+            <!-- Sponsor -->
+            <div style="margin-bottom:16px;">
+              <label style="display:block;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">
+                Patrocinador (upline) *
+              </label>
+              <input id="gate-sponsor" class="addr-inp" placeholder="0x… wallet de quien te invitó"
+                style="width:100%;box-sizing:border-box;"
+                oninput="validateGateSponsor(this.value)"/>
+              <div id="gate-sponsor-status" style="font-size:11px;margin-top:4px;font-family:var(--mono);"></div>
+            </div>
+
+            <!-- Slot selector -->
+            <div style="margin-bottom:20px;">
+              <label style="display:block;font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+                Monto del Slot
+              </label>
+              <div id="gate-slot-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;"></div>
+            </div>
+
+            <!-- Summary -->
+            <div id="gate-summary" style="display:none;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:14px;margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="color:var(--gray-500);">Slot seleccionado</span>
+                <span id="gate-sum-slot" style="font-weight:700;">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="color:var(--gray-500);">Fee de activación</span>
+                <span id="gate-sum-fee">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;padding-top:8px;border-top:1px solid var(--gray-200);">
+                <span>Total USDT</span>
+                <span id="gate-sum-total" style="color:var(--blue);">—</span>
+              </div>
+            </div>
+
+            <!-- Buy button -->
+            <button id="gate-buy-btn" onclick="gateBuySlot()" class="btn-primary"
+              style="width:100%;padding:14px;font-size:15px;border-radius:12px;" disabled>
+              Selecciona un slot para continuar
+            </button>
+            <div id="gate-buy-err" style="display:none;margin-top:8px;font-size:12px;color:var(--red);font-family:var(--mono);"></div>
+          </div>
+
+          <button onclick="disconnectWallet()" class="btn-secondary"
+            style="width:100%;padding:12px;font-size:13px;border-radius:12px;margin-top:12px;">
             Cambiar wallet
           </button>
         </div>
@@ -2701,85 +2752,164 @@ function _applySafeProvider(safeAddr, ethProvider) {
   if(dot)  dot.className   = 'wallet-dot connected';
 }
 
+// ── Minimal Safe Apps SDK — implemented via postMessage protocol ──
+// Source: @safe-global/safe-apps-sdk v8.1.0 communication protocol
+const _SafeSDK = (() => {
+  const SDK_VERSION = '8.1.0';
+  const callbacks   = new Map();
+
+  // Generate random request ID
+  const genId = () => {
+    const arr = new Uint8Array(5);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+  };
+
+  // Listen for responses from Safe parent
+  window.addEventListener('message', (event) => {
+    if (!event.data || typeof event.data !== 'object') return;
+    // Log ALL messages to understand what Safe sends
+    if (event.data.id || event.data.method || event.data.safeAddress) {
+      console.log('[Safe msg received] origin:', event.origin, 'data:', JSON.stringify(event.data).slice(0,200));
+    }
+    // Don't filter by source — Safe may respond from different contexts
+    const { id, success, data, error } = event.data;
+    if (!id || !callbacks.has(id)) return;
+    console.log('[Safe] Received response:', event.data);
+    const { resolve, reject } = callbacks.get(id);
+    callbacks.delete(id);
+    if (success === false) reject(new Error(error || 'Safe error'));
+    else resolve(data);
+  });
+
+  // Send a request to Safe parent and wait for response
+  const send = (method, params) => {
+    const id = genId();
+    const msg = { id, method, params, env: { sdkVersion: SDK_VERSION } };
+    // Try posting to parent with both '*' and specific Safe origins
+    const safeOrigins = [
+      '*',
+      'https://app.safe.global',
+      'https://gnosis-safe.io',
+    ];
+    safeOrigins.forEach(origin => {
+      try { window.parent.postMessage(msg, origin); } catch(e) {}
+    });
+    console.log('[Safe] Sent message:', msg);
+    return new Promise((resolve, reject) => {
+      callbacks.set(id, { resolve, reject });
+      setTimeout(() => {
+        if (callbacks.has(id)) {
+          callbacks.delete(id);
+          reject(new Error('Safe timeout — no response from parent'));
+        }
+      }, 8000);
+    });
+  };
+
+  return {
+    getSafeInfo: () => send('getSafeInfo', undefined),
+    rpcCall:     (call, params) => send('rpcCall', { call, params }),
+    sendTxs:     (txs) => send('sendTransactions', { txs }),
+  };
+})();
+
 async function tryConnectSafeApp() {
   try {
-    // Must be inside an iframe
     if (window.self === window.top) return false;
 
-    // ── Method 1: Safe injects window.ethereum with isSafe flag ──
-    const eth = window.ethereum;
-    if (eth) {
-      const ethProvider = new ethers.BrowserProvider(eth);
-      const accounts    = await ethProvider.listAccounts().catch(()=>[]);
-      if (accounts.length) {
-        const addr = await accounts[0].getAddress();
-        signer = await ethProvider.getSigner().catch(()=>null);
-        _applySafeProvider(addr, ethProvider);
-        toast('🔐 Safe Multisig conectado', 'success');
-        return true;
-      }
-      // Try requesting accounts
-      try {
-        await eth.request({ method: 'eth_requestAccounts' });
-        const accs2 = await ethProvider.listAccounts();
-        if (accs2.length) {
-          const addr2 = await accs2[0].getAddress();
-          signer = await ethProvider.getSigner().catch(()=>null);
-          _applySafeProvider(addr2, ethProvider);
-          toast('🔐 Safe Multisig conectado', 'success');
-          return true;
-        }
-      } catch(e2) { console.warn('[Safe] eth_requestAccounts failed:', e2.message); }
+    console.log('[Safe] Detected iframe context — requesting Safe info…');
+    const safeInfo = await _SafeSDK.getSafeInfo().catch(e => {
+      console.warn('[Safe] getSafeInfo failed:', e.message);
+      return null;
+    });
+
+    if (!safeInfo?.safeAddress) {
+      console.warn('[Safe] No safeAddress in response:', safeInfo);
+      return false;
     }
 
-    // ── Method 2: Safe postMessage API (iframed Safe App) ──
-    const safeAddr = await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('timeout')), 3000);
-      const handler = (event) => {
-        // Safe sends messages from its parent
-        if (!event.data) return;
-        const d = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (d?.method === 'getSafeInfo' || d?.id === 'getSafeInfo' || d?.safeAddress) {
-          clearTimeout(timeout);
-          window.removeEventListener('message', handler);
-          resolve(d.safeAddress || d?.result?.safeAddress);
+    const safeAddr = safeInfo.safeAddress;
+    console.log('[Safe] Connected as:', safeAddr);
+
+    // Build ethers provider that routes calls through Safe's rpcCall
+    const safeEIP1193 = {
+      request: async ({ method, params = [] }) => {
+        if (method === 'eth_accounts' || method === 'eth_requestAccounts')
+          return [safeAddr];
+        if (method === 'eth_chainId') return '0x38';
+        if (method === 'net_version')  return '56';
+        // Route RPC calls through Safe
+        try {
+          const result = await _SafeSDK.rpcCall(method, params);
+          return result;
+        } catch(e) {
+          throw new Error(`RPC ${method} failed: ${e.message}`);
         }
-      };
-      window.addEventListener('message', handler);
-      // Request Safe info from parent
-      window.parent.postMessage({ method: 'getSafeInfo', id: 'getSafeInfo' }, '*');
-    }).catch(() => null);
+      },
+      on:             () => {},
+      removeListener: () => {},
+    };
 
-    if (safeAddr) {
-      // Build a minimal provider using postMessage for tx signing
-      const msgProvider = {
-        request: async ({ method, params }) => {
-          if (method === 'eth_accounts' || method === 'eth_requestAccounts') return [safeAddr];
-          if (method === 'eth_chainId') return '0x38';
-          if (method === 'net_version') return '56';
-          return new Promise((res, rej) => {
-            const id  = Date.now();
-            const handler = (e) => {
-              const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-              if (d?.id === id) { window.removeEventListener('message', handler); res(d.result); }
-            };
-            window.addEventListener('message', handler);
-            window.parent.postMessage({ id, method, params: params || [] }, '*');
-            setTimeout(() => rej(new Error('timeout')), 30000);
-          });
-        },
-        on: ()=>{}, removeListener: ()=>{}, isMetaMask: false,
-      };
-      const ethProvider = new ethers.BrowserProvider(msgProvider);
-      signer = null; // Safe requires tx submission through its own UI
-      _applySafeProvider(safeAddr, ethProvider);
-      toast('🔐 Safe Multisig conectado via postMessage', 'success');
-      return true;
-    }
+    const ethProvider = new ethers.BrowserProvider(safeEIP1193);
 
-    return false;
+    // For write operations, Safe handles signing via its own UI (sendTransactions)
+    // We build a custom signer that routes sendTransaction through Safe
+    const safeSigner = {
+      provider: ethProvider,
+      getAddress: async () => safeAddr,
+      sendTransaction: async (tx) => {
+        const safeTx = {
+          to:    tx.to,
+          value: tx.value?.toString() || '0',
+          data:  tx.data  || '0x',
+        };
+        const result = await _SafeSDK.sendTxs([safeTx]);
+        return { hash: result?.safeTxHash || result, wait: async () => ({}) };
+      },
+      // For signing typed data / messages
+      signMessage:     async (msg) => { throw new Error('Use Safe UI for signing'); },
+      signTypedData:   async ()    => { throw new Error('Use Safe UI for signing'); },
+      connect:         () => safeSigner,
+      _isSigner:       true,
+    };
+
+    // Override contract interactions to use Safe signer
+    walletAddr = safeAddr.toLowerCase();
+    provider   = ethProvider;
+    signer     = safeSigner;
+
+    const d = DEPLOY_MAINNET;
+    contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       ethProvider);
+    contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       ethProvider);
+    contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       ethProvider);
+    contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       ethProvider);
+    contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, ethProvider);
+    contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     ethProvider);
+    contracts.usdt       = new ethers.Contract(d.usdt,     ERC20_ABI,      ethProvider);
+    addrs = d;
+
+    // Wire write contracts to safe signer
+    contracts.core.__safeSigner       = safeSigner;
+    contracts.slot.__safeSigner       = safeSigner;
+    contracts.rank.__safeSigner       = safeSigner;
+    contracts.pool.__safeSigner       = safeSigner;
+    contracts.enterprise.__safeSigner = safeSigner;
+    contracts.reward.__safeSigner     = safeSigner;
+    contracts.usdt.__safeSigner       = safeSigner;
+
+    const lbl  = document.getElementById('wallet-label');
+    const pill = document.getElementById('wallet-pill');
+    const dot  = document.getElementById('wallet-dot');
+    if(lbl)  lbl.textContent = safeAddr.slice(0,6)+'…'+safeAddr.slice(-4);
+    if(pill) { pill.disabled = false; pill.classList.add('connected'); }
+    if(dot)  dot.className   = 'wallet-dot connected';
+
+    toast('🔐 Safe Multisig conectado · '+safeAddr.slice(0,10)+'…', 'success');
+    return true;
+
   } catch(e) {
-    console.warn('[Safe auto-connect]', e.message);
+    console.warn('[Safe auto-connect error]', e.message);
     return false;
   }
 }
@@ -4476,12 +4606,13 @@ function showDappGate(state) {
   if(gate)    gate.style.display    = state === 'gate'    ? 'flex' : 'none';
   if(notreg)  notreg.style.display  = state === 'notreg'  ? 'flex' : 'none';
   if(content) content.style.display = state === 'content' ? 'block' : 'none';
+  if(state === 'notreg') initGateBuy();
 }
 
 function goToBuyFromGate() {
-  // Pre-fill sponsor if wallet knows its upline
-  showLanding();
-  setTimeout(() => scrollToSection('#buy-lp'), 300);
+  // Already on notreg screen — just scroll to the buy card
+  showDappGate('notreg');
+  document.getElementById('gate-sponsor')?.focus();
 }
 
 
@@ -6996,6 +7127,159 @@ window.addEventListener('load', ()=>{
     if(ok){ showDapp(); await checkRegistrationGate(); }
   }, 1000);
 });
+
+
+
+// ═══════════════════════════════════════════════════════════
+// GATE BUY SLOT — for unregistered users
+// ═══════════════════════════════════════════════════════════
+
+let _gateSelectedSlot = 0;
+let _gateSponsorValid = false;
+
+function initGateBuy() {
+  const grid = document.getElementById('gate-slot-grid');
+  if (!grid) return;
+
+  const amounts = [10,20,40,80,160,320,640,1280,2560,5120,10240,20480,40960,81920];
+  grid.innerHTML = amounts.map(a =>
+    `<button class="lp-slot-btn" id="gate-chip-${a}" onclick="selectGateSlot(${a})">
+      <div class="lp-sa">$${a.toLocaleString()}</div>
+      <div class="lp-sc">Cap $${(a*2).toLocaleString()}</div>
+    </button>`
+  ).join('');
+
+  // Pre-fill sponsor from URL ?ref=
+  const ref = new URL(window.location.href).searchParams.get('ref');
+  if (ref && /^0x[0-9a-fA-F]{40}$/.test(ref)) {
+    const inp = document.getElementById('gate-sponsor');
+    if (inp) { inp.value = ref; validateGateSponsor(ref); }
+  }
+}
+
+function selectGateSlot(amt) {
+  _gateSelectedSlot = amt;
+  document.querySelectorAll('[id^="gate-chip-"]').forEach(b => {
+    b.className = 'lp-slot-btn' + (parseInt(b.id.split('-')[2]) === amt ? ' sel' : '');
+  });
+  updateGateSummary();
+}
+
+function updateGateSummary() {
+  const amt = _gateSelectedSlot;
+  if (!amt) return;
+
+  const fee    = ACTIVATION_FEE_BY_LEVEL[slotLevelFromAmount(amt)] || 0n;
+  const amtWei = ethers.parseUnits(String(amt), 18);
+  const total  = amtWei + fee;
+
+  document.getElementById('gate-sum-slot').textContent  = '$' + amt.toLocaleString() + ' USDT';
+  document.getElementById('gate-sum-fee').textContent   = fmt18s(fee) + ' USDT';
+  document.getElementById('gate-sum-total').textContent = fmt18s(total) + ' USDT';
+  document.getElementById('gate-summary').style.display = 'block';
+
+  const btn = document.getElementById('gate-buy-btn');
+  if (btn) {
+    btn.disabled    = !_gateSponsorValid;
+    btn.textContent = _gateSponsorValid
+      ? `💰 Comprar Slot $${amt.toLocaleString()} USDT`
+      : 'Ingresa un patrocinador válido';
+  }
+}
+
+async function validateGateSponsor(val) {
+  const el  = document.getElementById('gate-sponsor-status');
+  const btn = document.getElementById('gate-buy-btn');
+  _gateSponsorValid = false;
+  if (!el) return;
+
+  if (!val || !/^0x[0-9a-fA-F]{40}$/.test(val)) {
+    el.textContent = ''; el.style.color = '';
+    if (btn && _gateSelectedSlot) { btn.disabled = true; btn.textContent = 'Ingresa un patrocinador válido'; }
+    return;
+  }
+
+  el.textContent = 'Verificando…'; el.style.color = 'var(--gray-400)';
+  try {
+    const info = await contracts.core.userInfo(val);
+    const exists = !!(info[0] || info.exists);
+    if (exists) {
+      _gateSponsorValid = true;
+      el.textContent = '✅ Patrocinador válido';
+      el.style.color = 'var(--green)';
+    } else {
+      el.textContent = '❌ Esta wallet no está registrada en el protocolo';
+      el.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    el.textContent = '⚠ No se pudo verificar';
+    el.style.color = 'var(--amber)';
+  }
+  updateGateSummary();
+}
+
+async function gateBuySlot() {
+  const sponsor  = document.getElementById('gate-sponsor')?.value?.trim();
+  const amt      = _gateSelectedSlot;
+  const errEl    = document.getElementById('gate-buy-err');
+  const btn      = document.getElementById('gate-buy-btn');
+
+  const showErr  = msg => { if(errEl){errEl.textContent=msg;errEl.style.display='block';} };
+  const hideErr  = ()  => { if(errEl) errEl.style.display='none'; };
+
+  hideErr();
+  if (!amt)    { showErr('Selecciona un monto'); return; }
+  if (!sponsor || !/^0x[0-9a-fA-F]{40}$/.test(sponsor)) { showErr('Patrocinador inválido'); return; }
+  if (!signer) { showErr('Wallet no conectada'); return; }
+
+  const slotLevel = slotLevelFromAmount(amt);
+  const amtWei    = ethers.parseUnits(String(amt), 18);
+  const fee       = ACTIVATION_FEE_BY_LEVEL[slotLevel] || 0n;
+  const total     = amtWei + fee;
+
+  try {
+    btn.disabled = true; btn.textContent = 'Aprobando USDT…';
+
+    // Check USDT balance
+    const balance = await contracts.usdt.balanceOf(walletAddr);
+    if (balance < total) {
+      showErr(`Saldo insuficiente: tienes ${fmt18s(balance)} USDT, necesitas ${fmt18s(total)} USDT`);
+      btn.disabled = false; btn.textContent = `💰 Comprar Slot $${amt.toLocaleString()} USDT`;
+      return;
+    }
+
+    // Approve USDT
+    const allowance = await contracts.usdt.allowance(walletAddr, addrs.slot);
+    if (allowance < total) {
+      const approveTx = await contracts.usdt.connect(signer).approve(addrs.slot, ethers.MaxUint256);
+      btn.textContent = 'Aprobando… (confirma en wallet)';
+      await approveTx.wait();
+    }
+
+    // Buy slot
+    btn.textContent = 'Comprando slot…';
+    const slotC = contracts.slot.connect(signer);
+    const tx    = await slotC.buySlot(amtWei, sponsor);
+    btn.textContent = 'Procesando transacción…';
+    await tx.wait();
+
+    toast('✅ ¡Slot activado! Bienvenido a ATLASH', 'success');
+    // Reload gate — user is now registered
+    await checkRegistrationGate();
+
+  } catch(e) {
+    const msg = e?.reason || e?.message || String(e);
+    console.error('[gateBuySlot]', e);
+    if (msg.includes('user rejected') || msg.includes('User denied')) {
+      showErr('Transacción cancelada');
+    } else if (msg.includes('insufficient')) {
+      showErr('Saldo USDT insuficiente');
+    } else {
+      showErr('Error: ' + msg.slice(0, 80));
+    }
+    btn.disabled = false; btn.textContent = `💰 Comprar Slot $${amt.toLocaleString()} USDT`;
+  }
+}
 
 
 </script>
