@@ -3594,13 +3594,16 @@ async function loadUserSlots(addr){
     const active=valid.filter(p=>p.rewardActive&&!p.completed);
     if(ovEl) ovEl.textContent=active.length;
 
+    const todayDayId = Math.floor(Date.now() / 86400000);
     const canSync=walletAddr&&walletAddr.toLowerCase()===addr.toLowerCase();
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;">${valid.map(p=>{
-      const isActive=!p.completed;
-      const amt=Number(ethers.formatUnits(p.slotAmount,18));
-      const paid=Number(ethers.formatUnits(p.paidOut,18));
-      const cap=Number(ethers.formatUnits(p.capMax,18));
-      const pct=cap>0?Math.min(100,Math.round(paid*100/cap)):0;
+      const isActive       = !p.completed;
+      const alreadySynced  = p.lastSyncDay >= todayDayId;
+      const amt  = Number(ethers.formatUnits(p.slotAmount, 18));
+      const paid = Number(ethers.formatUnits(p.paidOut, 18));
+      const rawCap = p.capMax > 0n ? p.capMax : p.slotAmount * 2n;
+      const cap  = Number(ethers.formatUnits(rawCap, 18));
+      const pct=cap>0?Math.min(100,Math.round(paid*100/trueCapMax)):0;
       const streak=Number(p.currentStreak||0);
       const best=Number(p.bestStreak||0);
       const boost=streak>=90?'+20% (90d)':streak>=30?'+10% (30d)':streak>=7?'+3% (7d)':'Sin boost';
@@ -3611,9 +3614,11 @@ async function loadUserSlots(addr){
             Slot nivel ${slotLevelFromAmount(p.slotAmount)} · ${amt.toLocaleString()} USDT
           </div>
           ${canSync&&isActive
-            ? p.roiEnabled
-              ? `<button class="btn-ghost" onclick="syncSlot(${p.id})" style="padding:5px 14px;font-size:12px;">💰 Reclamar Recompensa</button>`
-              : `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;background:var(--gray-100);border:1px solid var(--gray-200);font-size:11px;font-weight:700;color:var(--gray-500);">🤝 Slot Comercial</span>`
+            ? alreadySynced
+              ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:8px;background:var(--gray-50);border:1.5px solid var(--green);font-size:12px;font-weight:700;color:var(--green);">✅ Reclamado hoy</span>`
+              : p.roiEnabled
+                ? `<button class="btn-ghost" onclick="syncSlot(${p.id})" style="padding:5px 14px;font-size:12px;">💰 Reclamar Recompensa</button>`
+                : `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;background:var(--gray-100);border:1px solid var(--gray-200);font-size:11px;font-weight:700;color:var(--gray-500);">🤝 Slot Comercial</span>`
             : ''}
         </div>
         <div class="slot-pos-body">
@@ -3679,6 +3684,7 @@ async function syncSlot(posId){
     const tx = await contracts.slot.connect(signer).sync(BigInt(posId));
     await tx.wait();
     toast('✅ Recompensa reclamada · Slot #'+posId,'success');
+    await new Promise(r=>setTimeout(r,1500));
     if(currentUser) loadUserSlots(currentUser);
   }catch(e){
     const msg=e?.reason||e?.message||String(e);
@@ -5091,7 +5097,7 @@ async function loadNetworkTab(addr) {
         cyclesEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
           ${completed.map(p=>{
             const amt = Number(ethers.formatUnits(p.slotAmount,18));
-            const cap = Number(ethers.formatUnits(p.capMax,18));
+            const cap = Number(ethers.formatUnits(p.capMax > 0n ? p.capMax : p.slotAmount * 2n, 18));
             return `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:14px;box-shadow:var(--shadow-sm);">
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-400);margin-bottom:6px;">Ciclo completado</div>
               <div style="font-size:18px;font-weight:800;color:var(--green);letter-spacing:-.5px;margin-bottom:4px;">Slot ${p.slotLevel}</div>
