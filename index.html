@@ -2680,40 +2680,108 @@ const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function 
 // ── STATE ──
 let activeNet = null, _netKey = 'testnet';
 let provider = null, signer = null, walletAddr = null;
+// ── Safe connection helper ──
+function _applySafeProvider(safeAddr, ethProvider) {
+  walletAddr = safeAddr.toLowerCase();
+  provider   = ethProvider;
+  const d    = DEPLOY_MAINNET;
+  contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       ethProvider);
+  contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       ethProvider);
+  contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       ethProvider);
+  contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       ethProvider);
+  contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, ethProvider);
+  contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     ethProvider);
+  contracts.usdt       = new ethers.Contract(d.usdt,     ERC20_ABI,      ethProvider);
+  addrs = d;
+  const lbl  = document.getElementById('wallet-label');
+  const pill = document.getElementById('wallet-pill');
+  const dot  = document.getElementById('wallet-dot');
+  if(lbl)  lbl.textContent = walletAddr.slice(0,6)+'…'+walletAddr.slice(-4);
+  if(pill) { pill.disabled = false; pill.classList.add('connected'); }
+  if(dot)  dot.className   = 'wallet-dot connected';
+}
+
 async function tryConnectSafeApp() {
   try {
+    // Must be inside an iframe
     if (window.self === window.top) return false;
-    const isSafeContext = !!(window.parent !== window);
-    if (!isSafeContext) return false;
-    // Try Safe injected provider
+
+    // ── Method 1: Safe injects window.ethereum with isSafe flag ──
     const eth = window.ethereum;
-    if (eth && eth.isSafe) {
+    if (eth) {
       const ethProvider = new ethers.BrowserProvider(eth);
-      const accounts    = await ethProvider.listAccounts();
-      if (!accounts.length) return false;
-      const safeAddr = (await accounts[0].getAddress()).toLowerCase();
-      walletAddr = safeAddr; provider = ethProvider;
-      signer = await ethProvider.getSigner();
-      const d = DEPLOY_MAINNET;
-      contracts.core=new ethers.Contract(d.core,CORE_ABI,ethProvider);
-      contracts.slot=new ethers.Contract(d.slot,SLOT_ABI,ethProvider);
-      contracts.rank=new ethers.Contract(d.rank,RANK_ABI,ethProvider);
-      contracts.pool=new ethers.Contract(d.pool,POOL_ABI,ethProvider);
-      contracts.enterprise=new ethers.Contract(d.treasury,ENTERPRISE_ABI,ethProvider);
-      contracts.reward=new ethers.Contract(d.rewards,REWARD_ABI,ethProvider);
-      contracts.usdt=new ethers.Contract(d.usdt,ERC20_ABI,ethProvider);
-      addrs=d;
-      const lbl=document.getElementById('wallet-label');
-      const pill=document.getElementById('wallet-pill');
-      const dot=document.getElementById('wallet-dot');
-      if(lbl) lbl.textContent=safeAddr.slice(0,6)+'…'+safeAddr.slice(-4);
-      if(pill){pill.disabled=false;pill.classList.add('connected');}
-      if(dot) dot.className='wallet-dot connected';
-      toast('🔐 Safe Multisig conectado','success');
+      const accounts    = await ethProvider.listAccounts().catch(()=>[]);
+      if (accounts.length) {
+        const addr = await accounts[0].getAddress();
+        signer = await ethProvider.getSigner().catch(()=>null);
+        _applySafeProvider(addr, ethProvider);
+        toast('🔐 Safe Multisig conectado', 'success');
+        return true;
+      }
+      // Try requesting accounts
+      try {
+        await eth.request({ method: 'eth_requestAccounts' });
+        const accs2 = await ethProvider.listAccounts();
+        if (accs2.length) {
+          const addr2 = await accs2[0].getAddress();
+          signer = await ethProvider.getSigner().catch(()=>null);
+          _applySafeProvider(addr2, ethProvider);
+          toast('🔐 Safe Multisig conectado', 'success');
+          return true;
+        }
+      } catch(e2) { console.warn('[Safe] eth_requestAccounts failed:', e2.message); }
+    }
+
+    // ── Method 2: Safe postMessage API (iframed Safe App) ──
+    const safeAddr = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timeout')), 3000);
+      const handler = (event) => {
+        // Safe sends messages from its parent
+        if (!event.data) return;
+        const d = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (d?.method === 'getSafeInfo' || d?.id === 'getSafeInfo' || d?.safeAddress) {
+          clearTimeout(timeout);
+          window.removeEventListener('message', handler);
+          resolve(d.safeAddress || d?.result?.safeAddress);
+        }
+      };
+      window.addEventListener('message', handler);
+      // Request Safe info from parent
+      window.parent.postMessage({ method: 'getSafeInfo', id: 'getSafeInfo' }, '*');
+    }).catch(() => null);
+
+    if (safeAddr) {
+      // Build a minimal provider using postMessage for tx signing
+      const msgProvider = {
+        request: async ({ method, params }) => {
+          if (method === 'eth_accounts' || method === 'eth_requestAccounts') return [safeAddr];
+          if (method === 'eth_chainId') return '0x38';
+          if (method === 'net_version') return '56';
+          return new Promise((res, rej) => {
+            const id  = Date.now();
+            const handler = (e) => {
+              const d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+              if (d?.id === id) { window.removeEventListener('message', handler); res(d.result); }
+            };
+            window.addEventListener('message', handler);
+            window.parent.postMessage({ id, method, params: params || [] }, '*');
+            setTimeout(() => rej(new Error('timeout')), 30000);
+          });
+        },
+        on: ()=>{}, removeListener: ()=>{}, isMetaMask: false,
+      };
+      const ethProvider = new ethers.BrowserProvider(msgProvider);
+      signer = null; // Safe requires tx submission through its own UI
+      _applySafeProvider(safeAddr, ethProvider);
+      toast('🔐 Safe Multisig conectado via postMessage', 'success');
       return true;
     }
+
     return false;
-  } catch(e) { console.warn('[Safe]',e.message); return false; }
+  } catch(e) {
+    console.warn('[Safe auto-connect]', e.message);
+    return false;
+  }
 }
 
 let currentUser = null;
@@ -6894,17 +6962,39 @@ function connectWithSafe() {
 
 async function trySafeNow() {
   toast('Detectando Safe…','info');
+  // Give window.ethereum time to be injected by Safe
+  await new Promise(r => setTimeout(r, 800));
   const ok = await tryConnectSafeApp();
-  if(ok){ await checkRegistrationGate(); }
-  else { toast('Safe no detectado. Abre esta DApp desde app.safe.global → Apps','info'); setTimeout(connectWithSafe,400); }
+  if (ok) {
+    await checkRegistrationGate();
+  } else {
+    // Last resort: try window.ethereum even without isSafe flag
+    if (window.ethereum) {
+      try {
+        const prov   = new ethers.BrowserProvider(window.ethereum);
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const accs   = await prov.listAccounts();
+        if (accs.length) {
+          const addr = await accs[0].getAddress();
+          signer     = await prov.getSigner();
+          _applySafeProvider(addr, prov);
+          toast('🔐 Conectado via provider inyectado', 'success');
+          await checkRegistrationGate();
+          return;
+        }
+      } catch(e) { console.warn('[trySafeNow fallback]', e.message); }
+    }
+    toast('No se detectó provider. Intenta conectar con MetaMask o revisa que estés en Safe App.', 'info');
+    setTimeout(connectWithSafe, 400);
+  }
 }
 
 // Auto-detect Safe on page load
 window.addEventListener('load', ()=>{
   setTimeout(async()=>{
     const ok = await tryConnectSafeApp();
-    if(ok){ showDapp(); }
-  }, 600);
+    if(ok){ showDapp(); await checkRegistrationGate(); }
+  }, 1000);
 });
 
 
