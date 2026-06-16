@@ -921,6 +921,9 @@ footer .brand-mark{background:var(--blue);}
 .sep { height:1px;background:var(--gray-100);margin:16px 0; }
 </style>
 
+  <!-- Safe Apps SDK — auto-detects when running inside Safe iframe -->
+  <script src="https://cdn.jsdelivr.net/npm/@safe-global/safe-apps-provider@0.18.1/dist/index.umd.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@safe-global/safe-apps-sdk@8.1.0/dist/index.umd.js" crossorigin="anonymous"></script>
   <!-- Polyfills for WalletConnect -->
   <script>
     if(typeof process==='undefined') window.process={env:{},version:'',browser:true,nextTick:function(fn){setTimeout(fn,0);}};
@@ -2718,6 +2721,58 @@ const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function 
 // ── STATE ──
 let activeNet = null, _netKey = 'testnet';
 let provider = null, signer = null, walletAddr = null;
+
+// ── Safe App iframe auto-connect ──
+async function tryConnectSafeApp() {
+  try {
+    if (window.self === window.top) return false; // not in iframe
+
+    const SafeAppsSDK = window.SafeAppsSDK?.default || window.SafeAppsSDK;
+    const SafeProvider = window.SafeAppsProvider?.default || window.SafeAppsProvider;
+    if (!SafeAppsSDK || !SafeProvider) return false;
+
+    const sdk  = new SafeAppsSDK();
+    const safe = await Promise.race([
+      sdk.safe.getInfo(),
+      new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 2000))
+    ]).catch(() => null);
+    if (!safe?.safeAddress) return false;
+
+    console.log('[Safe] Detected Safe App:', safe.safeAddress);
+    const safeProvider = new SafeProvider(sdk, safe);
+    const ethProvider  = new ethers.BrowserProvider(safeProvider);
+    const safeAddr     = safe.safeAddress.toLowerCase();
+
+    walletAddr = safeAddr;
+    provider   = ethProvider;
+    signer     = await ethProvider.getSigner().catch(() => null);
+
+    const d = DEPLOY_MAINNET;
+    contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       ethProvider);
+    contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       ethProvider);
+    contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       ethProvider);
+    contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       ethProvider);
+    contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, ethProvider);
+    contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     ethProvider);
+    contracts.usdt       = new ethers.Contract(d.usdt,     ERC20_ABI,      ethProvider);
+    addrs = d;
+
+    const lbl  = document.getElementById('wallet-label');
+    const pill = document.getElementById('wallet-pill');
+    const dot  = document.getElementById('wallet-dot');
+    if(lbl)  lbl.textContent = safeAddr.slice(0,6)+'…'+safeAddr.slice(-4);
+    if(pill) { pill.disabled=false; pill.classList.add('connected'); }
+    if(dot)  dot.className = 'wallet-dot connected';
+
+    toast('🔐 Safe Multisig conectado', 'success');
+    return true;
+  } catch(e) {
+    console.warn('[Safe auto-connect]', e.message);
+    return false;
+  }
+}
+
+
 let currentUser = null;
 let contracts = {};
 let addrs = {};
@@ -2794,6 +2849,17 @@ function scrollToSection(selector){
 }
 
 // Scroll effect on topbar
+// Try Safe App connection on page load
+window.addEventListener('load', () => {
+  setTimeout(async () => {
+    const connected = await tryConnectSafeApp();
+    if (connected) {
+      // We're inside Safe — skip landing, go straight to dapp
+      showDapp();
+    }
+  }, 500);
+});
+
 window.addEventListener('scroll',()=>{
   document.getElementById('topbar').classList.toggle('scrolled',window.scrollY>20);
 });
@@ -2864,6 +2930,10 @@ async function confirmNetModal(){
     console.log('[confirmNetModal] calling _activateDapp, contracts.core=', !!contracts.core);
     _activateDapp();
     console.log('[confirmNetModal] _activateDapp done');
+    // Auto-connect if running inside Safe App iframe
+    tryConnectSafeApp().then(connected => {
+      if (connected) checkRegistrationGate();
+    });
   } catch(e) {
     console.error('[confirmNetModal] ERROR:', e);
     toast('Error al iniciar: ' + (e.message||String(e)).slice(0,80), 'error');
