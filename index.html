@@ -2478,7 +2478,7 @@ footer .brand-mark{background:var(--blue);}
 <div class="toast-wrap" id="toasts"></div>
 
 <!-- NETWORK CONFIG MODAL (dapp setup) -->
-<div id="net-modal" style="display:none;" class="wallet-modal-bg">
+<div id="net-modal" data-locked="mainnet" style="display:none!important;" style="display:none;" class="wallet-modal-bg">
   <div class="wallet-modal">
     <div class="wallet-modal-title">Configurar red</div>
     <div class="wallet-modal-sub">Selecciona la red y confirma las direcciones de los contratos.</div>
@@ -2828,12 +2828,13 @@ window.addEventListener('scroll',()=>{
 // ── NET MODAL ──
 let _pendingNetKey='mainnet'; // MAINNET ONLY BUILD
 function showNetModal(){
-  _pendingNetKey='testnet';
-  setNetModal('testnet');
-  document.getElementById('net-modal').style.display='flex';
+  // Mainnet-only: skip modal, auto-confirm mainnet
+  _pendingNetKey='mainnet';
+  confirmNetModal();
 }
 
 function setNetModal(key){
+  key='mainnet'; // Mainnet-only build — ignore testnet
   _pendingNetKey=key;
   const d=key==='mainnet'?DEPLOY_MAINNET:DEPLOY_TESTNET;
   const ml=document.getElementById('nm-contracts-list');
@@ -2871,9 +2872,10 @@ async function confirmNetModal(){
   console.log('[confirmNetModal] starting, _pendingNetKey=', _pendingNetKey);
   try {
     document.getElementById('net-modal').style.display='none';
-    _netKey    = _pendingNetKey;
-    activeNet  = NETS[_netKey];
-    const d    = _netKey==='mainnet' ? DEPLOY_MAINNET : DEPLOY_TESTNET;
+    _netKey    = 'mainnet'; // Mainnet-only build — always mainnet
+    _pendingNetKey = 'mainnet';
+    activeNet  = NETS['mainnet'];
+    const d    = DEPLOY_MAINNET;
     addrs      = { ...d };
     provider   = await createProvider(activeNet.rpcs);
 
