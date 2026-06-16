@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <script>if(typeof process==="undefined")window.process={env:{},version:"",browser:true,nextTick:function(fn){setTimeout(fn,0);}};</script>
 <style>
 /* ═══════════════════════════════════════════
    ATLASH LearnEarn · Blue/White Minimalist
@@ -920,20 +921,6 @@ footer .brand-mark{background:var(--blue);}
 .adm-row .addr-inp { flex:1;min-width:0; }
 .sep { height:1px;background:var(--gray-100);margin:16px 0; }
 </style>
-
-  <!-- Safe Apps SDK — auto-detects when running inside Safe iframe -->
-  <script src="https://cdn.jsdelivr.net/npm/@safe-global/safe-apps-provider@0.18.1/dist/index.umd.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@safe-global/safe-apps-sdk@8.1.0/dist/index.umd.js" crossorigin="anonymous"></script>
-  <!-- Polyfills for WalletConnect -->
-  <script>
-    if(typeof process==='undefined') window.process={env:{},version:'',browser:true,nextTick:function(fn){setTimeout(fn,0);}};
-    if(typeof global==='undefined')  window.global=window;
-    if(typeof Buffer==='undefined')  window.Buffer={from:function(d,e){return e==='base64'?atob(d):d;},isBuffer:function(){return false;}};
-  </script>
-  <!-- QRCode library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
-  <!-- WalletConnect Sign Client (dApp side) — browser bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.11.2/dist/index.umd.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -1424,62 +1411,28 @@ footer .brand-mark{background:var(--blue);}
 
       <!-- ── LEARN ── -->
       <div class="tpane" id="tab-learn">
-
-        <!-- COMING SOON overlay -->
         <div style="display:flex;flex-direction:column;align-items:center;padding:20px 0 40px;">
-
-          <!-- Coming soon banner -->
           <div style="width:100%;background:linear-gradient(135deg,var(--blue-deep) 0%,var(--blue-mid) 100%);border-radius:20px;padding:32px;margin-bottom:32px;text-align:center;">
             <div style="font-size:11px;font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:12px;">Gana mientras aprendes</div>
             <div style="font-size:28px;font-weight:800;color:var(--white);margin-bottom:10px;">Módulo Educativo</div>
             <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:8px 20px;margin-bottom:16px;">
-              <span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;display:inline-block;animation:pulse 1.5s infinite;"></span>
+              <span style="width:8px;height:8px;border-radius:50%;background:#fbbf24;display:inline-block;"></span>
               <span style="font-size:13px;font-weight:700;color:#fbbf24;letter-spacing:.5px;">PRÓXIMAMENTE</span>
             </div>
-            <div style="font-size:14px;color:rgba(255,255,255,.7);max-width:480px;margin:0 auto;line-height:1.7;">
-              El sistema de aprendizaje diario con recompensas estará disponible muy pronto. Mientras tanto, conoce más sobre el protocolo ATLASH.
-            </div>
+            <div style="font-size:14px;color:rgba(255,255,255,.7);max-width:480px;margin:0 auto;line-height:1.7;">El sistema de aprendizaje diario con recompensas estará disponible muy pronto.</div>
           </div>
-
-          <!-- Intro video -->
           <div style="width:100%;max-width:720px;">
-            <div style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;text-align:center;">
-              📺 Video de introducción — ATLASH Protocol
-            </div>
+            <div style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;text-align:center;">📺 Video de introducción — ATLASH Protocol</div>
             <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.15);">
-              <iframe
-                src="https://www.youtube.com/embed/2AUcyqcVJCM?si=JC9pm0-JI6CcFr87"
-                title="ATLASH Protocol — Introducción"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen
-                style="position:absolute;top:0;left:0;width:100%;height:100%;">
-              </iframe>
+              <iframe src="https://www.youtube.com/embed/2AUcyqcVJCM?si=JC9pm0-JI6CcFr87" title="ATLASH Protocol" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
             </div>
           </div>
-
-          <!-- What's coming -->
           <div style="width:100%;max-width:720px;margin-top:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-            <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;text-align:center;">
-              <div style="font-size:28px;margin-bottom:8px;">🎓</div>
-              <div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Video diario</div>
-              <div style="font-size:12px;color:var(--gray-400);">Contenido educativo sobre blockchain, DeFi y Web3</div>
-            </div>
-            <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;text-align:center;">
-              <div style="font-size:28px;margin-bottom:8px;">⚡</div>
-              <div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Sync de recompensas</div>
-              <div style="font-size:12px;color:var(--gray-400);">Completa el video y activa tu ROI del día</div>
-            </div>
-            <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;text-align:center;">
-              <div style="font-size:28px;margin-bottom:8px;">🔥</div>
-              <div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Racha activa</div>
-              <div style="font-size:12px;color:var(--gray-400);">Días consecutivos de aprendizaje con multiplicadores</div>
-            </div>
+            <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">🎓</div><div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Video diario</div><div style="font-size:12px;color:var(--gray-400);">Contenido educativo sobre blockchain, DeFi y Web3</div></div>
+            <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">⚡</div><div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Sync de recompensas</div><div style="font-size:12px;color:var(--gray-400);">Completa el video y activa tu ROI del día</div></div>
+            <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:14px;padding:20px;text-align:center;"><div style="font-size:28px;margin-bottom:8px;">🔥</div><div style="font-size:13px;font-weight:700;color:var(--gray-900);margin-bottom:4px;">Racha activa</div><div style="font-size:12px;color:var(--gray-400);">Días consecutivos con multiplicadores</div></div>
           </div>
-
         </div>
-
       </div>
 
             <!-- ── SLOTS ── -->
@@ -2454,7 +2407,7 @@ footer .brand-mark{background:var(--blue);}
 <div class="toast-wrap" id="toasts"></div>
 
 <!-- NETWORK CONFIG MODAL (dapp setup) -->
-<div id="net-modal" data-locked="mainnet" style="display:none!important;" style="display:none;" class="wallet-modal-bg">
+<div id="net-modal" style="display:none!important;" style="display:none;" class="wallet-modal-bg">
   <div class="wallet-modal">
     <div class="wallet-modal-title">Configurar red</div>
     <div class="wallet-modal-sub">Selecciona la red y confirma las direcciones de los contratos.</div>
@@ -2721,57 +2674,41 @@ const USDT_ABI = ["function approve(address,uint256) returns (bool)", "function 
 // ── STATE ──
 let activeNet = null, _netKey = 'testnet';
 let provider = null, signer = null, walletAddr = null;
-
-// ── Safe App iframe auto-connect ──
 async function tryConnectSafeApp() {
   try {
-    if (window.self === window.top) return false; // not in iframe
-
-    const SafeAppsSDK = window.SafeAppsSDK?.default || window.SafeAppsSDK;
-    const SafeProvider = window.SafeAppsProvider?.default || window.SafeAppsProvider;
-    if (!SafeAppsSDK || !SafeProvider) return false;
-
-    const sdk  = new SafeAppsSDK();
-    const safe = await Promise.race([
-      sdk.safe.getInfo(),
-      new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 2000))
-    ]).catch(() => null);
-    if (!safe?.safeAddress) return false;
-
-    console.log('[Safe] Detected Safe App:', safe.safeAddress);
-    const safeProvider = new SafeProvider(sdk, safe);
-    const ethProvider  = new ethers.BrowserProvider(safeProvider);
-    const safeAddr     = safe.safeAddress.toLowerCase();
-
-    walletAddr = safeAddr;
-    provider   = ethProvider;
-    signer     = await ethProvider.getSigner().catch(() => null);
-
-    const d = DEPLOY_MAINNET;
-    contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       ethProvider);
-    contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       ethProvider);
-    contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       ethProvider);
-    contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       ethProvider);
-    contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, ethProvider);
-    contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     ethProvider);
-    contracts.usdt       = new ethers.Contract(d.usdt,     ERC20_ABI,      ethProvider);
-    addrs = d;
-
-    const lbl  = document.getElementById('wallet-label');
-    const pill = document.getElementById('wallet-pill');
-    const dot  = document.getElementById('wallet-dot');
-    if(lbl)  lbl.textContent = safeAddr.slice(0,6)+'…'+safeAddr.slice(-4);
-    if(pill) { pill.disabled=false; pill.classList.add('connected'); }
-    if(dot)  dot.className = 'wallet-dot connected';
-
-    toast('🔐 Safe Multisig conectado', 'success');
-    return true;
-  } catch(e) {
-    console.warn('[Safe auto-connect]', e.message);
+    if (window.self === window.top) return false;
+    const isSafeContext = !!(window.parent !== window);
+    if (!isSafeContext) return false;
+    // Try Safe injected provider
+    const eth = window.ethereum;
+    if (eth && eth.isSafe) {
+      const ethProvider = new ethers.BrowserProvider(eth);
+      const accounts    = await ethProvider.listAccounts();
+      if (!accounts.length) return false;
+      const safeAddr = (await accounts[0].getAddress()).toLowerCase();
+      walletAddr = safeAddr; provider = ethProvider;
+      signer = await ethProvider.getSigner();
+      const d = DEPLOY_MAINNET;
+      contracts.core=new ethers.Contract(d.core,CORE_ABI,ethProvider);
+      contracts.slot=new ethers.Contract(d.slot,SLOT_ABI,ethProvider);
+      contracts.rank=new ethers.Contract(d.rank,RANK_ABI,ethProvider);
+      contracts.pool=new ethers.Contract(d.pool,POOL_ABI,ethProvider);
+      contracts.enterprise=new ethers.Contract(d.treasury,ENTERPRISE_ABI,ethProvider);
+      contracts.reward=new ethers.Contract(d.rewards,REWARD_ABI,ethProvider);
+      contracts.usdt=new ethers.Contract(d.usdt,ERC20_ABI,ethProvider);
+      addrs=d;
+      const lbl=document.getElementById('wallet-label');
+      const pill=document.getElementById('wallet-pill');
+      const dot=document.getElementById('wallet-dot');
+      if(lbl) lbl.textContent=safeAddr.slice(0,6)+'…'+safeAddr.slice(-4);
+      if(pill){pill.disabled=false;pill.classList.add('connected');}
+      if(dot) dot.className='wallet-dot connected';
+      toast('🔐 Safe Multisig conectado','success');
+      return true;
+    }
     return false;
-  }
+  } catch(e) { console.warn('[Safe]',e.message); return false; }
 }
-
 
 let currentUser = null;
 let contracts = {};
@@ -2849,31 +2786,19 @@ function scrollToSection(selector){
 }
 
 // Scroll effect on topbar
-// Try Safe App connection on page load
-window.addEventListener('load', () => {
-  setTimeout(async () => {
-    const connected = await tryConnectSafeApp();
-    if (connected) {
-      // We're inside Safe — skip landing, go straight to dapp
-      showDapp();
-    }
-  }, 500);
-});
-
 window.addEventListener('scroll',()=>{
   document.getElementById('topbar').classList.toggle('scrolled',window.scrollY>20);
 });
 
 // ── NET MODAL ──
-let _pendingNetKey='mainnet'; // MAINNET ONLY BUILD
+let _pendingNetKey='mainnet';
 function showNetModal(){
-  // Mainnet-only: skip modal, auto-confirm mainnet
   _pendingNetKey='mainnet';
   confirmNetModal();
 }
 
 function setNetModal(key){
-  key='mainnet'; // Mainnet-only build — ignore testnet
+  key='mainnet';
   _pendingNetKey=key;
   const d=key==='mainnet'?DEPLOY_MAINNET:DEPLOY_TESTNET;
   const ml=document.getElementById('nm-contracts-list');
@@ -2911,7 +2836,7 @@ async function confirmNetModal(){
   console.log('[confirmNetModal] starting, _pendingNetKey=', _pendingNetKey);
   try {
     document.getElementById('net-modal').style.display='none';
-    _netKey    = 'mainnet'; // Mainnet-only build — always mainnet
+    _netKey    = 'mainnet';
     _pendingNetKey = 'mainnet';
     activeNet  = NETS['mainnet'];
     const d    = DEPLOY_MAINNET;
@@ -2930,10 +2855,6 @@ async function confirmNetModal(){
     console.log('[confirmNetModal] calling _activateDapp, contracts.core=', !!contracts.core);
     _activateDapp();
     console.log('[confirmNetModal] _activateDapp done');
-    // Auto-connect if running inside Safe App iframe
-    tryConnectSafeApp().then(connected => {
-      if (connected) checkRegistrationGate();
-    });
   } catch(e) {
     console.error('[confirmNetModal] ERROR:', e);
     toast('Error al iniciar: ' + (e.message||String(e)).slice(0,80), 'error');
@@ -3019,13 +2940,10 @@ function openWalletModal(){
         <div><div class="wallet-option-name">MetaMask</div><div class="wallet-option-sub">Extensión de navegador · App móvil</div></div>
         <span class="wallet-option-badge">Popular</span>
       </button>
-      <button class="wallet-option" onclick="connectWithWalletConnect()" style="border:2px solid #3b82f6;">
-        <div class="wallet-option-icon" style="font-size:22px;">🔗</div>
-        <div>
-          <div class="wallet-option-name">WalletConnect</div>
-          <div class="wallet-option-sub">Safe Multisig · Cualquier wallet móvil · QR code</div>
-        </div>
-        <span class="wallet-option-badge" style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);">Safe ✓</span>
+      <button class="wallet-option" onclick="connectWithSafe()" style="border:1.5px solid #3b82f6;">
+        <div class="wallet-option-icon">🛡</div>
+        <div><div class="wallet-option-name">Safe Multisig</div><div class="wallet-option-sub">app.safe.global → Apps → esta URL</div></div>
+        <span class="wallet-option-badge" style="background:var(--blue-bg);color:var(--blue);">Multisig</span>
       </button>
       <button class="wallet-option" onclick="connectWith('trust')">
         <div class="wallet-option-icon">🛡️</div>
@@ -6930,219 +6848,58 @@ async function admRecoverExcess() {
 
 
 
-// ═══════════════════════════════════════════════════════════
-// WALLETCONNECT v2 — dApp side (Sign Client)
-// Safe Multisig: generates wc: URI → paste in Safe → approve
-// ═══════════════════════════════════════════════════════════
+function connectWithWalletConnect(){ connectWithSafe(); }
 
-const WC_PROJECT_ID = 'b56e18d47c72ab683b10814fe9495694';
-let signClient = null;
-let wcSession   = null;
-
-async function connectWithWalletConnect() {
-  document.querySelectorAll('.wallet-modal-bg').forEach(m => m.remove());
-
+function connectWithSafe() {
+  document.querySelectorAll('.wallet-modal-bg').forEach(m=>m.remove());
+  const dappUrl = window.location.href;
   const bg = document.createElement('div');
   bg.className = 'wallet-modal-bg';
-  bg.innerHTML = `
-    <div class="wallet-modal" style="max-width:460px;">
-      <div class="wallet-modal-title">🔗 Conectar vía WalletConnect</div>
-      <div class="wallet-modal-sub">Para Safe Multisig y wallets móviles</div>
-      <div id="wc-status" style="text-align:center;padding:24px 0;color:var(--gray-500);font-size:14px;">
-        <div style="font-size:32px;margin-bottom:12px;">⏳</div>
-        Generando código de conexión…
+  bg.innerHTML = `<div class="wallet-modal" style="max-width:460px;">
+    <div class="wallet-modal-title">🛡 Safe Multisig</div>
+    <div class="wallet-modal-sub">Conecta tu Safe wallet a ATLASH</div>
+    <div style="background:var(--blue-bg);border:1.5px solid var(--blue);border-radius:14px;padding:20px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:800;color:var(--blue);margin-bottom:10px;">Cómo conectar</div>
+      <ol style="margin:0;padding-left:20px;font-size:13px;color:var(--gray-700);line-height:2.2;">
+        <li>Ve a <strong>app.safe.global</strong></li>
+        <li>Selecciona tu Safe</li>
+        <li>Menú → <strong>Apps</strong> → <strong>My custom apps</strong></li>
+        <li>Pega la URL de la DApp</li>
+        <li>Acepta el aviso de seguridad → Conectar</li>
+      </ol>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <input value="${dappUrl}" readonly onclick="this.select()"
+          style="flex:1;background:white;border:1px solid var(--gray-200);border-radius:8px;padding:8px 10px;font-size:11px;font-family:var(--mono);"/>
+        <button onclick="navigator.clipboard.writeText('${dappUrl}').then(()=>toast('URL copiada','success'))"
+          class="btn-primary" style="white-space:nowrap;font-size:12px;padding:8px 14px;">📋 Copiar</button>
       </div>
-      <div id="wc-qr-wrap" style="display:none;text-align:center;">
-        <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">
-          📱 Escanea con tu wallet móvil, o copia el URI para Safe
-        </div>
-        <div id="wc-qr-canvas" style="display:inline-block;padding:12px;background:white;border-radius:12px;margin-bottom:12px;"></div>
-        <div style="margin-bottom:12px;">
-          <input id="wc-uri-input" readonly style="width:100%;box-sizing:border-box;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:8px 12px;font-size:11px;font-family:var(--mono);color:var(--gray-700);" />
-        </div>
-        <button onclick="copyWcUri()" class="btn-primary" style="width:100%;margin-bottom:8px;">
-          📋 Copiar URI para Safe
-        </button>
-        <div style="font-size:12px;color:var(--gray-400);line-height:1.6;background:var(--gray-50);border-radius:8px;padding:10px;text-align:left;">
-          <strong>Cómo usar en Safe:</strong><br/>
-          1. Ve a <strong>app.safe.global</strong><br/>
-          2. Menú → <strong>WalletConnect</strong><br/>
-          3. Pega el URI copiado → Conectar
-        </div>
-      </div>
-      <div id="wc-connected" style="display:none;text-align:center;padding:16px 0;">
-        <div style="font-size:32px;margin-bottom:8px;">✅</div>
-        <div style="font-size:15px;font-weight:700;color:var(--green);">Conectado</div>
-        <div id="wc-addr-display" style="font-size:12px;font-family:var(--mono);color:var(--gray-500);margin-top:4px;"></div>
-      </div>
-      <div id="wc-error" style="display:none;color:var(--red);font-size:13px;text-align:center;padding:12px 0;"></div>
-      <button onclick="cancelWc()" class="btn-outline" style="width:100%;margin-top:8px;" id="wc-cancel-btn">Cancelar</button>
-    </div>`;
+    </div>
+    <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;color:var(--gray-600);margin-bottom:10px;">¿Ya estás dentro de Safe App? Detecta la wallet automáticamente:</div>
+      <button onclick="document.querySelector('.wallet-modal-bg').remove();trySafeNow()" class="btn-primary" style="width:100%;">
+        🔍 Detectar Safe automáticamente
+      </button>
+    </div>
+    <button onclick="this.closest('.wallet-modal-bg').remove()" class="btn-outline" style="width:100%;">Cancelar</button>
+  </div>`;
   document.body.appendChild(bg);
-  bg.addEventListener('click', e => { if(e.target===bg) cancelWc(); });
-  _wcBg = bg;
-
-  try {
-    await initWcSignClient();
-  } catch(e) {
-    showWcError('Error al inicializar: ' + e.message);
-  }
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.remove();});
 }
 
-let _wcBg = null;
-
-function cancelWc() {
-  if(_wcBg) { _wcBg.remove(); _wcBg = null; }
-  if(signClient) {
-    try { signClient.disconnect?.(); } catch(e) {}
-  }
+async function trySafeNow() {
+  toast('Detectando Safe…','info');
+  const ok = await tryConnectSafeApp();
+  if(ok){ await checkRegistrationGate(); }
+  else { toast('Safe no detectado. Abre esta DApp desde app.safe.global → Apps','info'); setTimeout(connectWithSafe,400); }
 }
 
-function showWcError(msg) {
-  const el = document.getElementById('wc-error');
-  const st = document.getElementById('wc-status');
-  if(el) { el.textContent = msg; el.style.display = 'block'; }
-  if(st) st.style.display = 'none';
-}
-
-function copyWcUri() {
-  const inp = document.getElementById('wc-uri-input');
-  if(!inp) return;
-  navigator.clipboard.writeText(inp.value)
-    .then(() => toast('URI copiado — pégalo en Safe WalletConnect', 'success'))
-    .catch(() => { inp.select(); document.execCommand('copy'); toast('URI copiado', 'success'); });
-}
-
-async function initWcSignClient() {
-  // Dinamically load Sign Client if not available
-  if (!window.SignClient && !window.WalletConnectSignClient) {
-    throw new Error('SDK de WalletConnect no cargado. Verifica la conexión.');
-  }
-
-  const SignClientClass = window.SignClient?.default || window.SignClient ||
-                          window.WalletConnectSignClient?.default || window.WalletConnectSignClient;
-
-  signClient = await SignClientClass.init({
-    projectId: WC_PROJECT_ID,
-    metadata: {
-      name:        'ATLASH LearnEarn',
-      description: 'ATLASH Protocol — Learn to Earn on BSC Mainnet',
-      url:         window.location.origin || 'https://bullrunrb.github.io',
-      icons:       ['https://atlash.tech/favicon.ico'],
-    },
-  });
-
-  const { uri, approval } = await signClient.connect({
-    requiredNamespaces: {
-      eip155: {
-        methods: [
-          'eth_sendTransaction',
-          'eth_signTransaction',
-          'eth_sign',
-          'personal_sign',
-          'eth_signTypedData',
-          'eth_signTypedData_v4',
-        ],
-        chains:  ['eip155:56'], // BSC Mainnet
-        events:  ['chainChanged', 'accountsChanged'],
-      },
-    },
-  });
-
-  if (!uri) throw new Error('No se generó URI de WalletConnect');
-
-  // Show QR and URI
-  document.getElementById('wc-status').style.display = 'none';
-  document.getElementById('wc-qr-wrap').style.display = 'block';
-  document.getElementById('wc-uri-input').value = uri;
-
-  // Generate QR code
-  const qrEl = document.getElementById('wc-qr-canvas');
-  if(qrEl && window.QRCode) {
-    qrEl.innerHTML = '';
-    new QRCode(qrEl, { text: uri, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
-  }
-
-  // Wait for wallet to approve
-  try {
-    wcSession = await approval();
-  } catch(e) {
-    if(e.message?.includes('rejected') || e.message?.includes('cancel')) {
-      cancelWc();
-      toast('Conexión cancelada', 'info');
-      return;
-    }
-    throw e;
-  }
-
-  // Extract address
-  const accounts = wcSession.namespaces?.eip155?.accounts || [];
-  if (!accounts.length) throw new Error('Sin cuentas en la sesión WalletConnect');
-
-  const rawAddr = accounts[0].split(':')[2]; // "eip155:56:0xABC..." → "0xABC..."
-  walletAddr = rawAddr.toLowerCase();
-
-  // Build ethers provider from WC session
-  const wcEthers = new ethers.BrowserProvider({
-    request: async ({ method, params }) => {
-      return signClient.request({
-        topic: wcSession.topic,
-        chainId: 'eip155:56',
-        request: { method, params: params || [] },
-      });
-    },
-    on: () => {},
-    removeListener: () => {},
-  });
-
-  signer   = await wcEthers.getSigner(rawAddr);
-  provider = wcEthers;
-
-  // Rebuild contracts
-  const d = DEPLOY_MAINNET;
-  contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       wcEthers);
-  contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       wcEthers);
-  contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       wcEthers);
-  contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       wcEthers);
-  contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, wcEthers);
-  contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     wcEthers);
-  contracts.usdt       = new ethers.Contract(d.usdt,     ERC20_ABI,      wcEthers);
-  addrs = d;
-
-  // Show connected state
-  document.getElementById('wc-qr-wrap').style.display = 'none';
-  document.getElementById('wc-connected').style.display = 'block';
-  const addrEl = document.getElementById('wc-addr-display');
-  if(addrEl) addrEl.textContent = rawAddr.slice(0,10)+'…'+rawAddr.slice(-6);
-  document.getElementById('wc-cancel-btn').textContent = 'Cerrar';
-
-  // Update wallet pill
-  const lbl  = document.getElementById('wallet-label');
-  const pill = document.getElementById('wallet-pill');
-  const dot  = document.getElementById('wallet-dot');
-  if(lbl)  lbl.textContent = rawAddr.slice(0,6)+'…'+rawAddr.slice(-4);
-  if(pill) { pill.disabled=false; pill.classList.add('connected'); }
-  if(dot)  dot.className = 'wallet-dot connected';
-
-  toast('✅ Safe conectado · '+rawAddr.slice(0,10)+'…', 'success');
-
-  // Close modal after short delay
-  setTimeout(() => { if(_wcBg) { _wcBg.remove(); _wcBg=null; } }, 1500);
-
-  // Handle session events
-  signClient.on('session_delete', () => {
-    wcSession = null;
-    disconnectWallet();
-    toast('Safe desconectado', 'info');
-  });
-
-  await checkRegistrationGate();
-}
-
-async function tryConnectSafeInjected() {
-  document.querySelectorAll('.wallet-modal-bg').forEach(m => m.remove());
-  connectWith('metamask');
-}
+// Auto-detect Safe on page load
+window.addEventListener('load', ()=>{
+  setTimeout(async()=>{
+    const ok = await tryConnectSafeApp();
+    if(ok){ showDapp(); }
+  }, 600);
+});
 
 
 </script>
