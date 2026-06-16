@@ -3255,19 +3255,31 @@ async function connectWith(type){
       }
     }
 
-    // 4. Build signer
+    // 4. Build provider + signer
     const ep = new ethers.BrowserProvider(prov);
     signer     = await ep.getSigner();
-    walletAddr = await signer.getAddress();
+    walletAddr = (await signer.getAddress()).toLowerCase();
+    provider   = ep;
 
-    // 5. Update UI
+    // 5. Build contracts immediately — before gate check
+    const d = DEPLOY_MAINNET;
+    contracts.core       = new ethers.Contract(d.core,     CORE_ABI,       ep);
+    contracts.slot       = new ethers.Contract(d.slot,     SLOT_ABI,       ep);
+    contracts.rank       = new ethers.Contract(d.rank,     RANK_ABI,       ep);
+    contracts.pool       = new ethers.Contract(d.pool,     POOL_ABI,       ep);
+    contracts.enterprise = new ethers.Contract(d.treasury, ENTERPRISE_ABI, ep);
+    contracts.reward     = new ethers.Contract(d.rewards,  REWARD_ABI,     ep);
+    contracts.usdt       = new ethers.Contract(d.usdt,     USDT_ABI,       ep);
+    addrs = d;
+
+    // 6. Update UI
     lbl.textContent = short(walletAddr);
     pill.disabled   = false;
     pill.classList.add('connected');
     document.getElementById('wallet-dot').className = 'wallet-dot on';
     toast('✅ Conectado · ' + activeNet.label, 'success');
 
-    // 6. Gate check + load user data
+    // 7. Gate check — contracts are ready now
     updateRefLinkUI();
     await checkRegistrationGate();
     // Check for pending buy from landing
