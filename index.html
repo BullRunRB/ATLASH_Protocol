@@ -3595,7 +3595,18 @@ async function loadUserSlots(addr){
     if(ovEl) ovEl.textContent=active.length;
 
     const todayDayId = Math.floor(Date.now() / 86400000);
-    const canSync=walletAddr&&walletAddr.toLowerCase()===addr.toLowerCase();
+    const canSync = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
+    // Sum paidOut across ALL positions for total claimed KPI
+    try {
+      let _tot2 = 0n;
+      for (const rid of ids) {
+        const rr = await contracts.slot.positions(Number(rid)).catch(()=>null);
+        if (rr) _tot2 += (parsePosition(Number(rid), rr).paidOut || 0n);
+      }
+      const _cel = document.getElementById('sl-total-claimed');
+      if (_cel) _cel.textContent = fmt18s(_tot2) + ' USDT';
+    } catch(e) { console.warn('[total-claimed]', e); }
+
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;">${valid.map(p=>{
       const isActive       = !p.completed;
       const alreadySynced  = p.lastSyncDay >= todayDayId;
@@ -3603,7 +3614,9 @@ async function loadUserSlots(addr){
       const paid = Number(ethers.formatUnits(p.paidOut, 18));
       const rawCap = p.capMax > 0n ? p.capMax : p.slotAmount * 2n;
       const cap  = Number(ethers.formatUnits(rawCap, 18));
-      const pct=cap>0?Math.min(100,Math.round(paid*100/cap)):0;
+      const pctRaw = cap > 0 ? (paid * 100 / cap) : 0;
+      const pct    = cap > 0 && pctRaw > 0 ? Math.max(0.5, Math.round(pctRaw * 10) / 10) : 0;
+      const pctDisplay = pct > 0 ? (pct < 1 ? pct.toFixed(1) : Math.round(pct)) + '%' : '0%';
       const streak=Number(p.currentStreak||0);
       const best=Number(p.bestStreak||0);
       const boost=streak>=90?'+20% (90d)':streak>=30?'+10% (30d)':streak>=7?'+3% (7d)':'Sin boost';
@@ -3629,9 +3642,9 @@ async function loadUserSlots(addr){
             <div><div class="slot-stat-label">Boost</div><div class="slot-stat-val" style="color:var(--amber);font-size:12px;">${boost}</div></div>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400);margin-bottom:4px;font-family:var(--mono);">
-            <span>Progreso al 200%</span><span>${pct}%</span>
+            <span>Progreso al 200%</span><span>${pctDisplay}</span>
           </div>
-          <div class="prog"><div class="prog-fill" style="width:${pct}%;${!isActive?'background:var(--gray-400);':''}"></div></div>
+          <div class="prog"><div class="prog-fill" style="width:${Math.max(pct > 0 ? 0.3 : 0, pct)}%;${!isActive?'background:var(--gray-400);':''}"></div></div>
         </div>
       </div>`;
     }).join('')}</div>`;
