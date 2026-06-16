@@ -1,0 +1,11 @@
+{
+  "name": "ATLASH LearnEarn",
+  "description": "ATLASH Protocol — Learn to Earn on BSC Mainnet. Educación Web3 con recompensas en USDT.",
+  "iconPath": "https://atlash.tech/favicon.ico",
+  "networks": [
+    {
+      "chainId": 56,
+      "chainName": "BSC Mainnet"
+    }
+  ]
+}
