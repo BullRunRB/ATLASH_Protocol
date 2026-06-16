@@ -2526,13 +2526,13 @@ const NETS = {
 
 // ── DEPLOY ADDRESSES ──
 const DEPLOY_MAINNET = {
-  usdt:       '0xea0b64B081c5a37ab51996b4A7e9B99559ffd782',
-  core:       '0x5494a834B4Bd87953E5a2aE726B3959F1d1B2230',
-  pool:       '0xb34B696BE886eD06B8C5D92ee9705965CA768621',
-  rank:       '0xd679324E2C9A62647016Fb01f235A7d9490412FC',
-  treasury:   '0x98B05ea8E8A2581f6e56Ccf3F1eD819bdEe98Fa7',
-  slot:       '0x9172b828Bf1E5C84D4Fcc89BeC1377D1A669F987',
-  rewards:    '0xEB8b6B68D15A0B9c32cCD2B9243CEe30881B5418',
+  usdt:       '0x55d398326f99059fF775485246999027B3197955',
+  core:       '0x8158C4daCF848A92c90830f803383bb2e10EA097',
+  pool:       '0xB4937207dFEA9Ced60e15D3A08F9CD7D0C91eF9B',
+  rank:       '0x862d49145A0640ff4f1C9E80Dfe33BEAaDe6b39d',
+  treasury:   '0x46C6180Af0FF2A4E9f11f5701A0183eb2404C344',
+  slot:       '0x2e37Bc937e2aD0Aea41A20192e4112E2169AAC3e',
+  rewards:    '0xFA00A1C90D25c763032280bb35163ab9c81004d8',
 };
 
 const DEPLOY_TESTNET = {
@@ -2546,14 +2546,14 @@ const DEPLOY_TESTNET = {
 };
 
 // Root user (company root wallet)
-const COMPANY_ROOT = '0x48173E34Cd6A58DA4F489a01144480Fb03070673';
+const COMPANY_ROOT = '0x975C1768E0213D778287cb7A3324C8152389160E';
 
 // Hardcoded founders — bypass gate without needing contract call
 const PROTOCOL_FOUNDERS = [
   '0x08637844286742617ffDF9c89C9466eA475C6a34',
   '0x975c75f0577c31b7E9F6EC2fB89FBa48BbEd8eD6',
   '0x6dF15Fb8e6601eA09acB2439119926486dDdce2A',
-  '0x5a50504FA1Bb4bE8A0399Cd861777984d26ae2bf',
+  '0x010d4BcaB727D1b001E39c4eE1c8B7F15a40D131',
 ].map(a => a.toLowerCase());
 
 // ── ABIs ──
@@ -2826,7 +2826,7 @@ window.addEventListener('scroll',()=>{
 });
 
 // ── NET MODAL ──
-let _pendingNetKey='mainnet';
+let _pendingNetKey='mainnet'; // MAINNET ONLY BUILD
 function showNetModal(){
   _pendingNetKey='testnet';
   setNetModal('testnet');
