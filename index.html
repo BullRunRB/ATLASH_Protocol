@@ -1639,13 +1639,24 @@ footer .brand-mark{background:var(--blue);}
 <div class="sec"><span class="sec-bar"></span><span class="sec-label">Pools de Rangos (R1–R7)</span><span class="sec-line"></span></div>
 <div class="panel" style="margin-bottom:16px;">
 <div class="panel-head">
-<div class="panel-title">🏆 Pools de rangos por mes</div>
+<div class="panel-title">🏆 Mes actual — pools de rangos</div>
 <button class="btn-ghost" disabled="" id="btn-claim-ranks" onclick="claimAllRankPools()" style="padding:5px 14px;font-size:12px;">
               Reclamar todos los rangos
             </button>
 </div>
 <div class="panel-body" id="earn-rank-table">
 <div class="empty"><div class="empty-icon">○</div><div class="empty-title">Sin usuario</div><div class="empty-desc">Conecta tu wallet o busca una dirección</div></div>
+</div>
+</div>
+<!-- Closed Rank Months section -->
+<div class="sec" style="margin-top:16px;"><span class="sec-bar"></span><span class="sec-label">Historial de cierres de rangos</span><span class="sec-line"></span></div>
+<div class="panel" style="margin-bottom:16px;">
+<div class="panel-head">
+<div class="panel-title">📅 Meses cerrados — calificación y bonos por cobrar</div>
+<button class="btn-outline" onclick="loadEarningsTab()" style="padding:5px 12px;font-size:11px;">↻ Actualizar</button>
+</div>
+<div class="panel-body" id="earn-rank-closed-table">
+<div class="empty"><div class="empty-icon">○</div><div class="empty-title">Cargando…</div></div>
 </div>
 </div>
 <!-- Leadership Pool section -->
@@ -4808,6 +4819,8 @@ async function loadEarningsTab() {
 
   try {
     const monthId = await contracts.core.currentMonthIndex().catch(()=>0n);
+    const monthNum = Number(monthId);
+    const isOwn = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
 
     // ── Load rank pools (R1–R7) for current month ──
     const rankRows = [];
@@ -4820,47 +4833,104 @@ async function loadEarningsTab() {
         contracts.rank.isQualifiedForPool(addr, r).catch(()=>false),
       ]);
       rankTotal += claimable;
-      rankRows.push({ rank: r, poolBal, claimable, finalized, qualified });
+      rankRows.push({ monthId: monthNum, rank: r, poolBal, claimable, finalized, qualified });
     }
+
+    // ── Closed rank months history ──
+    // El contrato no expone una lista dinámica de meses cerrados, por eso se revisan los últimos 12 meses.
+    // La calificación histórica se infiere por bono pendiente; si ya fue cobrado, el contrato puede devolver 0.
+    const lookback = 12;
+    const monthChecks = [];
+    for (let off = 0; off < lookback && monthNum - off >= 0; off++) {
+      const mId = BigInt(monthNum - off);
+      monthChecks.push((async()=>{
+        const ranks = [];
+        for (let r = 1; r <= 7; r++) {
+          const [poolBal, finalized, claimable] = await Promise.all([
+            contracts.rank.rankPoolByMonth(mId, r).catch(()=>0n),
+            contracts.rank.rankPoolFinalized(mId, r).catch(()=>false),
+            contracts.rank.rankPoolClaimable(mId, r, addr).catch(()=>0n),
+          ]);
+          ranks.push({ rank:r, poolBal, finalized, claimable });
+        }
+        const closed = ranks.some(x=>x.finalized);
+        const totalPool = ranks.reduce((a,x)=>a + x.poolBal, 0n);
+        const totalClaimable = ranks.reduce((a,x)=>a + x.claimable, 0n);
+        const claimableRanks = ranks.filter(x=>x.claimable > 0n).map(x=>x.rank);
+        return { mId: Number(mId), ranks, closed, totalPool, totalClaimable, claimableRanks };
+      })());
+    }
+    const closedMonths = (await Promise.all(monthChecks)).filter(m=>m.closed);
+    const closedRankTotal = closedMonths.reduce((a,m)=>a + m.totalClaimable, 0n);
 
     // ── Load Top Five pool ──
     const poolBal  = await contracts.pool.leadershipPoolByMonth(monthId).catch(()=>0n);
     const topFivePending = await contracts.pool.pendingTopFive(addr, monthId).catch(()=>0n);
     const poolFin  = await contracts.pool.leadershipFinalized(monthId).catch(()=>false);
-    const grandTotal = rankTotal + topFivePending;
+    const grandTotal = rankTotal + closedRankTotal + topFivePending;
 
     // ── Update KPI cards ──
-    document.getElementById('earn-rank-total').textContent  = fmt18s(rankTotal)+' USDT';
+    document.getElementById('earn-rank-total').textContent  = fmt18s(rankTotal + closedRankTotal)+' USDT';
     document.getElementById('earn-pool-total').textContent  = fmt18s(topFivePending)+' USDT';
     document.getElementById('earn-grand-total').textContent = fmt18s(grandTotal)+' USDT';
     // Also update overview earnings summary
     const ovRanks   = document.getElementById('ov-earn-ranks');
     const ovTopFive = document.getElementById('ov-earn-topfive');
     const ovTotal   = document.getElementById('ov-earn-total');
-    if(ovRanks)   ovRanks.textContent   = fmt18s(rankTotal)+' USDT';
+    if(ovRanks)   ovRanks.textContent   = fmt18s(rankTotal + closedRankTotal)+' USDT';
     if(ovTopFive) ovTopFive.textContent = fmt18s(topFivePending)+' USDT';
     if(ovTotal)   ovTotal.textContent   = fmt18s(grandTotal)+' USDT';
 
     const claimAllBtn  = document.getElementById('btn-claim-all');
     const claimRanks   = document.getElementById('btn-claim-ranks');
-    const isOwn = walletAddr && walletAddr.toLowerCase() === addr.toLowerCase();
     if (claimAllBtn) claimAllBtn.disabled  = !(isOwn && grandTotal > 0n);
     if (claimRanks)  claimRanks.disabled   = !(isOwn && rankTotal > 0n);
 
-    // ── Render rank rows ──
+    // ── Render current month rank rows ──
     const rankEl = document.getElementById('earn-rank-table');
     if (rankEl) {
       rankEl.innerHTML = `<table class="tbl">
-          <thead><tr><th>Rango</th><th>${monthIdToName(monthId)}</th><th>Estado</th><th>Calificado</th><th>Mi claimable</th><th></th></tr></thead>
+          <thead><tr><th>Rango</th><th>${monthIdToName(monthId)}</th><th>Estado</th><th>Calificado hoy</th><th>Mi pendiente</th><th></th></tr></thead>
           <tbody>${rankRows.map(r=>`<tr>
             <td><span class="badge badge-blue">Rank ${r.rank}</span></td>
             <td style="color:var(--blue);font-weight:700;">${fmt18s(r.poolBal)} USDT</td>
             <td><span class="badge ${r.finalized?'badge-green':'badge-gray'}">${r.finalized?'✓ Cerrado':'⏳ Abierto'}</span></td>
             <td>${r.qualified?'<span class="badge badge-blue">✓ Calificado</span>':'<span class="badge badge-gray">No calificado</span>'}</td>
             <td style="color:${r.claimable>0n?'var(--green)':'var(--gray-400)'};font-weight:700;">${fmt18s(r.claimable)} USDT</td>
-            <td>${isOwn && r.claimable>0n?`<button class="btn-ghost" onclick="claimSingleRankPool(${r.rank})" style="padding:4px 12px;font-size:11px;">Reclamar</button>`:''}</td>
+            <td>${isOwn && r.claimable>0n?`<button class="btn-ghost" onclick="claimSingleRankPool(${r.monthId},${r.rank})" style="padding:4px 12px;font-size:11px;">Reclamar</button>`:''}</td>
           </tr>`).join('')}</tbody>
         </table>`;
+    }
+
+    // ── Render closed rank months history ──
+    const closedEl = document.getElementById('earn-rank-closed-table');
+    if (closedEl) {
+      if (!closedMonths.length) {
+        closedEl.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin meses cerrados detectados</div><div class="empty-desc">Cuando el admin cierre pools de rangos, aparecerán aquí.</div></div>`;
+      } else {
+        closedEl.innerHTML = `<table class="tbl">
+          <thead><tr><th>Mes cerrado</th><th>Pool cerrado</th><th>Estado usuario</th><th>Rangos con bono</th><th>Por cobrar</th><th></th></tr></thead>
+          <tbody>${closedMonths.map(m=>{
+            const qualified = m.totalClaimable > 0n;
+            const ranksTxt = m.claimableRanks.length ? m.claimableRanks.map(r=>'R'+r).join(', ') : '—';
+            return `<tr>
+              <td style="font-weight:700;">${monthIdToName(BigInt(m.mId))}</td>
+              <td style="color:var(--blue);font-weight:700;">${fmt18s(m.totalPool)} USDT</td>
+              <td>${qualified
+                ? '<span class="badge badge-green">✓ Calificado con bono</span>'
+                : '<span class="badge badge-gray">Sin bono pendiente</span>'}</td>
+              <td style="font-family:var(--mono);">${ranksTxt}</td>
+              <td style="color:${m.totalClaimable>0n?'var(--green)':'var(--gray-400)'};font-weight:700;">${fmt18s(m.totalClaimable)} USDT</td>
+              <td>${isOwn && m.totalClaimable>0n
+                ? `<button class="btn-ghost" onclick="claimRankBonusMonth(${m.mId},[${m.claimableRanks.join(',')}])" style="padding:4px 12px;font-size:11px;">Reclamar bono de rango</button>`
+                : ''}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+        <div class="alert alert-info" style="margin-top:12px;margin-bottom:0;">
+          <span>ℹ️</span><span>La columna “Sin bono pendiente” significa que no hay valor por cobrar en ese mes. Si el bono ya fue reclamado, el contrato también puede devolver 0.</span>
+        </div>`;
+      }
     }
 
     // ── Render Top Five pool rows (last 3 months) ──
@@ -4898,13 +4968,37 @@ async function loadEarningsTab() {
 }
 
 // Claim single rank pool
-async function claimSingleRankPool(rank) {
+async function claimSingleRankPool(monthIdOrRank, maybeRank) {
   if (!signer) { toast('Conecta tu wallet', 'error'); return; }
   try {
-    const monthId = await contracts.core.currentMonthIndex();
-    toast(`Reclamando Rank ${rank} pool…`, 'info');
+    let monthId, rank;
+    if (typeof maybeRank === 'undefined') {
+      monthId = await contracts.core.currentMonthIndex();
+      rank = monthIdOrRank;
+    } else {
+      monthId = BigInt(monthIdOrRank);
+      rank = maybeRank;
+    }
+    toast(`Reclamando bono de rango R${rank} · mes ${Number(monthId)}…`, 'info');
     await (await contracts.rank.connect(signer).claimRankPool(monthId, rank)).wait();
-    toast(`✅ Pool Rank ${rank} reclamado`, 'success');
+    toast(`✅ Bono de rango R${rank} reclamado`, 'success');
+    loadEarningsTab();
+  } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error'); }
+}
+
+async function claimRankBonusMonth(monthId, ranks) {
+  if (!signer) { toast('Conecta tu wallet', 'error'); return; }
+  if (!Array.isArray(ranks) || ranks.length === 0) { toast('No hay bonos de rango por reclamar en este mes', 'info'); return; }
+  try {
+    toast(`Reclamando bono de rango del mes ${monthId}…`, 'info');
+    if (contracts.rank.claimSelectedRankPools) {
+      await (await contracts.rank.connect(signer).claimSelectedRankPools(monthId, ranks)).wait();
+    } else {
+      for (const r of ranks) {
+        await (await contracts.rank.connect(signer).claimRankPool(monthId, r)).wait();
+      }
+    }
+    toast(`✅ Bono de rango del mes ${monthId} reclamado`, 'success');
     loadEarningsTab();
   } catch(e) { toast('Error: '+(e?.reason||e?.message||'').slice(0,60), 'error'); }
 }
