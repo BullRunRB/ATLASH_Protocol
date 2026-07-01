@@ -4609,9 +4609,8 @@ async function checkRegistrationGate() {
     if (isRootHard) {
       showDappGate('content');
       setTimeout(() => {
-        showAdminTabs();
-        showDashboardTabs();
-        goTab('dashboard');
+        showRootFullTabs();
+        goTab('overview');
       }, 50);
       toast('👑 Wallet raíz — acceso total', 'info');
     } else {
@@ -4647,9 +4646,8 @@ async function checkRegistrationGate() {
       showDappGate('content');
       // Use setTimeout to ensure DOM is fully rendered before hiding tabs
       setTimeout(() => {
-        showAdminTabs();
-        showDashboardTabs();
-        goTab('dashboard');
+        showRootFullTabs();
+        goTab('overview');
       }, 50);
       toast('👑 Acceso owner/root activado', 'info');
       return;
@@ -6505,6 +6503,24 @@ function showAdminTabs() {
   });
 }
 
+function showRootFullTabs() {
+  _isAdminSession = true; // Root keeps admin access, but does NOT lose regular tabs
+
+  // Desktop: show every DApp tab, including regular + admin/special tabs
+  document.querySelectorAll('#dapp-tabs-nav .dtab').forEach(btn => {
+    btn.style.display = '';
+  });
+
+  // Mobile sidebar: show every DApp item, including regular + admin/special items
+  [
+    'sb-overview','sb-learn','sb-slots','sb-founders','sb-commercial','sb-earnings',
+    'sb-ranks','sb-pools','sb-network','sb-treasury','sb-dashboard','sb-contracts','sb-admin'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
+  });
+}
+
 function showDashboardTabs() {
   ['tab-dashboard-btn'].forEach(id => {
     const el=document.getElementById(id); if(el) el.style.display='';
@@ -6532,7 +6548,7 @@ async function applyTabVisibility() {
 
   // ── Tier 1: COMPANY_ROOT → full admin ──
   if (COMPANY_ROOT.toLowerCase() === wallet) {
-    showAdminTabs(); showFounderTab(); return;
+    showRootFullTabs(); return;
   }
 
   // ── Tier 2: owner / guardian → full admin ──
