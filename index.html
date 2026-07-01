@@ -4603,6 +4603,22 @@ function goToBuyFromGate() {
 }
 
 
+async function loadConnectedWalletAsCurrentUser() {
+  if (!walletAddr) return;
+  currentUser = walletAddr;
+  const searchInput = document.getElementById('search-inp');
+  if (searchInput) searchInput.value = walletAddr;
+
+  // Root/owner wallets must load the same user-facing data as any normal user,
+  // not only receive administrative tab visibility.
+  await loadUserData(walletAddr);
+
+  if (contracts.slot) {
+    loadLearnSlots();
+  }
+}
+
+
 
 async function checkRegistrationGate() {
   if (!walletAddr || !contracts.core) {
@@ -4623,6 +4639,7 @@ async function checkRegistrationGate() {
         showRootFullTabs();
         goTab('overview');
       }, 50);
+      await loadConnectedWalletAsCurrentUser();
       toast('👑 Wallet raíz — acceso total', 'info');
     } else {
       toast('🏛 Fundador — acceso habilitado', 'success');
@@ -4660,6 +4677,7 @@ async function checkRegistrationGate() {
         showRootFullTabs();
         goTab('overview');
       }, 50);
+      await loadConnectedWalletAsCurrentUser();
       toast('👑 Acceso owner/root activado', 'info');
       return;
     }
@@ -4706,6 +4724,7 @@ async function checkRegistrationGate() {
       if (addrEl) addrEl.textContent = walletAddr;
       if (registered) {
         showDappGate('content');
+        currentUser = walletAddr;
         document.getElementById('search-inp').value = walletAddr;
         searchUser();
         checkOwnerAccess();
